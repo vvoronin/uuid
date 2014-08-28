@@ -18,7 +18,12 @@ const (
 
 	// set the following to the number of 100ns ticks of the actual
 	// resolution of your system's clock
-	uuidsPerTimestamp = 1024
+	idsPerTimestamp = 1024
+)
+
+var (
+	lastTimestamp Timestamp
+	idsThisTimestamp = idsPerTimestamp
 )
 
 // **********************************************  Timestamp
@@ -50,9 +55,6 @@ func (o Timestamp) Unix() time.Time {
 	return time.Unix(0, int64(t * 100))
 }
 
-var lastTimestamp Timestamp
-var uuidsThisTimestamp = uuidsPerTimestamp
-
 // Get time as 60-bit 100ns ticks since UUID epoch.
 // Compensate for the fact that real clock resolution is
 // less than 100ns.
@@ -64,17 +66,17 @@ func currentUUIDTimestamp() Timestamp {
 		// if clock reading changed since last UUID generated
 		if lastTimestamp != timeNow {
 			// reset count of UUIDs with this timestamp
-			uuidsThisTimestamp = 0
+			idsThisTimestamp = 0
 			lastTimestamp = timeNow
 			break
 		}
-		if (uuidsThisTimestamp < uuidsPerTimestamp) {
-			uuidsThisTimestamp++
+		if (idsThisTimestamp < idsPerTimestamp) {
+			idsThisTimestamp++
 			break
 		}
 		// going too fast for the clock; spin
 	}
 	// add the count of UUIDs to low order bits of the clock reading
-	return timeNow + Timestamp(uuidsThisTimestamp)
+	return timeNow + Timestamp(idsThisTimestamp)
 }
 
