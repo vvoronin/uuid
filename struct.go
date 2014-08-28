@@ -77,7 +77,7 @@ func (o UUIDStruct) String() string {
 	return formatter(&o, format)
 }
 
-func (o UUIDStruct) Format(pFormat Format) string {
+func (o UUIDStruct) Format(pFormat string) string {
 	return formatter(&o, pFormat)
 }
 

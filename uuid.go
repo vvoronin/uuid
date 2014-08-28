@@ -51,7 +51,7 @@ const (
 
 var (
 	parseUUIDRegex = regexp.MustCompile(hexPattern)
-	format Format
+	format string
 )
 
 func init() {
@@ -207,24 +207,23 @@ type UniqueName interface {
 
 // **********************************************  UUID Printing
 
-type Format string
-
 const (
-	Clean Format         = "%x%x%x%x%x%x"
-	Curly Format         = "{%x%x%x%x%x%x}"
-	Bracket Format       = "(%x%x%x%x%x%x)"
-	CleanHyphen Format   = "%x-%x-%x-%x%x-%x"
-	CurlyHyphen Format   = "{%x-%x-%x-%x%x-%x}"
-	BracketHyphen Format = "(%x-%x-%x-%x%x-%x)"
-	GoIdFormat Format    = "[%X-%X-%x-%X%X-%x]"
+	Clean       = "%x%x%x%x%x%x"
+	Curly       = "{%x%x%x%x%x%x}"
+	Bracket     = "(%x%x%x%x%x%x)"
+	CleanHyphen = "%x-%x-%x-%x%x-%x"
+
+	// This is the default format with uppercase letters.
+	CurlyHyphen   = "{%x-%x-%x-%x%x-%x}"
+	BracketHyphen = "(%x-%x-%x-%x%x-%x)"
+	GoIdFormat    = "[%X-%X-%x-%X%X-%x]"
 )
 
-// Switches the printing format for UUID strings
-// When String() is called it will get the current format
-// Default is CurlyHyphen
+// Switches the printing format for ALL UUID strings
+// When String() is called on an UUID it will get the current format
 // A valid format will have 6 groups
-func SwitchFormat(pFormat Format) {
-	if (strings.Count(string(pFormat), "%") != 6) {
+func SwitchFormat(pFormat string) {
+	if (strings.Count(pFormat, "%") != 6) {
 		panic(errors.New("UUID.SwitchFormat: invalid formatting"))
 	}
 	format = pFormat
@@ -232,12 +231,12 @@ func SwitchFormat(pFormat Format) {
 
 // Same as SwitchFormat but will make it uppercase: will ruin GoId
 // formatting
-func SwitchFormatUpper(pFormat Format) {
-	SwitchFormat(Format(strings.ToUpper(string(pFormat))))
+func SwitchFormatUpper(pFormat string) {
+	SwitchFormat(strings.ToUpper(pFormat))
 }
 
 // Gets the current default format string
-func GetFormat() Format {
+func GetFormat() string {
 	return format
 }
 
@@ -290,14 +289,14 @@ func setVariant(pByte *byte, pVariant byte) {
 }
 
 // format a UUID into a human readable string
-func formatter(pUUID UUID, pFormat Format) string {
+func formatter(pUUID UUID, pFormat string) string {
 	b := pUUID.Bytes()
-	return fmt.Sprintf(string(pFormat), b[0:4], b[4:6], b[6:8], b[8:9], b[9:10], b[10:pUUID.Size()])
+	return fmt.Sprintf(pFormat, b[0:4], b[4:6], b[6:8], b[8:9], b[9:10], b[10:pUUID.Size()])
 }
 
 // Format a UUID into a human readable string
-func Formatter(pUUID UUID, pFormat Format) string {
-	if (strings.Count(string(pFormat), "%") != 6) {
+func Formatter(pUUID UUID, pFormat string) string {
+	if (strings.Count(pFormat, "%") != 6) {
 		panic(errors.New("UUID.SwitchFormat: invalid formatting"))
 	}
 	return formatter(pUUID, pFormat)

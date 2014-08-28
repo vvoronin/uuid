@@ -46,7 +46,7 @@ func (o UUIDArray) String() string {
 	return formatter(&o, format)
 }
 
-func (o UUIDArray) Format(pFormat Format) string {
+func (o UUIDArray) Format(pFormat string) string {
 	return formatter(&o, pFormat)
 }
 
