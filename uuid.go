@@ -22,6 +22,7 @@ package uuid
  ***************/
 
 import (
+	"encoding"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -63,6 +64,9 @@ func init() {
 // The main interface for UUIDs
 // Each implementation must also implement the UniqueName interface
 type UUID interface {
+
+encoding.BinaryMarshaler
+encoding.BinaryUnmarshaler
 
 	// Marshals the UUID bytes or data
 	Bytes() (data []byte)
