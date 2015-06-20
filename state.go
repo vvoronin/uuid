@@ -72,7 +72,7 @@ type State struct {
 // to an earlier read issue then the sequence is randomly generated
 // else if there is an issue with the time the sequence is incremeted
 func (o *State) read(pNow Timestamp, pNode net.HardwareAddr) {
-	if bytes.Equal(pNode, o.node) || o.randomSequence {
+	if bytes.Equal([]byte(pNode), o.node) || o.randomSequence {
 		o.sequence = uint16(seed.Int())&0x3FFF
 	} else if pNow < o.past {
 		o.sequence ++
@@ -102,15 +102,15 @@ func (o *State) init() {
 	}
 	intfcs, err := net.Interfaces()
 	if err != nil {
-		log.Println("UUID.State.init: address error:", err)
+		log.Println("UUID.State.init: address error: will generate random node id instead", err)
 		return
 	}
 	a := getHardwareAddress(intfcs)
 	if a == nil {
-		log.Println("UUID.State.init: address error:", err)
+		log.Println("UUID.State.init: address error: will generate random node id instead", err)
 		return
 	}
-	if bytes.Equal(a, state.node) {
+	if bytes.Equal([]byte(a), state.node) {
 		state.sequence ++
 	}
 	state.node = a

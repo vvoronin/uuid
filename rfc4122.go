@@ -57,7 +57,7 @@ func NewV1() UUID {
 	state.read(now, currentUUIDNodeId())
 	state.persist()
 	runtime.UnlockOSThread()
-	return formatV1(now, 1, ReservedRFC4122, state.node)
+	return formatV1(now, uint16(1), ReservedRFC4122, state.node)
 }
 
 // NewV3 will generate a new RFC4122 version 3 UUID
@@ -134,7 +134,7 @@ func getHardwareAddress(pInterfaces []net.Interface) net.HardwareAddr {
 			//if inter.Flags.String() != "0" {
 			if addrs, err := inter.Addrs(); err == nil {
 				for _, addr := range addrs {
-					if addr.String() != "0.0.0.0" && !bytes.Equal(inter.HardwareAddr, make([]byte, len(inter.HardwareAddr))) {
+					if addr.String() != "0.0.0.0" && !bytes.Equal([]byte(inter.HardwareAddr), make([]byte, len(inter.HardwareAddr))) {
 						return inter.HardwareAddr
 					}
 				}
