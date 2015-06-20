@@ -129,55 +129,56 @@ const (
 func TestUUID_Formats_String(t *testing.T) {
 	ids := []UUID {NewV4(), NewV1(), GoId(NewV4(), Name("RULEZ"), md5.New())}
 
-	SwitchFormatUpper(CurlyHyphen)
+	// Reset default
+	SwitchFormat(CleanHyphen)
 
 	for _, u := range ids {
 
-		// CurlyHyphen
+		SwitchFormatUpper(CurlyHyphen)
 		if !regexp.MustCompile(curlyHyphenHexPattern).MatchString(u.String()) {
-			t.Error("Curly hyphen UUID string output got", u)
+			t.Error("Curly hyphen UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Clean
 		SwitchFormat(Clean)
 		if !regexp.MustCompile(cleanHexPattern).MatchString(u.String()) {
-			t.Error("Clean UUID string output got", u)
+			t.Error("Clean UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Curly
 		SwitchFormat(Curly)
 		if !regexp.MustCompile(curlyHexPattern).MatchString(u.String()) {
-			t.Error("Curly clean UUID string output got", u)
+			t.Error("Curly clean UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Bracket
 		SwitchFormat(Bracket)
 		if !regexp.MustCompile(bracketHexPattern).MatchString(u.String()) {
-			t.Error("Bracket clean UUID string output got", u)
+			t.Error("Bracket clean UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Clean Hyphen
 		SwitchFormat(CleanHyphen)
 		if !regexp.MustCompile(cleanHyphenHexPattern).MatchString(u.String()) {
-			t.Error("Clean hyphen UUID string output got", u)
+			t.Error("Clean hyphen UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Bracket Hyphen
 		SwitchFormat(BracketHyphen)
 		if !regexp.MustCompile(bracketHyphenHexPattern).MatchString(u.String()) {
-			t.Error("Bracket hyphen UUID string output got", u)
+			t.Error("Bracket hyphen UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Bracket Hyphen
 		SwitchFormat(GoIdFormat)
 		if !regexp.MustCompile(goIdHexPattern).MatchString(u.String()) {
-			t.Error("GoId UUID string output expected", u)
+			t.Error("GoId UUID string output expected", u, u.Version())
 		}
 		outputLn(u)
 
@@ -186,7 +187,7 @@ func TestUUID_Formats_String(t *testing.T) {
 	}
 }
 
-func TestUUID_Formats(t *testing.T) {
+func TestUUID_Formatter(t *testing.T) {
 	ids := []UUID {NewV4(), NewV1(), GoId(NewV4(), Name("RULEZ"), md5.New())}
 
 	for _, u := range ids {
