@@ -7,12 +7,17 @@ package uuid
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"testing"
 )
 
 var (
 	goLang Name = "https://google.com/golang.org?q=golang"
+)
+
+const (
+	generate = 1000000
 )
 
 func TestUUID_NewV1(t *testing.T) {
@@ -29,7 +34,7 @@ func TestUUID_NewV1(t *testing.T) {
 }
 
 func TestUUID_NewV1Bulk(t *testing.T) {
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < generate; i++ {
 		NewV1()
 	}
 }
@@ -78,12 +83,12 @@ func TestUUID_NewV3(t *testing.T) {
 }
 
 func TestUUID_NewV3Bulk(t *testing.T) {
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < generate; i++ {
 		NewV3(NamespaceDNS, goLang)
 	}
 }
 
-func TestNewV4(t *testing.T) {
+func TestUUID_NewV4(t *testing.T) {
 	u := NewV4()
 	if u.Version() != 4 {
 		t.Errorf("Expected correct version %d, but got %d", 4, u.Version())
@@ -97,7 +102,7 @@ func TestNewV4(t *testing.T) {
 }
 
 func TestUUID_NewV4Bulk(t *testing.T) {
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < generate; i++ {
 		NewV4()
 	}
 }
@@ -146,9 +151,21 @@ func TestUUID_NewV5(t *testing.T) {
 }
 
 func TestUUID_NewV5Bulk(t *testing.T) {
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < generate; i++ {
 		NewV5(NamespaceDNS, goLang)
 	}
+}
+
+func TestUUID_getHardwareAddress(t *testing.T) {
+	intfcs, err := net.Interfaces()
+	if err != nil {
+		return
+	}
+	addr := getHardwareAddress(intfcs)
+	if (addr == nil) {
+		return
+	}
+	fmt.Println(addr)
 }
 
 // A small test to test uniqueness across all UUIDs created
