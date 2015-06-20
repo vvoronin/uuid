@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestUUIDTimestamp_now(t *testing.T) {
+func TestUUI_Timestamp_now(t *testing.T) {
 	sec, nsec := Now()
 	if sec <= 1391463463 {
 		t.Errorf("Expected a value greater than 02/03/2014 @ 9:37pm in UTC but got %d", sec)

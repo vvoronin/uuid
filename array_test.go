@@ -18,7 +18,7 @@ var array_bytes = []byte{
 	0x23, 0x12, 0x4A, 0x11, 0x89, 0xFF,
 }
 
-func TestUUIDArray_UnmarshalBinary(t *testing.T) {
+func TestUUID_Array_UnmarshalBinary(t *testing.T) {
 	u := new(UUIDArray)
 	err := u.UnmarshalBinary([]byte{1, 2, 3, 4, 5})
 	if err == nil {

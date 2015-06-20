@@ -32,7 +32,7 @@ func TestUUID_StateSeed(t *testing.T) {
 	}
 }
 
-func TestUUIDState_read(t *testing.T) {
+func TestUUID_State_read(t *testing.T) {
 	s := new(State)
 	s.past = Timestamp((1391463463*10000000)+(100*10)+gregorianToUNIXOffset)
 	s.node = state_bytes
@@ -74,14 +74,14 @@ func TestUUIDState_read(t *testing.T) {
 	}
 }
 
-func TestUUIDState_init(t *testing.T) {
+func TestUUID_State_init(t *testing.T) {
 
 
 }
 
 // Tests that the schedule is run approx every ten seconds
 // takes 90 seconds to complete on my machine at 90000000 UUIDs
-func TestUUIDState_saveSchedule(t *testing.T) {
+func TestUUID_State_saveSchedule(t *testing.T) {
 	if V1Save {
 		count := 0
 		now := time.Now()
