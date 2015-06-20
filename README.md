@@ -12,15 +12,18 @@ It will generate the following:
 * Version 4: based on crytographically secure random numbers
 * Version 5: based on SHA-1 hash
 
-Functions NewV1, NewV3, NewV4, NewV5, New, NewHex and ParseUUID() for generating versions 3, 4
+Functions NewV1, NewV3, NewV4, NewV5, New, NewHex and Parse() for generating versions 3, 4
 and 5 UUIDs are as specified in [RFC 4122](http://www.ietf.org/rfc/rfc4122.txt).
 
 # Requirements
 
-Go 1.2 and tip supported.
+Go 1.3, 1.2 and tip supported.
 
-# Recent Changes to original work by nu7hatch
+# Recent Changes
 
+* API changes to simplify use.
+* Added formatting support for user defined formats
+* Added support for Google App Engine
 * Varient type bits are now set correctly
 * Varient type can now be retrieved more efficiently
 * New tests for variant setting to confirm correctness
