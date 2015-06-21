@@ -9,7 +9,7 @@ It will generate the following:
 
 * Version 1: based on timestamp and MAC address
 * Version 3: based on MD5 hash
-* Version 4: based on crytographically secure random numbers
+* Version 4: based on cryptographically secure random numbers
 * Version 5: based on SHA-1 hash
 
 Functions NewV1, NewV3, NewV4, NewV5, New, NewHex and Parse() for generating versions 3, 4
@@ -21,14 +21,18 @@ Go 1.3, 1.2 and tip supported.
 
 # Recent Changes
 
+* Removed use of OS Thread locking and runtime package requirement
+* Changed String() output to CleanHyphen to match the canonical standard
+* Plenty of minor change and housekeeping
+* Removed default saver and replaced with interface
 * API changes to simplify use.
 * Added formatting support for user defined formats
 * Added support for Google App Engine
-* Varient type bits are now set correctly
-* Varient type can now be retrieved more efficiently
+* Variant type bits are now set correctly
+* Variant type can now be retrieved more efficiently
 * New tests for variant setting to confirm correctness
 * New tests added to confirm proper version setting
-* Type UUID change to UUIDArray for V3-5 UUIDS and UUIDStruct added for V1 UUIDs
+* Type UUID change to UUIDArray for V3-5 UUIDs and UUIDStruct added for V1 UUIDs
 ** These implement the BinaryMarshaller and BinaryUnmarshaller interfaces
 * New was added to create a base UUID from a []byte slice - this uses UUIDArray
 * ParseHex was renamed to ParseUUID

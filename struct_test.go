@@ -19,7 +19,7 @@ var struct_bytes = []byte{
 }
 
 func TestUUID_Struct_UnmarshalBinary(t *testing.T) {
-	u := new(UUIDStruct)
+	u := new(Struct)
 	u.size = length
 	err := u.UnmarshalBinary([]byte{1, 2, 3, 4, 5})
 	if err == nil {
@@ -30,6 +30,3 @@ func TestUUID_Struct_UnmarshalBinary(t *testing.T) {
 		t.Errorf("Expected bytes")
 	}
 }
-
-
-

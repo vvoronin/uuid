@@ -7,7 +7,6 @@ package uuid
 
 import (
 	"fmt"
-	"net"
 	"net/url"
 	"testing"
 )
@@ -156,18 +155,6 @@ func TestUUID_NewV5Bulk(t *testing.T) {
 	}
 }
 
-func TestUUID_getHardwareAddress(t *testing.T) {
-	intfcs, err := net.Interfaces()
-	if err != nil {
-		return
-	}
-	addr := getHardwareAddress(intfcs)
-	if (addr == nil) {
-		return
-	}
-	fmt.Println(addr)
-}
-
 // A small test to test uniqueness across all UUIDs created
 func TestUUID_EachIsUnique(t *testing.T) {
 	s := 1000
@@ -220,5 +207,3 @@ func UUID_NamespaceDefaults() {
 	fmt.Println(NamespaceOID)
 	fmt.Println(NamespaceX500)
 }
-
-

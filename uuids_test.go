@@ -10,59 +10,61 @@ import (
 	"crypto/sha1"
 	"crypto/sha512"
 	"fmt"
-	"testing"
 	"regexp"
 	"strings"
+	"testing"
 )
 
 const (
 	secondsPerHour       = 60 * 60
 	secondsPerDay        = 24 * secondsPerHour
-	unixToInternal int64 = (1969 * 365 + 1969 / 4 - 1969 / 100 + 1969 / 400) * secondsPerDay
+	unixToInternal int64 = (1969*365 + 1969/4 - 1969/100 + 1969/400) * secondsPerDay
 	internalToUnix int64 = -unixToInternal
 )
 
-var uuid_goLang Name = "https://google.com/golang.org?q=golang"
-var printer bool = true
-var uuid_bytes = []byte{
-	0xAA, 0xCF, 0xEE, 0x12,
-	0xD4, 0x00,
-	0x27, 0x23,
-	0x00,
-	0xD3,
-	0x23, 0x12, 0x4A, 0x11, 0x89, 0xFF,
-}
-var uuid_variants = []byte{
-	ReservedNCS, ReservedRFC4122, ReservedMicrosoft, ReservedFuture,
-}
-var namespaceUuids = []UUID {
-	NamespaceDNS, NamespaceURL, NamespaceOID, NamespaceX500,
-}
-var invalidHexStrings = [...]string{
-	"foo",
-	"6ba7b814-9dad-11d1-80b4-",
-	"6ba7b814--9dad-11d1-80b4--00c04fd430c8",
-	"6ba7b814-9dad7-11d1-80b4-00c04fd430c8999",
-	"{6ba7b814-9dad-1180b4-00c04fd430c8",
-	"{6ba7b814--11d1-80b4-00c04fd430c8}",
-	"urn:uuid:6ba7b814-9dad-1666666680b4-00c04fd430c8",
-}
-var validHexStrings = [...]string{
-	"6ba7b8149dad-11d1-80b4-00c04fd430c8}",
-	"{6ba7b8149dad-11d1-80b400c04fd430c8}",
-	"{6ba7b814-9dad11d180b400c04fd430c8}",
-	"6ba7b8149dad-11d1-80b4-00c04fd430c8",
-	"6ba7b814-9dad11d1-80b4-00c04fd430c8",
-	"6ba7b814-9dad-11d180b4-00c04fd430c8",
-	"6ba7b814-9dad-11d1-80b400c04fd430c8",
-	"6ba7b8149dad11d180b400c04fd430c8",
-	"6ba7b814-9dad-11d1-80b4-00c04fd430c8",
-	"{6ba7b814-9dad-11d1-80b4-00c04fd430c8}",
-	"{6ba7b814-9dad-11d1-80b4-00c04fd430c8",
-	"6ba7b814-9dad-11d1-80b4-00c04fd430c8}",
-	"(6ba7b814-9dad-11d1-80b4-00c04fd430c8)",
-	"urn:uuid:6ba7b814-9dad-11d1-80b4-00c04fd430c8",
-}
+var (
+	uuid_goLang Name = "https://google.com/golang.org?q=golang"
+	printer     bool = false
+	uuid_bytes       = []byte{
+		0xAA, 0xCF, 0xEE, 0x12,
+		0xD4, 0x00,
+		0x27, 0x23,
+		0x00,
+		0xD3,
+		0x23, 0x12, 0x4A, 0x11, 0x89, 0xFF,
+	}
+	uuid_variants = []byte{
+		ReservedNCS, ReservedRFC4122, ReservedMicrosoft, ReservedFuture,
+	}
+	namespaceUuids = []UUID{
+		NamespaceDNS, NamespaceURL, NamespaceOID, NamespaceX500,
+	}
+	invalidHexStrings = [...]string{
+		"foo",
+		"6ba7b814-9dad-11d1-80b4-",
+		"6ba7b814--9dad-11d1-80b4--00c04fd430c8",
+		"6ba7b814-9dad7-11d1-80b4-00c04fd430c8999",
+		"{6ba7b814-9dad-1180b4-00c04fd430c8",
+		"{6ba7b814--11d1-80b4-00c04fd430c8}",
+		"urn:uuid:6ba7b814-9dad-1666666680b4-00c04fd430c8",
+	}
+	validHexStrings = [...]string{
+		"6ba7b8149dad-11d1-80b4-00c04fd430c8}",
+		"{6ba7b8149dad-11d1-80b400c04fd430c8}",
+		"{6ba7b814-9dad11d180b400c04fd430c8}",
+		"6ba7b8149dad-11d1-80b4-00c04fd430c8",
+		"6ba7b814-9dad11d1-80b4-00c04fd430c8",
+		"6ba7b814-9dad-11d180b4-00c04fd430c8",
+		"6ba7b814-9dad-11d1-80b400c04fd430c8",
+		"6ba7b8149dad11d180b400c04fd430c8",
+		"6ba7b814-9dad-11d1-80b4-00c04fd430c8",
+		"{6ba7b814-9dad-11d1-80b4-00c04fd430c8}",
+		"{6ba7b814-9dad-11d1-80b4-00c04fd430c8",
+		"6ba7b814-9dad-11d1-80b4-00c04fd430c8}",
+		"(6ba7b814-9dad-11d1-80b4-00c04fd430c8)",
+		"urn:uuid:6ba7b814-9dad-11d1-80b4-00c04fd430c8",
+	}
+)
 
 func TestUUID_Simple(t *testing.T) {
 	u := NewV1()
@@ -71,7 +73,7 @@ func TestUUID_Simple(t *testing.T) {
 	u, _ = Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 	u = NewV3(u, Name("test"))
 	outputLn(u)
-	if ! strings.EqualFold("45a113ac-c7f2-30b0-90a5-a399ab912716", u.String()) {
+	if !strings.EqualFold("45a113ac-c7f2-30b0-90a5-a399ab912716", u.String()) {
 		t.Errorf("Expected string representation to be %s, but got: %s", "45a113ac-c7f2-30b0-90a5-a399ab912716", u.String())
 	}
 
@@ -127,7 +129,7 @@ const (
 )
 
 func TestUUID_Formats_String(t *testing.T) {
-	ids := []UUID {NewV4(), NewV1(), GoId(NewV4(), Name("RULEZ"), md5.New())}
+	ids := []UUID{NewV4(), NewV1(), GoId(NewV4(), Name("RULEZ"), md5.New())}
 
 	// Reset default
 	SwitchFormat(CleanHyphen)
@@ -188,7 +190,7 @@ func TestUUID_Formats_String(t *testing.T) {
 }
 
 func TestUUID_Formatter(t *testing.T) {
-	ids := []UUID {NewV4(), NewV1(), GoId(NewV4(), Name("RULEZ"), md5.New())}
+	ids := []UUID{NewV4(), NewV1(), GoId(NewV4(), Name("RULEZ"), md5.New())}
 
 	for _, u := range ids {
 		// CurlyHyphen - default
@@ -235,7 +237,7 @@ func TestUUID_Formatter(t *testing.T) {
 	}
 }
 
-func TestUUIDNewHex(t *testing.T) {
+func TestUUID_NewHex(t *testing.T) {
 	s := "f3593cffee9240df408687825b523f13"
 	u := NewHex(s)
 	if u == nil {
@@ -259,8 +261,7 @@ func TestUUID_NewHexBulk(t *testing.T) {
 	}
 }
 
-// Tests PasreUUID
-func TestUUIDParseUUID(t *testing.T) {
+func TestUUID_Parse(t *testing.T) {
 	for _, v := range invalidHexStrings {
 		_, err := Parse(v)
 		if err == nil {
@@ -281,14 +282,14 @@ func TestUUIDParseUUID(t *testing.T) {
 	}
 }
 
-func TestUUIDSum(t *testing.T) {
-	u := new(UUIDArray)
+func TestUUID_Sum(t *testing.T) {
+	u := new(Array)
 	Digest(u, NamespaceDNS, uuid_goLang, md5.New())
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")
 	}
 	output(u.Bytes())
-	u = new(UUIDArray)
+	u = new(Array)
 	Digest(u, NamespaceDNS, uuid_goLang, sha1.New())
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")
@@ -298,11 +299,11 @@ func TestUUIDSum(t *testing.T) {
 
 // Tests all possible version numbers and that
 // each number returned is the same
-func TestUUIDStruct_VersionBits(t *testing.T) {
-	uStruct := new(UUIDStruct)
+func TestUUID_Struct_VersionBits(t *testing.T) {
+	uStruct := new(Struct)
 	uStruct.size = length
 	for v := 0; v < 16; v++ {
-		for i := 0; i <= 255; i ++ {
+		for i := 0; i <= 255; i++ {
 			uuid_bytes[versionIndex] = byte(i)
 			uStruct.Unmarshal(uuid_bytes)
 			uStruct.setVersion(v)
@@ -317,12 +318,12 @@ func TestUUIDStruct_VersionBits(t *testing.T) {
 
 // Tests all possible variants with their respective bits set
 // Tests whether the expected output comes out on each byte case
-func TestUUIDStruct_VarientBits(t *testing.T) {
+func TestUUID_Struct_VariantBits(t *testing.T) {
 	for _, v := range uuid_variants {
-		for i := 0; i <= 255; i ++ {
+		for i := 0; i <= 255; i++ {
 			uuid_bytes[variantIndex] = byte(i)
 
-			uStruct := createUUIDStruct(uuid_bytes, 4, v)
+			uStruct := createStruct(uuid_bytes, 4, v)
 			b := uStruct.sequenceHiAndVariant >> 4
 			tVariantConstraint(v, b, uStruct, t)
 
@@ -335,12 +336,12 @@ func TestUUIDStruct_VarientBits(t *testing.T) {
 
 // Tests all possible variants with their respective bits set
 // Tests whether the expected output comes out on each byte case
-func TestUUIDArray_VarientBits(t *testing.T) {
+func TestUUID_Array_VariantBits(t *testing.T) {
 	for _, v := range uuid_variants {
-		for i := 0; i <= 255; i ++ {
+		for i := 0; i <= 255; i++ {
 			uuid_bytes[variantIndex] = byte(i)
 
-			uArray := createUUIDArray(uuid_bytes, 4, v)
+			uArray := createArray(uuid_bytes, 4, v)
 			b := uArray[variantIndex] >> 4
 			tVariantConstraint(v, b, uArray, t)
 
@@ -353,10 +354,10 @@ func TestUUIDArray_VarientBits(t *testing.T) {
 
 // Tests all possible version numbers and that
 // each number returned is the same
-func TestUUIDArray_VersionBits(t *testing.T) {
-	uArray := new(UUIDArray)
+func TestUUID_Array_VersionBits(t *testing.T) {
+	uArray := new(Array)
 	for v := 0; v < 16; v++ {
-		for i := 0; i <= 255; i ++ {
+		for i := 0; i <= 255; i++ {
 			uuid_bytes[versionIndex] = byte(i)
 			uArray.Unmarshal(uuid_bytes)
 			uArray.setVersion(v)
@@ -369,7 +370,7 @@ func TestUUIDArray_VersionBits(t *testing.T) {
 	}
 }
 
-func BenchmarkParseUUID(b *testing.B) {
+func BenchmarkUUID_Parse(b *testing.B) {
 	s := "f3593cff-ee92-40df-4086-87825b523f13"
 	for i := 0; i < b.N; i++ {
 		_, err := Parse(s)
@@ -383,8 +384,8 @@ func BenchmarkParseUUID(b *testing.B) {
 
 // *******************************************************
 
-func createUUIDStruct(pData []byte, pVersion int, pVariant byte) *UUIDStruct {
-	o := new(UUIDStruct)
+func createStruct(pData []byte, pVersion int, pVariant byte) *Struct {
+	o := new(Struct)
 	o.size = length
 	o.Unmarshal(pData)
 	o.setVersion(pVersion)
@@ -392,8 +393,8 @@ func createUUIDStruct(pData []byte, pVersion int, pVariant byte) *UUIDStruct {
 	return o
 }
 
-func createUUIDArray(pData []byte, pVersion int, pVariant byte) *UUIDArray {
-	o := new(UUIDArray)
+func createArray(pData []byte, pVersion int, pVariant byte) *Array {
+	o := new(Array)
 	o.Unmarshal(pData)
 	o.setVersion(pVersion)
 	o.setVariant(pVariant)
@@ -408,46 +409,50 @@ func tVariantConstraint(v byte, b byte, o UUID, t *testing.T) {
 		case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07:
 			outputF(": %X ", b)
 			break
-		default: t.Errorf("%X most high bits do not resolve to 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07", b)
+		default:
+			t.Errorf("%X most high bits do not resolve to 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07", b)
 		}
 	case ReservedRFC4122:
 		switch b {
 		case 0x08, 0x09, 0x0A, 0x0B:
 			outputF(": %X ", b)
 			break
-		default: t.Errorf("%X most high bits do not resolve to 0x08, 0x09, 0x0A, 0x0B", b)
+		default:
+			t.Errorf("%X most high bits do not resolve to 0x08, 0x09, 0x0A, 0x0B", b)
 		}
 	case ReservedMicrosoft:
 		switch b {
 		case 0x0C, 0x0D:
 			outputF(": %X ", b)
 			break
-		default: t.Errorf("%X most high bits do not resolve to 0x0C, 0x0D", b)
+		default:
+			t.Errorf("%X most high bits do not resolve to 0x0C, 0x0D", b)
 		}
 	case ReservedFuture:
 		switch b {
 		case 0x0E, 0x0F:
 			outputF(": %X ", b)
 			break
-		default: t.Errorf("%X most high bits do not resolve to 0x0E, 0x0F", b)
+		default:
+			t.Errorf("%X most high bits do not resolve to 0x0E, 0x0F", b)
 		}
 	}
 	output("\n")
 }
 
-func output(a... interface{}) {
+func output(a ...interface{}) {
 	if printer {
 		fmt.Print(a...)
 	}
 }
 
-func outputLn(a... interface{}) {
+func outputLn(a ...interface{}) {
 	if printer {
 		fmt.Println(a...)
 	}
 }
 
-func outputF(format string, a... interface{}) {
+func outputF(format string, a ...interface{}) {
 	if printer {
 		fmt.Printf(format, a)
 	}

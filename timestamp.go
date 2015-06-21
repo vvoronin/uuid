@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	lastTimestamp Timestamp
+	lastTimestamp    Timestamp
 	idsThisTimestamp = idsPerTimestamp
 )
 
@@ -46,13 +46,13 @@ func Now() (sec int64, nsec int32) {
 // 1000000000 / 100 = 10000000 tiks per second
 func timestamp() Timestamp {
 	sec, nsec := Now()
-	return Timestamp(uint64(sec) * ticksPerSecond +
-		uint64(nsec) / 100 + gregorianToUNIXOffset)
+	return Timestamp(uint64(sec)*ticksPerSecond +
+		uint64(nsec)/100 + gregorianToUNIXOffset)
 }
 
 func (o Timestamp) Unix() time.Time {
 	t := uint64(o) - gregorianToUNIXOffset
-	return time.Unix(0, int64(t * 100))
+	return time.Unix(0, int64(t*100))
 }
 
 // Get time as 60-bit 100ns ticks since UUID epoch.
@@ -70,7 +70,7 @@ func currentUUIDTimestamp() Timestamp {
 			lastTimestamp = timeNow
 			break
 		}
-		if (idsThisTimestamp < idsPerTimestamp) {
+		if idsThisTimestamp < idsPerTimestamp {
 			idsThisTimestamp++
 			break
 		}
@@ -79,4 +79,3 @@ func currentUUIDTimestamp() Timestamp {
 	// add the count of UUIDs to low order bits of the clock reading
 	return timeNow + Timestamp(idsThisTimestamp)
 }
-

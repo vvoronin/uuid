@@ -27,17 +27,18 @@ import (
 	"errors"
 	"fmt"
 	"hash"
-	"regexp"
 	seed "math/rand"
+	"regexp"
 	"strings"
+	"bytes"
 )
 
 const (
-	ReservedNCS byte        = 0x00
-	ReservedRFC4122   byte  = 0x80 // or and A0 if masked with 1F
-	ReservedMicrosoft  byte = 0xC0
-	ReservedFuture byte     = 0xE0
-	TakeBack byte           = 0xF0
+	ReservedNCS       byte = 0x00
+	ReservedRFC4122   byte = 0x80 // or and A0 if masked with 1F
+	ReservedMicrosoft byte = 0xC0
+	ReservedFuture    byte = 0xE0
+	TakeBack          byte = 0xF0
 )
 
 const (
@@ -52,11 +53,11 @@ const (
 
 var (
 	parseUUIDRegex = regexp.MustCompile(hexPattern)
-	format string
+	format         string
 )
 
 func init() {
-	SwitchFormat(canonical)
+	SetStringerFormat(CleanHyphen)
 }
 
 // ******************************************************  UUID
@@ -64,9 +65,8 @@ func init() {
 // The main interface for UUIDs
 // Each implementation must also implement the UniqueName interface
 type UUID interface {
-
-encoding.BinaryMarshaler
-encoding.BinaryUnmarshaler
+	encoding.BinaryMarshaler
+	encoding.BinaryUnmarshaler
 
 	// Marshals the UUID bytes or data
 	Bytes() (data []byte)
@@ -104,7 +104,7 @@ encoding.BinaryUnmarshaler
 // It truncates any bytes past the default length of 16
 // It will panic if data slice is too small.
 func New(pData []byte) UUID {
-	o := new(UUIDArray)
+	o := new(Array)
 	o.Unmarshal(pData[:length])
 	return o
 }
@@ -112,7 +112,7 @@ func New(pData []byte) UUID {
 // GoId creates a UUID based on an existing UUID, timestamps, name and a hash.
 // It will truncate any bytes past the length of the initial hash.
 func GoId(pNs UUID, pName UniqueName, pHash hash.Hash) UUID {
-	o := new(UUIDStruct)
+	o := new(Struct)
 	o.size = pHash.Size()
 	Digest(o, pNs, pName, pHash)
 	now := currentUUIDTimestamp()
@@ -120,14 +120,14 @@ func GoId(pNs UUID, pName UniqueName, pHash hash.Hash) UUID {
 	return formatGoId(o, now, uint16(15), ReservedFuture, sequence)
 }
 
-// Unmarshals data into struct for GoId UUIDs
-func formatGoId(o *UUIDStruct, pNow Timestamp, pVersion uint16, pVariant byte, pSequence uint16) UUID {
+// Unmarshal data into struct for GoId UUIDs
+func formatGoId(o *Struct, pNow Timestamp, pVersion uint16, pVariant byte, pSequence uint16) UUID {
 	o.timeLow = uint32(pNow & 0xFFFFFFFF)
 	o.timeMid = uint16((pNow >> 32) & 0xFFFF)
 	o.timeHiAndVersion = uint16((pNow >> 48) & 0x0FFF)
 	o.timeHiAndVersion |= uint16(pVersion << 12)
 	o.sequenceLow = byte(pSequence & 0xFF)
-	o.sequenceHiAndVariant = byte(( pSequence & 0x3F00) >> 8)
+	o.sequenceHiAndVariant = byte((pSequence & 0x3F00) >> 8)
 	o.sequenceHiAndVariant |= pVariant
 	return o
 }
@@ -156,7 +156,7 @@ func Parse(pUUID string) (UUID, error) {
 	if md == nil {
 		return nil, errors.New("uuid.Parse: invalid string")
 	}
-	return NewHex(md[2]+md[3]+md[4]+md[5]+md[6]), nil
+	return NewHex(md[2] + md[3] + md[4] + md[5] + md[6]), nil
 }
 
 // Digest a namespace UUID and a UniqueName, which then marshals to
@@ -170,9 +170,9 @@ func Digest(o, pNs UUID, pName UniqueName, pHash hash.Hash) {
 
 // Function provides a safe way to unmarshal bytes into an
 // existing UUID.
-// Checks for length
-func UnmarshalBinary(o UUID , pData []byte) error {
-	if (len(pData) != o.Size()) {
+// Checks for length.
+func UnmarshalBinary(o UUID, pData []byte) error {
+	if len(pData) != o.Size() {
 		return errors.New("uuid.UnmarshalBinary: invalid length")
 	}
 	o.Unmarshal(pData)
@@ -192,7 +192,7 @@ func (o Name) String() string {
 }
 
 // NewName will create a name from several sources
-func NewName(salt string, pNames... UniqueName) UniqueName {
+func NewName(salt string, pNames ...UniqueName) UniqueName {
 	var s string
 	for _, s2 := range pNames {
 		s += s2.String()
@@ -215,35 +215,40 @@ type UniqueName interface {
 
 // **********************************************  UUID Printing
 
+type Format string
+
 const (
-	Clean       = "%x%x%x%x%x%x"
-	Curly       = "{%x%x%x%x%x%x}"
-	Bracket     = "(%x%x%x%x%x%x)"
+	Clean  Format = "%x%x%x%x%x%x"
+	Curly  Format = "{%x%x%x%x%x%x}"
+	Bracket Format = "(%x%x%x%x%x%x)"
 
 	// This is the default format.
-	CleanHyphen = "%x-%x-%x-%x%x-%x"
+	CleanHyphen Format = "%x-%x-%x-%x%x-%x"
 
-	CurlyHyphen   = "{%x-%x-%x-%x%x-%x}"
-	BracketHyphen = "(%x-%x-%x-%x%x-%x)"
-	GoIdFormat    = "[%X-%X-%x-%X%X-%x]"
-
-	canonical = CleanHyphen
+	CurlyHyphen   Format = "{%x-%x-%x-%x%x-%x}"
+	BracketHyphen Format = "(%x-%x-%x-%x%x-%x)"
+	GoIdFormat    Format = "[%X-%X-%x-%X%X-%x]"
 )
 
-// Switches the printing format for ALL UUID strings
-// When String() is called on an UUID it will get the current global format
-// A valid format will have 6 groups
-func SwitchFormat(pFormat string) {
-	if (strings.Count(pFormat, "%") != 6) {
-		panic(errors.New("uuid.SwitchFormat: invalid formatting"))
+// Switches the default printing format for ALL UUID strings
+// A valid format will have 6 groups if the supplied Format does not
+func SetStringerFormat(pFormat Format) {
+	switchFormat(string(pFormat))
+}
+
+// Same as SetStringerFormat but will make it uppercase
+func SetStringerUppercaseFormat(pFormat Format) {
+	form := strings.ToUpper(string(pFormat))
+	switchFormat(form)
+}
+
+func switchFormat(pFormat string) {
+	if strings.Count(pFormat, "%") != 6 {
+		panic(errors.New("uuid.switchFormat: invalid formatting"))
 	}
 	format = pFormat
 }
 
-// Same as SwitchFormat but will make it uppercase
-func SwitchFormatUpper(pFormat string) {
-	SwitchFormat(strings.ToUpper(pFormat))
-}
 
 // Gets the current default format pattern
 func GetFormat() string {
@@ -252,7 +257,8 @@ func GetFormat() string {
 
 // Compares whether each UUID is the same
 func Equal(p1 UUID, p2 UUID) bool {
-	return p1.String() == p2.String()
+	return 	bytes.Equal(p1.Bytes(), p2.Bytes())
+
 }
 
 // **********************************************  UUID Versions
@@ -260,7 +266,7 @@ func Equal(p1 UUID, p2 UUID) bool {
 type UUIDVersion int
 
 const (
-	NONE    UUIDVersion = iota
+	NONE UUIDVersion = iota
 	RFC4122v1
 	DunnoYetv2
 	RFC4122v3
@@ -287,15 +293,15 @@ func variant(pVariant byte) byte {
 func setVariant(pByte *byte, pVariant byte) {
 	switch pVariant {
 	case ReservedRFC4122:
-		*pByte  &= variantSet
+		*pByte &= variantSet
 	case ReservedFuture, ReservedMicrosoft:
-		*pByte  &= 0x1F
+		*pByte &= 0x1F
 	case ReservedNCS:
-		*pByte  &= 0x7F
+		*pByte &= 0x7F
 	default:
 		panic(errors.New("uuid.setVariant: invalid variant mask"))
 	}
-	*pByte |= pVariant;
+	*pByte |= pVariant
 }
 
 // format a UUID into a human readable string
@@ -305,19 +311,10 @@ func formatter(pUUID UUID, pFormat string) string {
 }
 
 // Format a UUID into a human readable string
-func Formatter(pUUID UUID, pFormat string) string {
-	if (strings.Count(pFormat, "%") != 6) {
+func Formatter(pUUID UUID, pFormat Format) string {
+	form := string(pFormat)
+	if strings.Count(form, "%") != 6 {
 		panic(errors.New("uuid.Formatter: invalid formatting"))
 	}
-	return formatter(pUUID, pFormat)
+	return formatter(pUUID, form)
 }
-
-
-
-
-
-
-
-
-
-

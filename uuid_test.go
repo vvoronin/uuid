@@ -1,10 +1,10 @@
 package uuid_test
 
-
 import (
-	"github.com/twinj/uuid"
 	"fmt"
+	"github.com/twinj/uuid"
 	"testing"
+	"time"
 )
 
 const (
@@ -39,7 +39,7 @@ func Test_NewV5(t *testing.T) {
 	fmt.Printf(print, u5.Version(), u5.Variant(), u5)
 }
 
-func Test_ParseHex(t *testing.T) {
+func Test_Parse(t *testing.T) {
 	u, err := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 	if err != nil {
 		fmt.Println("error:", err)
@@ -48,3 +48,89 @@ func Test_ParseHex(t *testing.T) {
 	fmt.Println(u)
 }
 
+func Example() {
+	u1 := uuid.NewV1()
+	uP, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+	u3 := uuid.NewV3(uP, uuid.Name("test"))
+	u4 := uuid.NewV4()
+	fmt.Printf(print, u4.Version(), u4.Variant(), u4)
+
+	u5 := uuid.NewV5(uuid.NamespaceURL, uuid.Name("test"))
+
+	if uuid.Equal(u1, u3) {
+		fmt.Printf("Will never happen")
+	}
+	fmt.Printf(uuid.Formatter(u5, uuid.CurlyHyphen))
+
+	SetStringerFormat(uuid.BracketHyphen)
+}
+
+func Example() {
+	var config = StateSaverConfig{SaveReport: true, SaveSchedule: 30 * time.Minute}
+	uuid.SetupFileSystemStateSaver(config)
+	u1 := uuid.NewV1()
+	fmt.Printf(print, u1.Version(), u1.Variant(), u1)
+
+	uP, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+	u3 := uuid.NewV3(uP, uuid.Name("test"))
+
+	u4 := uuid.NewV4()
+	fmt.Printf(print, u4.Version(), u4.Variant(), u4)
+
+	u5 := uuid.NewV5(uuid.NamespaceURL, uuid.Name("test"))
+
+	if uuid.Equal(u1, u3) {
+		fmt.Printf("Will never happen")
+	}
+
+	fmt.Printf(uuid.Formatter(u5, uuid.CurlyHyphen))
+
+	uuid.SetStringerFormat(uuid.BracketHyphen)
+}
+
+func ExampleNewV1() {
+	u1 := uuid.NewV1()
+	fmt.Printf(print, u1.Version(), u1.Variant(), u1)
+}
+
+func ExampleNewV3() {
+	u, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+	u3 := uuid.NewV3(u, uuid.Name("test"))
+	fmt.Printf(print, u3.Version(), u3.Variant(), u3)
+}
+
+func ExampleNewV4() {
+	u4 := uuid.NewV4()
+	fmt.Printf(print, u4.Version(), u4.Variant(), u4)
+}
+
+func ExampleNewV5() {
+	u5 := uuid.NewV5(uuid.NamespaceURL, uuid.Name("test"))
+	fmt.Printf(print, u5.Version(), u5.Variant(), u5)
+}
+
+func ExampleParse() {
+	u, err := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	fmt.Println(u)
+}
+
+func ExampleSetupFileSystemStateSaver() {
+	var config = StateSaverConfig{SaveReport: true, SaveSchedule: 30 * time.Minute}
+	uuid.SetupFileSystemStateSaver(config)
+	u1 := uuid.NewV1()
+	fmt.Printf(print, u1.Version(), u1.Variant(), u1)
+}
+
+func ExampleFormatter() {
+	u4 := uuid.NewV4()
+	fmt.Printf(uuid.Formatter(u4, uuid.CurlyHyphen))
+}
+
+func ExampleSetStringerFormat() {
+	uuid.SetStringerFormat(uuid.BracketHyphen)
+	u4 := uuid.NewV4()
+	fmt.Printf(print, u4.Version(), u4.Variant(), u4)
+}
