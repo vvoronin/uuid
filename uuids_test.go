@@ -132,60 +132,60 @@ func TestUUID_Formats_String(t *testing.T) {
 	ids := []UUID{NewV4(), NewV1(), GoId(NewV4(), Name("RULEZ"), md5.New())}
 
 	// Reset default
-	SwitchFormat(CleanHyphen)
+	SetStringerFormat(CleanHyphen)
 
 	for _, u := range ids {
 
-		SwitchFormatUpper(CurlyHyphen)
+		SetStringerUppercaseFormat(CurlyHyphen)
 		if !regexp.MustCompile(curlyHyphenHexPattern).MatchString(u.String()) {
 			t.Error("Curly hyphen UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Clean
-		SwitchFormat(Clean)
+		SetStringerFormat(Clean)
 		if !regexp.MustCompile(cleanHexPattern).MatchString(u.String()) {
 			t.Error("Clean UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Curly
-		SwitchFormat(Curly)
+		SetStringerFormat(Curly)
 		if !regexp.MustCompile(curlyHexPattern).MatchString(u.String()) {
 			t.Error("Curly clean UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Bracket
-		SwitchFormat(Bracket)
+		SetStringerFormat(Bracket)
 		if !regexp.MustCompile(bracketHexPattern).MatchString(u.String()) {
 			t.Error("Bracket clean UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Clean Hyphen
-		SwitchFormat(CleanHyphen)
+		SetStringerFormat(CleanHyphen)
 		if !regexp.MustCompile(cleanHyphenHexPattern).MatchString(u.String()) {
 			t.Error("Clean hyphen UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Bracket Hyphen
-		SwitchFormat(BracketHyphen)
+		SetStringerFormat(BracketHyphen)
 		if !regexp.MustCompile(bracketHyphenHexPattern).MatchString(u.String()) {
 			t.Error("Bracket hyphen UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Bracket Hyphen
-		SwitchFormat(GoIdFormat)
+		SetStringerFormat(GoIdFormat)
 		if !regexp.MustCompile(goIdHexPattern).MatchString(u.String()) {
 			t.Error("GoId UUID string output expected", u, u.Version())
 		}
 		outputLn(u)
 
 		// Reset default
-		SwitchFormat(CleanHyphen)
+		SetStringerFormat(CleanHyphen)
 	}
 }
 

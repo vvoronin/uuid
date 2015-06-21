@@ -49,24 +49,7 @@ func Test_Parse(t *testing.T) {
 }
 
 func Example() {
-	u1 := uuid.NewV1()
-	uP, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
-	u3 := uuid.NewV3(uP, uuid.Name("test"))
-	u4 := uuid.NewV4()
-	fmt.Printf(print, u4.Version(), u4.Variant(), u4)
-
-	u5 := uuid.NewV5(uuid.NamespaceURL, uuid.Name("test"))
-
-	if uuid.Equal(u1, u3) {
-		fmt.Printf("Will never happen")
-	}
-	fmt.Printf(uuid.Formatter(u5, uuid.CurlyHyphen))
-
-	SetStringerFormat(uuid.BracketHyphen)
-}
-
-func Example() {
-	var config = StateSaverConfig{SaveReport: true, SaveSchedule: 30 * time.Minute}
+	var config = uuid.StateSaverConfig{SaveReport: true, SaveSchedule: 30 * time.Minute}
 	uuid.SetupFileSystemStateSaver(config)
 	u1 := uuid.NewV1()
 	fmt.Printf(print, u1.Version(), u1.Variant(), u1)
@@ -118,7 +101,7 @@ func ExampleParse() {
 }
 
 func ExampleSetupFileSystemStateSaver() {
-	var config = StateSaverConfig{SaveReport: true, SaveSchedule: 30 * time.Minute}
+	var config = uuid.StateSaverConfig{SaveReport: true, SaveSchedule: 30 * time.Minute}
 	uuid.SetupFileSystemStateSaver(config)
 	u1 := uuid.NewV1()
 	fmt.Printf(print, u1.Version(), u1.Variant(), u1)
