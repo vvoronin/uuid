@@ -17,7 +17,7 @@ and 5 UUIDs are as specified in [RFC 4122](http://www.ietf.org/rfc/rfc4122.txt).
 
 # Requirements
 
-Go 1.3, 1.2 and tip supported.
+Go 1.4, 1.3, 1.2 and tip supported.
 
 # Recent Changes
 
