@@ -216,10 +216,11 @@ func GetFormat() string {
 // Switches the default printing format for ALL UUID strings
 // A valid format will have 6 groups if the supplied Format does not
 func SwitchFormat(pFormat Format) {
-	if strings.Count(pFormat, "%") != 6 {
+	form := string(pFormat)
+	if strings.Count(form, "%") != 6 {
 		panic(errors.New("uuid.switchFormat: invalid formatting"))
 	}
-	format = pFormat
+	format = form
 }
 
 // Same as SwitchFormat but will make it uppercase
