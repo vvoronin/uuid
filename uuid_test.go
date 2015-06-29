@@ -68,7 +68,7 @@ func Example() {
 
 	fmt.Printf(uuid.Formatter(u5, uuid.CurlyHyphen))
 
-	uuid.SetStringerFormat(uuid.BracketHyphen)
+	uuid.SwitchFormat(uuid.BracketHyphen)
 }
 
 func ExampleNewV1() {
@@ -112,8 +112,8 @@ func ExampleFormatter() {
 	fmt.Printf(uuid.Formatter(u4, uuid.CurlyHyphen))
 }
 
-func ExampleSetStringerFormat() {
-	uuid.SetStringerFormat(uuid.BracketHyphen)
+func ExampleSwitchFormat() {
+	uuid.SwitchFormat(uuid.BracketHyphen)
 	u4 := uuid.NewV4()
 	fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
 }

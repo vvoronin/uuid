@@ -27,7 +27,6 @@ import (
 	"errors"
 	"fmt"
 	"hash"
-	seed "math/rand"
 	"regexp"
 	"strings"
 	"bytes"
@@ -57,7 +56,7 @@ var (
 )
 
 func init() {
-	SetStringerFormat(CleanHyphen)
+	SwitchFormat(CleanHyphen)
 }
 
 // ******************************************************  UUID
@@ -101,40 +100,18 @@ type UUID interface {
 }
 
 // New creates a UUID from a slice of bytes.
-// It truncates any bytes past the default length of 16
-// It will panic if data slice is too small.
+// Truncates any bytes past the default length of 16
+// Will panic if data slice is too small.
 func New(pData []byte) UUID {
 	o := new(Array)
 	o.Unmarshal(pData[:length])
 	return o
 }
 
-// GoId creates a UUID based on an existing UUID, timestamps, name and a hash.
-// It will truncate any bytes past the length of the initial hash.
-func GoId(pNs UUID, pName UniqueName, pHash hash.Hash) UUID {
-	o := new(Struct)
-	o.size = pHash.Size()
-	Digest(o, pNs, pName, pHash)
-	now := currentUUIDTimestamp()
-	sequence := uint16(seed.Int()) & 0x3FFF
-	return formatGoId(o, now, uint16(15), ReservedFuture, sequence)
-}
-
-// Unmarshal data into struct for GoId UUIDs
-func formatGoId(o *Struct, pNow Timestamp, pVersion uint16, pVariant byte, pSequence uint16) UUID {
-	o.timeLow = uint32(pNow & 0xFFFFFFFF)
-	o.timeMid = uint16((pNow >> 32) & 0xFFFF)
-	o.timeHiAndVersion = uint16((pNow >> 48) & 0x0FFF)
-	o.timeHiAndVersion |= uint16(pVersion << 12)
-	o.sequenceLow = byte(pSequence & 0xFF)
-	o.sequenceHiAndVariant = byte((pSequence & 0x3F00) >> 8)
-	o.sequenceHiAndVariant |= pVariant
-	return o
-}
 
 // Creates a UUID from a hex string
 // Will panic if hex string is invalid - will panic even with hyphens and brackets
-// Expects a clean string
+// Expects a clean string use Parse otherwise.
 func NewHex(pUuid string) UUID {
 	bytes, err := hex.DecodeString(pUuid)
 	if err != nil {
@@ -181,17 +158,16 @@ func UnmarshalBinary(o UUID, pData []byte) error {
 
 // **********************************************  UUID Names
 
-// Name is a simple string which implements UniqueName
-// Cast standard string to this so that they confirm to the
-// UniqueName interface.
+// A UUID Name is a simple string which implements UniqueName
+// which satisfies the Stringer interface.
 type Name string
 
-// Returns the string. Satisfies the Stringer interface.
+// Returns the name as a string. Satisfies the Stringer interface.
 func (o Name) String() string {
 	return string(o)
 }
 
-// NewName will create a name from several sources
+// NewName will create a unique name from several sources
 func NewName(salt string, pNames ...UniqueName) UniqueName {
 	var s string
 	for _, s2 := range pNames {
@@ -215,6 +191,8 @@ type UniqueName interface {
 
 // **********************************************  UUID Printing
 
+// A Format is a pattern used by the stringer interface with which to print
+// the UUID.
 type Format string
 
 const (
@@ -230,35 +208,40 @@ const (
 	GoIdFormat    Format = "[%X-%X-%x-%X%X-%x]"
 )
 
+// Gets the current default format pattern
+func GetFormat() string {
+	return format
+}
+
 // Switches the default printing format for ALL UUID strings
 // A valid format will have 6 groups if the supplied Format does not
-func SetStringerFormat(pFormat Format) {
-	switchFormat(string(pFormat))
-}
-
-// Same as SetStringerFormat but will make it uppercase
-func SetStringerUppercaseFormat(pFormat Format) {
-	form := strings.ToUpper(string(pFormat))
-	switchFormat(form)
-}
-
-func switchFormat(pFormat string) {
+func SwitchFormat(pFormat Format) {
 	if strings.Count(pFormat, "%") != 6 {
 		panic(errors.New("uuid.switchFormat: invalid formatting"))
 	}
 	format = pFormat
 }
 
-
-// Gets the current default format pattern
-func GetFormat() string {
-	return format
+// Same as SwitchFormat but will make it uppercase
+func SwitchFormatUpperCase(pFormat Format) {
+	form := strings.ToUpper(string(pFormat))
+	SwitchFormat(Format(form))
 }
 
 // Compares whether each UUID is the same
 func Equal(p1 UUID, p2 UUID) bool {
 	return 	bytes.Equal(p1.Bytes(), p2.Bytes())
+}
 
+// Format a UUID into a human readable string which matches the given Format
+// Use this for one time formatting when setting the default using SwitchFormat
+// is overkill.
+func Formatter(pUUID UUID, pFormat Format) string {
+	form := string(pFormat)
+	if strings.Count(form, "%") != 6 {
+		panic(errors.New("uuid.Formatter: invalid formatting"))
+	}
+	return formatter(pUUID, form)
 }
 
 // **********************************************  UUID Versions
@@ -310,11 +293,3 @@ func formatter(pUUID UUID, pFormat string) string {
 	return fmt.Sprintf(pFormat, b[0:4], b[4:6], b[6:8], b[8:9], b[9:10], b[10:pUUID.Size()])
 }
 
-// Format a UUID into a human readable string
-func Formatter(pUUID UUID, pFormat Format) string {
-	form := string(pFormat)
-	if strings.Count(form, "%") != 6 {
-		panic(errors.New("uuid.Formatter: invalid formatting"))
-	}
-	return formatter(pUUID, form)
-}

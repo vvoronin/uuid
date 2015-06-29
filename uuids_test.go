@@ -8,7 +8,6 @@ package uuid
 import (
 	"crypto/md5"
 	"crypto/sha1"
-	"crypto/sha512"
 	"fmt"
 	"regexp"
 	"strings"
@@ -82,9 +81,6 @@ func TestUUID_Simple(t *testing.T) {
 
 	u = NewV5(u, Name("test"))
 	outputLn(u)
-
-	u = GoId(u, Name("test"), sha512.New())
-	outputF("%x \n", u.Bytes())
 }
 
 func TestUUID_New(t *testing.T) {
@@ -109,12 +105,6 @@ func TestUUID_NewBulk(t *testing.T) {
 	}
 }
 
-func TestUUID_GoIdBulk(t *testing.T) {
-	for i := 0; i < 100; i++ {
-		u := GoId(NamespaceX500, Name(""), md5.New())
-		outputLn(Formatter(u, GoIdFormat))
-	}
-}
 
 const (
 	clean                   = `[A-Fa-f0-9]{8}[A-Fa-f0-9]{4}[1-5fF][A-Fa-f0-9]{3}[A-Fa-f0-9]{4}[A-Fa-f0-9]{12}`
@@ -129,63 +119,63 @@ const (
 )
 
 func TestUUID_Formats_String(t *testing.T) {
-	ids := []UUID{NewV4(), NewV1(), GoId(NewV4(), Name("RULEZ"), md5.New())}
+	ids := []UUID{NewV4(), NewV1()}
 
 	// Reset default
-	SetStringerFormat(CleanHyphen)
+	SwitchFormat(CleanHyphen)
 
 	for _, u := range ids {
 
-		SetStringerUppercaseFormat(CurlyHyphen)
+		SwitchFormatUpperCase(CurlyHyphen)
 		if !regexp.MustCompile(curlyHyphenHexPattern).MatchString(u.String()) {
 			t.Error("Curly hyphen UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Clean
-		SetStringerFormat(Clean)
+		SwitchFormat(Clean)
 		if !regexp.MustCompile(cleanHexPattern).MatchString(u.String()) {
 			t.Error("Clean UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Curly
-		SetStringerFormat(Curly)
+		SwitchFormat(Curly)
 		if !regexp.MustCompile(curlyHexPattern).MatchString(u.String()) {
 			t.Error("Curly clean UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Bracket
-		SetStringerFormat(Bracket)
+		SwitchFormat(Bracket)
 		if !regexp.MustCompile(bracketHexPattern).MatchString(u.String()) {
 			t.Error("Bracket clean UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Clean Hyphen
-		SetStringerFormat(CleanHyphen)
+		SwitchFormat(CleanHyphen)
 		if !regexp.MustCompile(cleanHyphenHexPattern).MatchString(u.String()) {
 			t.Error("Clean hyphen UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Bracket Hyphen
-		SetStringerFormat(BracketHyphen)
+		SwitchFormat(BracketHyphen)
 		if !regexp.MustCompile(bracketHyphenHexPattern).MatchString(u.String()) {
 			t.Error("Bracket hyphen UUID string output got", u, u.Version())
 		}
 		outputLn(u)
 
 		// Bracket Hyphen
-		SetStringerFormat(GoIdFormat)
+		SwitchFormat(GoIdFormat)
 		if !regexp.MustCompile(goIdHexPattern).MatchString(u.String()) {
 			t.Error("GoId UUID string output expected", u, u.Version())
 		}
 		outputLn(u)
 
 		// Reset default
-		SetStringerFormat(CleanHyphen)
+		SwitchFormat(CleanHyphen)
 	}
 }
 
