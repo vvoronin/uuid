@@ -68,7 +68,7 @@ for more information.
 	}
 	fmt.Printf(uuid.Formatter(u5, uuid.CurlyHyphen))
 
-	uuid.SetStringerFormat(uuid.BracketHyphen)
+	uuid.SwitchFormat(uuid.BracketHyphen)
 
 ## Copyright
 
