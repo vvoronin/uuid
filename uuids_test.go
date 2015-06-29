@@ -180,7 +180,7 @@ func TestUUID_Formats_String(t *testing.T) {
 }
 
 func TestUUID_Formatter(t *testing.T) {
-	ids := []UUID{NewV4(), NewV1(), GoId(NewV4(), Name("RULEZ"), md5.New())}
+	ids := []UUID{NewV4(), NewV1()}
 
 	for _, u := range ids {
 		// CurlyHyphen - default
