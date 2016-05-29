@@ -64,6 +64,15 @@ func NewV1() UUID {
 	return formatV1(now, uint16(1), ReservedRFC4122, state.node)
 }
 
+func BulkV1(pLength int) []UUID {
+	ids := make([]UUID, pLength)
+	for i := 0; i < pLength; i++ {
+		u := NewV1()
+		ids[i] = u
+	}
+	return ids
+}
+
 // NewV3 will generate a new RFC4122 version 3 UUID
 // V3 is based on the MD5 hash of a namespace identifier UUID and
 // any type which implements the UniqueName interface for the name.
@@ -100,6 +109,24 @@ func NewV5(pNs UUID, pName UniqueName) UUID {
 	o.setRFC4122Variant()
 	o.setVersion(5)
 	return o
+}
+
+func bulkBasic(pLength int, pFunc func() UUID) []UUID {
+	ids := make([]UUID, pLength)
+	for i := 0; i < pLength; i++ {
+		u := pFunc()
+		ids[i] = u
+	}
+	return ids
+}
+
+func bulk(pLength int, pFunc func() UUID) []UUID {
+	ids := make([]UUID, pLength)
+	for i := 0; i < pLength; i++ {
+		u := pFunc()
+		ids[i] = u
+	}
+	return ids
 }
 
 // either generates a random node when there is an error or gets

@@ -20,12 +20,10 @@ var (
 	config = StateSaverConfig{SaveReport: true, SaveSchedule: saveDuration * time.Second}
 )
 
-func init() {
-	SetupFileSystemStateSaver(config)
-}
-
 // Tests that the schedule is run on the timeDuration
 func TestUUID_State_saveSchedule(t *testing.T) {
+
+	SetupFileSystemStateSaver(config)
 
 	if state.saver != nil {
 		count := 0
