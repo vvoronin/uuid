@@ -19,7 +19,7 @@ var struct_bytes = []byte{
 }
 
 func TestUUID_Struct_UnmarshalBinary(t *testing.T) {
-	u := new(Struct)
+	u := new(uuid)
 	u.size = length
 	err := u.UnmarshalBinary([]byte{1, 2, 3, 4, 5})
 	if err == nil {

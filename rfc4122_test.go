@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/url"
 	"testing"
+	"log"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 )
 
 const (
-	generate = 1000000
+	generate = 10000
 )
 
 func TestUUID_NewV1(t *testing.T) {
@@ -34,7 +35,8 @@ func TestUUID_NewV1(t *testing.T) {
 
 func TestUUID_NewV1Bulk(t *testing.T) {
 	for i := 0; i < generate; i++ {
-		NewV1()
+		o:= NewV1()
+		log.Println("", o)
 	}
 }
 

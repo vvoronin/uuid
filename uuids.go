@@ -40,6 +40,16 @@ const (
 	TakeBack          byte = 0xF0
 )
 
+// UUID DCE domains.
+
+type DCEDomain byte
+
+const (
+	DomainPerson DCEDomain = iota
+	DomainGroup
+)
+
+
 const (
 
 	// Pattern used to parse string representation of the UUID.
@@ -58,6 +68,9 @@ var (
 func init() {
 	SwitchFormat(CleanHyphen)
 }
+
+type Node []byte
+type Sequence uint16
 
 // ******************************************************  UUID
 
@@ -103,7 +116,7 @@ type UUID interface {
 // Truncates any bytes past the default length of 16
 // Will panic if data slice is too small.
 func New(pData []byte) UUID {
-	o := new(Array)
+	o := new(array)
 	o.Unmarshal(pData[:length])
 	return o
 }

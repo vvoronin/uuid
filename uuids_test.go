@@ -273,13 +273,13 @@ func TestUUID_Parse(t *testing.T) {
 }
 
 func TestUUID_Sum(t *testing.T) {
-	u := new(Array)
+	u := new(array)
 	Digest(u, NamespaceDNS, uuid_goLang, md5.New())
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")
 	}
 	output(u.Bytes())
-	u = new(Array)
+	u = new(array)
 	Digest(u, NamespaceDNS, uuid_goLang, sha1.New())
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")
@@ -290,7 +290,7 @@ func TestUUID_Sum(t *testing.T) {
 // Tests all possible version numbers and that
 // each number returned is the same
 func TestUUID_Struct_VersionBits(t *testing.T) {
-	uStruct := new(Struct)
+	uStruct := new(uuid)
 	uStruct.size = length
 	for v := 0; v < 16; v++ {
 		for i := 0; i <= 255; i++ {
@@ -345,12 +345,12 @@ func TestUUID_Array_VariantBits(t *testing.T) {
 // Tests all possible version numbers and that
 // each number returned is the same
 func TestUUID_Array_VersionBits(t *testing.T) {
-	uArray := new(Array)
+	uArray := new(array)
 	for v := 0; v < 16; v++ {
 		for i := 0; i <= 255; i++ {
 			uuid_bytes[versionIndex] = byte(i)
 			uArray.Unmarshal(uuid_bytes)
-			uArray.setVersion(v)
+			uArray.setVersion(byte(v))
 			output(uArray)
 			if uArray.Version() != v {
 				t.Errorf("%x does not resolve to %x", byte(uArray.Version()), v)
@@ -374,8 +374,8 @@ func BenchmarkUUID_Parse(b *testing.B) {
 
 // *******************************************************
 
-func createStruct(pData []byte, pVersion int, pVariant byte) *Struct {
-	o := new(Struct)
+func createStruct(pData []byte, pVersion int, pVariant byte) *uuid {
+	o := new(uuid)
 	o.size = length
 	o.Unmarshal(pData)
 	o.setVersion(pVersion)
@@ -383,8 +383,8 @@ func createStruct(pData []byte, pVersion int, pVariant byte) *Struct {
 	return o
 }
 
-func createArray(pData []byte, pVersion int, pVariant byte) *Array {
-	o := new(Array)
+func createArray(pData []byte, pVersion byte, pVariant byte) *array {
+	o := new(array)
 	o.Unmarshal(pData)
 	o.setVersion(pVersion)
 	o.setVariant(pVariant)

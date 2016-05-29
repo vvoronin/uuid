@@ -2,9 +2,9 @@ package uuid_test
 
 import (
 	"fmt"
-	"github.com/twinj/uuid"
 	"testing"
 	"time"
+	"github.com/twinj/uuid"
 )
 
 const (
@@ -49,8 +49,12 @@ func Test_Parse(t *testing.T) {
 }
 
 func Example() {
-	var config = uuid.StateSaverConfig{SaveReport: true, SaveSchedule: 30 * time.Minute}
-	uuid.SetupFileSystemStateSaver(config)
+	saver := new(uuid.FileSystemSaver)
+	saver.Report = true
+	saver.Duration = time.Second * 3
+	// Run before any v1 or v2 UUIDs to ensure the saver takes
+	uuid.SetupSaver(saver)
+
 	u1 := uuid.NewV1()
 	fmt.Printf("version %d variant %x: %s\n", u1.Version(), u1.Variant(), u1)
 
@@ -100,9 +104,13 @@ func ExampleParse() {
 	fmt.Println(u)
 }
 
-func ExampleSetupFileSystemStateSaver() {
-	var config = uuid.StateSaverConfig{SaveReport: true, SaveSchedule: 30 * time.Minute}
-	uuid.SetupFileSystemStateSaver(config)
+func ExampleReadStore() {
+	saver := new(uuid.FileSystemSaver)
+	saver.Report = true
+	saver.Duration = 3 * time.Second
+
+	// Run before any v1 or v2 UUIDs to ensure the saver takes
+	uuid.SetupSaver(saver)
 	u1 := uuid.NewV1()
 	fmt.Printf("version %d variant %x: %s\n", u1.Version(), u1.Variant(), u1)
 }
@@ -117,3 +125,4 @@ func ExampleSwitchFormat() {
 	u4 := uuid.NewV4()
 	fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
 }
+

@@ -19,7 +19,7 @@ var array_bytes = []byte{
 }
 
 func TestUUID_Array_UnmarshalBinary(t *testing.T) {
-	u := new(Array)
+	u := new(array)
 	err := u.UnmarshalBinary([]byte{1, 2, 3, 4, 5})
 	if err == nil {
 		t.Errorf("Expected error due to invalid byte length")
