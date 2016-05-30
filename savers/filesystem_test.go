@@ -1,7 +1,7 @@
-package uuid
+package savers
 
 /****************
- * Date: 21/06/15
+ * Date: 30/05/16
  * Time: 6:46 PM
  ***************/
 
@@ -9,21 +9,19 @@ import (
 	"testing"
 	"time"
 	"github.com/stretchr/testify/assert"
+	"github.com/twinj/uuid"
 )
 
 const (
-
-	saveDuration  =  3
-	generateIds = 1900000
+	saveDuration = 3
 )
-
 
 func SetupFileSystemStateSaver() *FileSystemSaver {
 	saver := new(FileSystemSaver)
 	saver.Report = true
 	saver.Duration = saveDuration * time.Second
-	saver.Timestamp = Now()
-	SetupSaver(saver)
+	saver.Timestamp = uuid.Now()
+	uuid.SetupSaver(saver)
 	return saver
 }
 
@@ -34,12 +32,12 @@ func TestUUID_State_saveSchedule(t *testing.T) {
 	count := 0
 
 	past := time.Now()
-	for i := 0; i < generateIds; i++ {
-		if  Now() > saver.Timestamp {
-			time.Sleep(3 * time.Second)
+	for i := 0; i < 5; i++ {
+		if uuid.Now() > saver.Timestamp {
+			time.Sleep(saver.Duration)
 			count++
 		}
-		NewV1()
+		uuid.NewV1()
 	}
 	d := time.Since(past)
 
