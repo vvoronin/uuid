@@ -7,7 +7,6 @@ package uuid
 
 import (
 	"fmt"
-	"log"
 	"net/url"
 	"testing"
 )
