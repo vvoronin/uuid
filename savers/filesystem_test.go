@@ -6,10 +6,10 @@ package savers
  ***************/
 
 import (
-	"testing"
-	"time"
 	"github.com/stretchr/testify/assert"
 	"github.com/twinj/uuid"
+	"testing"
+	"time"
 )
 
 const (
@@ -41,5 +41,5 @@ func TestUUID_State_saveSchedule(t *testing.T) {
 	}
 	d := time.Since(past)
 
-	assert.Equal(t, int(d / saver.Duration), count, "Should be as many saves as second increments")
+	assert.Equal(t, int(d/saver.Duration), count, "Should be as many saves as second increments")
 }

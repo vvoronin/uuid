@@ -77,7 +77,7 @@ func (o *uuid) UnmarshalBinary(pData []byte) error {
 }
 
 func (o uuid) String() string {
-	return formatter(&o, format)
+	return formatter(&o, generator.format)
 }
 
 func (o uuid) Format(pFormat string) string {

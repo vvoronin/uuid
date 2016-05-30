@@ -43,7 +43,7 @@ func (o *array) Bytes() []byte {
 }
 
 func (o array) String() string {
-	return formatter(&o, format)
+	return formatter(&o, generator.format)
 }
 
 func (o array) Format(pFormat string) string {

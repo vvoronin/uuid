@@ -7,8 +7,8 @@ package uuid
 
 import (
 	"fmt"
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 var state_bytes = []byte{
@@ -20,7 +20,6 @@ var state_bytes = []byte{
 	0x23, 0x12, 0x4A, 0x11, 0x89, 0xFF,
 }
 
-
 func TestUUID_getHardwareAddress(t *testing.T) {
 	addr := getHardwareAddress()
 	if addr == nil {
@@ -31,17 +30,17 @@ func TestUUID_getHardwareAddress(t *testing.T) {
 
 func TestUUID_StateSeed(t *testing.T) {
 
-	assert.True(t, state.Timestamp > Timestamp((1391463463*10000000)+(100*10)+gregorianToUNIXOffset),
-		"Expected a value greater than 02/03/2014 @ 9:37pm in UTC but got %s", state.Timestamp)
+	assert.True(t, generator.Timestamp > Timestamp((1391463463*10000000)+(100*10)+gregorianToUNIXOffset),
+		"Expected a value greater than 02/03/2014 @ 9:37pm in UTC but got %s", generator.Timestamp)
 
-	if state.Timestamp < Timestamp((1391463463*10000000)+(100*10)+gregorianToUNIXOffset) {
-		t.Errorf("Expected a value greater than 02/03/2014 @ 9:37pm in UTC but got %s", state.Timestamp)
+	if generator.Timestamp < Timestamp((1391463463*10000000)+(100*10)+gregorianToUNIXOffset) {
+		t.Errorf("Expected a value greater than 02/03/2014 @ 9:37pm in UTC but got %s", generator.Timestamp)
 	}
-	if state.Node == nil {
+	if generator.Store.Node == nil {
 		t.Errorf("Expected a non nil node")
 	}
-	if state.Sequence <= 0 {
-		t.Errorf("Expected a value greater than but got %d", state.Sequence)
+	if generator.Sequence <= 0 {
+		t.Errorf("Expected a value greater than but got %d", generator.Sequence)
 	}
 }
 

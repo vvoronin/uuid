@@ -14,14 +14,6 @@ const (
 	defaultSpinResolution = 1024
 )
 
-type Spin struct {
-	// the amount of ids based on the Timestamp
-	Count, Resolution uint16
-
-	// the tracked spin stamp
-	Stamp Timestamp
-}
-
 // **********************************************  Timestamp
 
 // 4.1.4.  Timestamp https://www.ietf.org/rfc/rfc4122.txt
@@ -63,17 +55,17 @@ func Convert(pTime time.Time) Timestamp {
 
 // Converts UUID Timestamp to UTC time.Time
 func (o Timestamp) Time() time.Time {
-	return time.Unix(0, int64((o - gregorianToUNIXOffset)*100)).UTC()
+	return time.Unix(0, int64((o-gregorianToUNIXOffset)*100)).UTC()
 }
 
 // Returns the timestamp as modified by the duration
 func (o Timestamp) Add(pDuration time.Duration) Timestamp {
-	return o + Timestamp(pDuration / 100)
+	return o + Timestamp(pDuration/100)
 }
 
 // Returns the timestamp as modified by the duration
 func (o Timestamp) Sub(pDuration time.Duration) Timestamp {
-	return o - Timestamp(pDuration / 100)
+	return o - Timestamp(pDuration/100)
 }
 
 // Returns the timestamp as modified by the duration
@@ -110,16 +102,31 @@ func (o Timestamp) String() string {
 // additional node identifiers can be allocated to the system, which
 // will permit higher speed allocation by making multiple UUIDs
 // potentially available for each time stamp value.
-func (o *Spin) next() Timestamp {
+
+type Spinner interface {
+	Next() Timestamp
+}
+
+var _ Spinner = &spinner{}
+
+type spinner struct {
+	// the amount of ids based on the Timestamp
+	Count, Resolution uint16
+
+	// the tracked spin stamp
+	Timestamp
+}
+
+func (o *spinner) Next() Timestamp {
 	var now Timestamp
 	for {
 		now = Now()
 
 		// if clock reading changed since last UUID generated
-		if o.Stamp != now {
+		if o.Timestamp != now {
 			// reset count of UUIDs with this timestamp
 			o.Count = 0
-			o.Stamp = now
+			o.Timestamp = now
 			break
 		}
 		if o.Count < o.Resolution {

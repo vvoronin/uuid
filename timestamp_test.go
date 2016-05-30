@@ -1,11 +1,11 @@
 package uuid
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
-	"time"
 	"sync"
 	"sync/atomic"
+	"testing"
+	"time"
 )
 
 /****************
@@ -34,13 +34,13 @@ func TestTimestampToTimeShouldBeUTC(t *testing.T) {
 func TestDuplicateTimestampsSingleRoutine(t *testing.T) {
 	size := defaultSpinResolution * 10
 
-	spin := Spin{}
+	spin := spinner{}
 	spin.Resolution = defaultSpinResolution
 
 	times := make([]Timestamp, size)
 
 	for i := 0; i < size; i++ {
-		times[i] = spin.next()
+		times[i] = spin.Next()
 	}
 
 	for j := size - 1; j >= 0; j-- {
@@ -57,9 +57,9 @@ func TestDuplicateTimestampsSingleRoutine(t *testing.T) {
 func TestDuplicateTimestampsMultipleRoutine(t *testing.T) {
 
 	size := defaultSpinResolution * 10
-	waitSize :=3
+	waitSize := 3
 
-	spin := Spin{}
+	spin := spinner{}
 	spin.Resolution = defaultSpinResolution
 
 	times := make([]Timestamp, size)
@@ -77,11 +77,11 @@ func TestDuplicateTimestampsMultipleRoutine(t *testing.T) {
 				mutex.Lock()
 				j := atomic.LoadInt32(&index)
 				atomic.AddInt32(&index, 1)
-				if (j >= int32(size)) {
+				if j >= int32(size) {
 					mutex.Unlock()
 					break
 				}
-				times[j] = spin.next()
+				times[j] = spin.Next()
 				mutex.Unlock()
 			}
 		}()
@@ -98,4 +98,3 @@ func TestDuplicateTimestampsMultipleRoutine(t *testing.T) {
 	}
 
 }
-

@@ -7,16 +7,17 @@ package savers
 
 import (
 	"encoding/gob"
+	"github.com/twinj/uuid"
 	"log"
 	"os"
 	"time"
-	"github.com/twinj/uuid"
 )
 
+var _ uuid.Saver = &FileSystemSaver{}
 
 // This implements the Saver interface for UUIDs
 type FileSystemSaver struct {
-	cache  *os.File
+	cache *os.File
 
 	// Whether to log each save
 	Report bool
@@ -36,7 +37,7 @@ func (o *FileSystemSaver) Save(pStore *uuid.Store) {
 		if err == nil {
 			// do the save
 			err = o.encode(pStore)
-			if (err == nil) {
+			if err == nil {
 				if o.Report {
 					log.Printf("UUID Saved State Storage: %s", pStore)
 				}
@@ -76,7 +77,7 @@ func (o *FileSystemSaver) reset() {
 }
 
 func (o *FileSystemSaver) open() (err error) {
-	o.cache, err = os.OpenFile(os.TempDir() + "/state.unique", os.O_RDWR, os.ModeExclusive)
+	o.cache, err = os.OpenFile(os.TempDir()+"/state.unique", os.O_RDWR, os.ModeExclusive)
 	return
 }
 

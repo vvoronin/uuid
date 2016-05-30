@@ -1,6 +1,6 @@
 // This package provides RFC4122 UUIDs.
 //
-// NewV1, NewV3, NewV4, NewV5, for generating versions 1, 3, 4
+// NewV1, NewV2, NewV3, NewV4, NewV5, for generating versions 1, 3, 4
 // and 5 UUIDs as specified in RFC-4122.
 //
 // New([]byte), unsafe; NewHex(string); and Parse(string) for
@@ -22,6 +22,7 @@ package uuid
  ***************/
 
 import (
+	"bytes"
 	"encoding"
 	"encoding/hex"
 	"errors"
@@ -29,7 +30,6 @@ import (
 	"hash"
 	"regexp"
 	"strings"
-	"bytes"
 )
 
 const (
@@ -49,7 +49,6 @@ const (
 	DomainGroup
 )
 
-
 const (
 
 	// Pattern used to parse string representation of the UUID.
@@ -62,19 +61,14 @@ const (
 
 var (
 	parseUUIDRegex = regexp.MustCompile(hexPattern)
-	format         string
 )
-
-func init() {
-	SwitchFormat(CleanHyphen)
-}
 
 type Node []byte
 type Sequence uint16
 
 // ******************************************************  UUID
 
-// The main interface for UUIDs
+// Interface for all UUIDs
 // Each implementation must also implement the UniqueName interface
 type UUID interface {
 	encoding.BinaryMarshaler
@@ -106,13 +100,13 @@ type UUID interface {
 	// This may behave differently across non RFC4122 UUIDs
 	Variant() byte
 
-	// UUID can be used as a Name within a namespace
-	// Is simply just a String() string method
+	// A UUID can be used as a Name within a namespace
+	// Is simply just a String() string, method
 	// Returns a formatted version of the UUID.
-	String() string
+	UniqueName
 }
 
-// New creates a UUID from a slice of bytes.
+// Creates a UUID from a slice of bytes.
 // Truncates any bytes past the default length of 16
 // Will panic if data slice is too small.
 func New(pData []byte) UUID {
@@ -120,7 +114,6 @@ func New(pData []byte) UUID {
 	o.Unmarshal(pData[:length])
 	return o
 }
-
 
 // Creates a UUID from a hex string
 // Will panic if hex string is invalid - will panic even with hyphens and brackets
@@ -133,7 +126,7 @@ func NewHex(pUuid string) UUID {
 	return New(bytes)
 }
 
-// Parse creates a UUID from a valid string representation.
+// Creates a UUID from a valid string representation.
 // Accepts UUID string in following formats:
 //		6ba7b8149dad11d180b400c04fd430c8
 //		6ba7b814-9dad-11d1-80b4-00c04fd430c8
@@ -149,9 +142,7 @@ func Parse(pUUID string) (UUID, error) {
 	return NewHex(md[2] + md[3] + md[4] + md[5] + md[6]), nil
 }
 
-// Digest a namespace UUID and a UniqueName, which then marshals to
-// a new UUID
-func Digest(o, pNs UUID, pName UniqueName, pHash hash.Hash) {
+func digest(o, pNs UUID, pName UniqueName, pHash hash.Hash) {
 	// Hash writer never returns an error
 	pHash.Write(pNs.Bytes())
 	pHash.Write([]byte(pName.String()))
@@ -181,12 +172,12 @@ func (o Name) String() string {
 }
 
 // NewName will create a unique name from several sources
-func NewName(salt string, pNames ...UniqueName) UniqueName {
+func NewName(pSalt string, pNames ...UniqueName) UniqueName {
 	var s string
 	for _, s2 := range pNames {
 		s += s2.String()
 	}
-	return Name(s + salt)
+	return Name(s + pSalt)
 }
 
 // UniqueName is a Stinger interface
@@ -209,8 +200,8 @@ type UniqueName interface {
 type Format string
 
 const (
-	Clean  Format = "%x%x%x%x%x%x"
-	Curly  Format = "{%x%x%x%x%x%x}"
+	Clean   Format = "%x%x%x%x%x%x"
+	Curly   Format = "{%x%x%x%x%x%x}"
 	Bracket Format = "(%x%x%x%x%x%x)"
 
 	// This is the default format.
@@ -221,9 +212,16 @@ const (
 	GoIdFormat    Format = "[%X-%X-%x-%X%X-%x]"
 )
 
+func newGenerator(pSpinner Spinner, pDefaultFormat Format) (generator *Generator) {
+	generator = new(Generator)
+	generator.format = string(pDefaultFormat)
+	generator.Spinner = pSpinner
+	return
+}
+
 // Gets the current default format pattern
 func GetFormat() string {
-	return format
+	return generator.format
 }
 
 // Switches the default printing format for ALL UUID strings
@@ -233,7 +231,7 @@ func SwitchFormat(pFormat Format) {
 	if strings.Count(form, "%") != 6 {
 		panic(errors.New("uuid.switchFormat: invalid formatting"))
 	}
-	format = form
+	generator.format = form
 }
 
 // Same as SwitchFormat but will make it uppercase
@@ -244,7 +242,7 @@ func SwitchFormatUpperCase(pFormat Format) {
 
 // Compares whether each UUID is the same
 func Equal(p1 UUID, p2 UUID) bool {
-	return 	bytes.Equal(p1.Bytes(), p2.Bytes())
+	return bytes.Equal(p1.Bytes(), p2.Bytes())
 }
 
 // Format a UUID into a human readable string which matches the given Format
@@ -306,4 +304,3 @@ func formatter(pUUID UUID, pFormat string) string {
 	b := pUUID.Bytes()
 	return fmt.Sprintf(pFormat, b[0:4], b[4:6], b[6:8], b[8:9], b[9:10], b[10:pUUID.Size()])
 }
-
