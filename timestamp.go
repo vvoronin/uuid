@@ -103,12 +103,6 @@ func (o Timestamp) String() string {
 // will permit higher speed allocation by making multiple UUIDs
 // potentially available for each time stamp value.
 
-type Spinner interface {
-	Next() Timestamp
-}
-
-var _ Spinner = &spinner{}
-
 type spinner struct {
 	// the amount of ids based on the Timestamp
 	Count, Resolution uint16
@@ -117,7 +111,7 @@ type spinner struct {
 	Timestamp
 }
 
-func (o *spinner) Next() Timestamp {
+func (o *spinner) next() Timestamp {
 	var now Timestamp
 	for {
 		now = Now()

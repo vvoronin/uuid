@@ -35,7 +35,10 @@ var (
 	NamespaceOID UUID = &uuid{0x6ba7b812, 0x9dad, 0x11d1, 0x80, 0xb4, nodeId, length}
 	NamespaceX500 UUID = &uuid{0x6ba7b814, 0x9dad, 0x11d1, 0x80, 0xb4, nodeId, length}
 
-	generator = newGenerator(&spinner{Resolution:1024, Timestamp: Now(), Count:0}, CleanHyphen)
+	generator = newGenerator(
+		(&spinner{Resolution:defaultSpinResolution, Timestamp: Now(), Count:0}).next,
+		getHardwareAddress,
+		CleanHyphen)
 )
 
 // Generate a new RFC4122 version 1 UUID

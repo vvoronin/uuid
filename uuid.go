@@ -212,10 +212,11 @@ const (
 	GoIdFormat    Format = "[%X-%X-%x-%X%X-%x]"
 )
 
-func newGenerator(pSpinner Spinner, pDefaultFormat Format) (generator *Generator) {
+func newGenerator(pSpinner func() Timestamp, pNode func() Node, pDefaultFormat Format) (generator *Generator) {
 	generator = new(Generator)
 	generator.format = string(pDefaultFormat)
-	generator.Spinner = pSpinner
+	generator.next = pSpinner
+	generator.node = pNode
 	return
 }
 

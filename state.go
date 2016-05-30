@@ -72,8 +72,8 @@ type Generator struct {
 	Saver
 	*Store
 
-	Spinner
-	Node
+	next func() Timestamp
+	node func() Node
 
 	format string
 }
@@ -146,7 +146,7 @@ func (o *Generator) read() *Store {
 
 	// Get the current time as a 60-bit count of 100-nanosecond intervals
 	// since 00:00:00.00, 15 October 1582.
-	now := o.Next()
+	now := o.next()
 
 	// If the last timestamp is later than
 	// the current timestamp, increment the clock sequence value.
@@ -186,10 +186,10 @@ func (o *Generator) init() {
 
 	// Get the current time as a 60-bit count of 100-nanosecond intervals
 	// since 00:00:00.00, 15 October 1582.
-	now := o.Next()
+	now := o.next()
 
 	//  Get the current node ID.
-	node := getHardwareAddress()
+	node := o.node()
 
 	// If the state was unavailable (e.g., non-existent or corrupted), or
 	// the saved node ID is different than the current node ID, generate
