@@ -40,7 +40,7 @@ func TestDuplicateTimestampsSingleRoutine(t *testing.T) {
 	times := make([]Timestamp, size)
 
 	for i := 0; i < size; i++ {
-		times[i] = spin.Next()
+		times[i] = spin.next()
 	}
 
 	for j := size - 1; j >= 0; j-- {
@@ -81,7 +81,7 @@ func TestDuplicateTimestampsMultipleRoutine(t *testing.T) {
 					mutex.Unlock()
 					break
 				}
-				times[j] = spin.Next()
+				times[j] = spin.next()
 				mutex.Unlock()
 			}
 		}()
