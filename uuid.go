@@ -37,7 +37,10 @@ const (
 	ReservedRFC4122   byte = 0x80 // or and A0 if masked with 1F
 	ReservedMicrosoft byte = 0xC0
 	ReservedFuture    byte = 0xE0
-	TakeBack          byte = 0xF0
+)
+
+const (
+	takeBack          byte = 0xF0
 )
 
 // UUID DCE domains.
@@ -256,19 +259,6 @@ func Formatter(pUUID UUID, pFormat Format) string {
 	}
 	return formatter(pUUID, form)
 }
-
-// **********************************************  UUID Versions
-
-type UUIDVersion int
-
-const (
-	NONE UUIDVersion = iota
-	RFC4122v1
-	DunnoYetv2
-	RFC4122v3
-	RFC4122v4
-	RFC4122v5
-)
 
 // ***************************************************  Helpers
 

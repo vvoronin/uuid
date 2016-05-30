@@ -36,7 +36,6 @@ func TestUUID_NewV1(t *testing.T) {
 func TestUUID_NewV1Bulk(t *testing.T) {
 	for i := 0; i < generate; i++ {
 		o := NewV1()
-		log.Println("", o)
 	}
 }
 
