@@ -44,7 +44,7 @@ func (o *FileSystemSaver) Save(pStore *uuid.Store) {
 			}
 		}
 		if err != nil {
-			log.Println("uuid.State.save:", err)
+			log.Println("uuid.FileSystemSaver.Save:", err)
 		}
 		o.Timestamp = pStore.Add(o.Duration)
 	}
