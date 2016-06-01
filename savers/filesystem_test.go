@@ -18,13 +18,13 @@ const (
 	saveDuration = 3
 )
 
-func SetupFileSystemStateSaver() *FileSystemSaver {
-	return &FileSystemSaver{Path: path.Join(os.TempDir(), "github.com.twinj.uuid.generator-" + uuid.NewV4().String()), Report: true, Duration: saveDuration * time.Second }
+func SetupFileSystemStateSaver(pPath string) *FileSystemSaver {
+	return &FileSystemSaver{Path: pPath, Report: true, Duration: saveDuration * time.Second }
 }
 
 // Tests that the schedule is run on the timeDuration
 func TestFileSystemSaver_SaveSchedule(t *testing.T) {
-	saver := SetupFileSystemStateSaver()
+	saver := SetupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"))
 
 	// Read is always called first
 	saver.Read()
@@ -46,15 +46,28 @@ func TestFileSystemSaver_SaveSchedule(t *testing.T) {
 }
 
 func TestFileSystemSaver_Read(t *testing.T) {
-	saver := SetupFileSystemStateSaver()
+	paths := []string{
+		path.Join(os.TempDir(), "test", "github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"),
+		path.Join(os.TempDir(), "github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"),
+		path.Join("github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"),
+		path.Join("/github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"),
+		path.Join("/github.com.twinj.uuid.generator-" + uuid.NewV4().String()),
+		path.Join("/generator-" + uuid.NewV4().String()),
+	}
 
-	err, _ := saver.Read()
+	for i := range paths {
 
-	assert.Nil(t, err)
+		saver := SetupFileSystemStateSaver(paths[i])
+
+		err, _ := saver.Read()
+
+		assert.Nil(t, err, "Path failure %d %s", i, paths[i])
+	}
 }
 
 func TestFileSystemSaver_Save(t *testing.T) {
-	saver := SetupFileSystemStateSaver()
+
+	saver := SetupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"))
 
 	// Read is always called first
 	saver.Read()
@@ -64,7 +77,8 @@ func TestFileSystemSaver_Save(t *testing.T) {
 }
 
 func TestFileSystemSaver_SaveAndRead(t *testing.T) {
-	saver := SetupFileSystemStateSaver()
+
+	saver := SetupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"))
 
 	// Read is always called first
 	saver.Read()
@@ -77,4 +91,5 @@ func TestFileSystemSaver_SaveAndRead(t *testing.T) {
 	assert.Equal(t, store.Timestamp, saved.Timestamp)
 	assert.Equal(t, store.Sequence, saved.Sequence)
 	assert.Equal(t, store.Node, saved.Node)
+
 }

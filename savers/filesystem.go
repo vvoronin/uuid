@@ -11,6 +11,8 @@ import (
 	"log"
 	"os"
 	"time"
+	"path"
+_	"path/filepath"
 )
 
 var _ uuid.Saver = &FileSystemSaver{}
@@ -19,10 +21,10 @@ var _ uuid.Saver = &FileSystemSaver{}
 type FileSystemSaver struct {
 	// A file to save the state to
 	// Used gob format on uuid.State entity
-	file *os.File
+	file   *os.File
 
 	// Preferred location for the store
-	Path string
+	Path   string
 
 	// Whether to log each save
 	Report bool
@@ -63,20 +65,37 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Printf("'%s' created\n", "uuid.FileSystemSaver")
+			dir, file := path.Split(o.Path)
+			if dir == "" || dir == "/" {
+				dir, err = os.Getwd()
+				if err != nil {
+					dir = os.TempDir()
+				}
+			}
+			o.Path = path.Join(dir, file)
+
+			err = os.MkdirAll(dir, os.ModeDir | 0755)
+			if err != nil {
+				goto error
+			}
+
 			o.file, err = os.Create(o.Path)
 			if err != nil {
-				log.Println("uuid.FileSystemSaver.Init: SaveState error:", err)
-				return
+				goto error
 			}
+
+			log.Println("uuid.FileSystemSaver created", o.Path)
 			// If new encode blank store
 			o.encode(&uuid.Store{})
 		} else {
-			log.Println("uuid.FileSystemSaver.Init: SaveState error:", err)
-			return
+			goto error
 		}
 	}
 	return o.decode()
+
+	error:
+	log.Println("uuid.FileSystemSaver.Read: error will autogenerate", err)
+	return
 }
 
 func (o *FileSystemSaver) reset() {
