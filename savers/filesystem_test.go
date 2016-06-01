@@ -10,6 +10,8 @@ import (
 	"github.com/twinj/uuid"
 	"testing"
 	"time"
+	"os"
+	"path"
 )
 
 const (
@@ -17,21 +19,20 @@ const (
 )
 
 func SetupFileSystemStateSaver() *FileSystemSaver {
-	saver := new(FileSystemSaver)
-	saver.Report = true
-	saver.Duration = saveDuration * time.Second
-	saver.Timestamp = uuid.Now()
-	return saver
+	return &FileSystemSaver{Path: path.Join(os.TempDir(), "github.com.twinj.uuid.generator-" + uuid.NewV4().String()), Report: true, Duration: saveDuration * time.Second }
 }
 
 // Tests that the schedule is run on the timeDuration
 func TestFileSystemSaver_SaveSchedule(t *testing.T) {
 	saver := SetupFileSystemStateSaver()
 
+	// Read is always called first
+	saver.Read()
+
 	count := 0
 
 	past := time.Now()
-	for i := 0; i < 5; i++ {
+	for ; count == 10; {
 		if uuid.Now() > saver.Timestamp {
 			time.Sleep(saver.Duration)
 			count++
@@ -55,12 +56,18 @@ func TestFileSystemSaver_Read(t *testing.T) {
 func TestFileSystemSaver_Save(t *testing.T) {
 	saver := SetupFileSystemStateSaver()
 
+	// Read is always called first
+	saver.Read()
+
 	store := &uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
 	saver.Save(store)
 }
 
 func TestFileSystemSaver_SaveAndRead(t *testing.T) {
 	saver := SetupFileSystemStateSaver()
+
+	// Read is always called first
+	saver.Read()
 
 	store := &uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
 	saver.Save(store)

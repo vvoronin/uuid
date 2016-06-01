@@ -17,7 +17,12 @@ var _ uuid.Saver = &FileSystemSaver{}
 
 // This implements the Saver interface for UUIDs
 type FileSystemSaver struct {
-	cache *os.File
+	// A file to save the state to
+	// Used gob format on uuid.State entity
+	file *os.File
+
+	// Preferred location for the store
+	Path string
 
 	// Whether to log each save
 	Report bool
@@ -33,7 +38,7 @@ func (o *FileSystemSaver) Save(pStore *uuid.Store) {
 
 	if pStore.Timestamp >= o.Timestamp {
 		err := o.open()
-		defer o.cache.Close()
+		defer o.file.Close()
 		if err == nil {
 			// do the save
 			err = o.encode(pStore)
@@ -54,16 +59,18 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 	gob.Register(uuid.Store{})
 
 	err = o.open()
-	defer o.cache.Close()
+	defer o.file.Close()
 
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Printf("'%s' created\n", "uuid.FileSystemSaver")
-			o.cache, err = os.Create(os.TempDir() + "/state.unique")
+			o.file, err = os.Create(o.Path)
 			if err != nil {
 				log.Println("uuid.FileSystemSaver.Init: SaveState error:", err)
 				return
 			}
+			// If new encode blank store
+			o.encode(&uuid.Store{})
 		} else {
 			log.Println("uuid.FileSystemSaver.Init: SaveState error:", err)
 			return
@@ -73,18 +80,17 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 }
 
 func (o *FileSystemSaver) reset() {
-	o.cache.Seek(0, 0)
+	o.file.Seek(0, 0)
 }
 
 func (o *FileSystemSaver) open() (err error) {
-	o.cache, err = os.OpenFile(os.TempDir()+"/state.unique", os.O_RDWR, os.ModeExclusive)
+	o.file, err = os.OpenFile(o.Path, os.O_RDWR, os.ModeExclusive)
 	return
 }
 
 func (o *FileSystemSaver) encode(pStore *uuid.Store) error {
 	// ensure reader state is ready for use
-	o.reset()
-	enc := gob.NewEncoder(o.cache)
+	enc := gob.NewEncoder(o.file)
 	err := enc.Encode(&pStore)
 	if err != nil {
 		log.Println("uuid.FileSystemSaver.encode error:", err)
@@ -94,8 +100,8 @@ func (o *FileSystemSaver) encode(pStore *uuid.Store) error {
 
 func (o *FileSystemSaver) decode() (err error, store uuid.Store) {
 	// ensure reader state is ready for use
-	// o.reset()
-	dec := gob.NewDecoder(o.cache)
+	o.reset()
+	dec := gob.NewDecoder(o.file)
 	store = uuid.Store{}
 	err = dec.Decode(&store)
 	if err != nil {
