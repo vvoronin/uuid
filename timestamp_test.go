@@ -24,7 +24,9 @@ func TestTimestampSize(t *testing.T) {
 
 func TestNowToTime(t *testing.T) {
 	now := time.Now()
-	assert.True(t, now.UnixNano() == Convert(now).Time().UnixNano())
+	nano := now.UnixNano()
+	convertedNano := Convert(now).Time().UnixNano()
+	assert.True(t, nano == convertedNano, "Times do not match %d %d", nano, convertedNano)
 }
 
 func TestTimestampToTimeShouldBeUTC(t *testing.T) {
