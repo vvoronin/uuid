@@ -22,7 +22,6 @@ install:
 build_script:
   - go vet ./...
   - gofmt -s -l .
-  - deadcode
   - go test -short -v
   - go test -short -race -v
 
