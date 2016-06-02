@@ -26,7 +26,7 @@ func TestNowToTime(t *testing.T) {
 	now := time.Now()
 	nano := now.UnixNano()
 	convertedNano := Convert(now).Time().UnixNano()
-	assert.True(t, nano == convertedNano, "Times do not match %d %d", nano, convertedNano)
+	assert.True(t, nano/100*100 == convertedNano, "Times do not match %d %d", nano, convertedNano)
 }
 
 func TestTimestampToTimeShouldBeUTC(t *testing.T) {
