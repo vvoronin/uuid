@@ -8,3 +8,6 @@ go:
     - tip
 notifications:
     email: true
+os:
+    - linux
+    - osx
