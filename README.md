@@ -1,6 +1,7 @@
 Go UUID implementation
 ========================
 
+[![Build Status]()](https://ci.appveyor.com/api/projects/status/github/twinj/uuid?branch=master&svg=true)
 [![Build Status](https://travis-ci.org/twinj/uuid.png?branch=master)](https://travis-ci.org/twinj/uuid)
 [![GoDoc](http://godoc.org/github.com/twinj/uuid?status.png)](http://godoc.org/github.com/twinj/uuid)
 
