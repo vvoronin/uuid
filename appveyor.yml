@@ -21,8 +21,8 @@ install:
 build_script:
   - go vet ./...
   - gofmt -s -l .
-  - golint github.com/twinj/uuid...
-  - deadcode
+#  - golint github.com/twinj/uuid...
+#  - deadcode
   - go test -short -v
   - go test -short -race -v
 
