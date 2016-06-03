@@ -230,7 +230,7 @@ func (o *Generator) init() {
 		storage.Sequence++
 	}
 
-	storage.Timestamp = now;
+	storage.Timestamp = now
 	storage.Node = node
 
 	o.Store = &storage

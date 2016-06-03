@@ -10,9 +10,8 @@ import (
 	"github.com/twinj/uuid"
 	"log"
 	"os"
-	"time"
 	"path"
-_	"path/filepath"
+	"time"
 )
 
 var _ uuid.Saver = &FileSystemSaver{}
@@ -21,10 +20,10 @@ var _ uuid.Saver = &FileSystemSaver{}
 type FileSystemSaver struct {
 	// A file to save the state to
 	// Used gob format on uuid.State entity
-	file   *os.File
+	file *os.File
 
 	// Preferred location for the store
-	Path   string
+	Path string
 
 	// Whether to log each save
 	Report bool
@@ -74,7 +73,7 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 			}
 			o.Path = path.Join(dir, file)
 
-			err = os.MkdirAll(dir, os.ModeDir | 0755)
+			err = os.MkdirAll(dir, os.ModeDir|0755)
 			if err != nil {
 				goto error
 			}
@@ -93,7 +92,7 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 	}
 	return o.decode()
 
-	error:
+error:
 	log.Println("uuid.FileSystemSaver.Read: error will autogenerate", err)
 	return
 }

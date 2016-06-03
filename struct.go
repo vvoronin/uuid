@@ -48,7 +48,8 @@ func (o *uuid) Unmarshal(pData []byte) {
 	o.timeHiAndVersion = binary.BigEndian.Uint16(pData[6:8])
 	o.sequenceHiAndVariant = pData[8]
 	o.sequenceLow = pData[9]
-	copy(o.node, pData[10:o.Size()])
+
+	copy(o.node[:], pData[10:length])
 }
 
 func (o *uuid) Bytes() (data []byte) {

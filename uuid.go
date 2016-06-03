@@ -39,9 +39,11 @@ const (
 	ReservedFuture    byte = 0xE0
 )
 
+/*  Keep for reference of byte setup which works for user implementation
 const (
-	takeBack          byte = 0xF0
+	takeBack byte = 0xF0
 )
+*/
 
 // UUID DCE domains.
 
@@ -114,7 +116,7 @@ type UUID interface {
 // Will panic if data slice is too small.
 func New(pData []byte) UUID {
 	o := new(array)
-	o.Unmarshal(pData[:length])
+	o.Unmarshal(pData)
 	return o
 }
 

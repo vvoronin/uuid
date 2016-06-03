@@ -35,7 +35,7 @@ func (o *array) setVariant(pVariant byte) {
 }
 
 func (o *array) Unmarshal(pData []byte) {
-	copy(o[:], pData)
+	copy(o[:], pData[:length])
 }
 
 func (o *array) Bytes() []byte {
