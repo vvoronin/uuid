@@ -35,18 +35,20 @@ Any supported version of Go.
 
 # Future considerations
 
-* length and format should not be an issue
-*
+* length and format of UUID should not be an issue
+* using new cryptographic technology should not be an issue
+* improve support for sequential UUIDs merged with cryptographic nodes
 
 # Recent Changes
 
+* Improved builds and tests
+* Library overhaul to cleanup exports that are not useful for a user
 * Improved file system Saver interface, breaking changes.
     To use a saver make sure you pass it in via the uuid.SetupSaver(Saver) method before a UUID is generated, so as to take affect.
 * Removed use of OS Thread locking and runtime package requirement
 * Changed String() output to CleanHyphen to match the canonical standard
 * Removed default non volatile store and replaced with Saver interface
 * Added formatting support for user defined formats
-* Added support for Google App Engine
 * Variant type bits are now set correctly
 * Variant type can now be retrieved more efficiently
 * New tests for variant setting to confirm correctness
@@ -84,8 +86,8 @@ for more information.
 
 ## Links
 
-[RFC 4122](http://www.ietf.org/rfc/rfc4122.txt)
-[DCE 1.1: Authentication and Security Services](http://pubs.opengroup.org/onlinepubs/9629399/apdxa.htm)
+* [RFC 4122](http://www.ietf.org/rfc/rfc4122.txt)
+* [DCE 1.1: Authentication and Security Services](http://pubs.opengroup.org/onlinepubs/9629399/apdxa.htm)
 
 ## Copyright
 
