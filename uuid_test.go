@@ -12,18 +12,20 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
 	secondsPerHour       = 60 * 60
 	secondsPerDay        = 24 * secondsPerHour
 	unixToInternal int64 = (1969*365 + 1969/4 - 1969/100 + 1969/400) * secondsPerDay
-	internalToUnix int64 = -unixToInternal
 )
 
 var (
 	uuid_goLang Name = "https://google.com/golang.org?q=golang"
+
 	printer     bool = false
+
 	uuid_bytes       = []byte{
 		0xAA, 0xCF, 0xEE, 0x12,
 		0xD4, 0x00,
@@ -32,12 +34,14 @@ var (
 		0xD3,
 		0x23, 0x12, 0x4A, 0x11, 0x89, 0xFF,
 	}
+
 	uuid_variants = []byte{
 		ReservedNCS, ReservedRFC4122, ReservedMicrosoft, ReservedFuture,
 	}
 	namespaceUuids = []UUID{
 		NamespaceDNS, NamespaceURL, NamespaceOID, NamespaceX500,
 	}
+
 	invalidHexStrings = [...]string{
 		"foo",
 		"6ba7b814-9dad-11d1-80b4-",
@@ -47,6 +51,7 @@ var (
 		"{6ba7b814--11d1-80b4-00c04fd430c8}",
 		"urn:uuid:6ba7b814-9dad-1666666680b4-00c04fd430c8",
 	}
+
 	validHexStrings = [...]string{
 		"6ba7b8149dad-11d1-80b4-00c04fd430c8}",
 		"{6ba7b8149dad-11d1-80b400c04fd430c8}",
@@ -65,44 +70,74 @@ var (
 	}
 )
 
+func TestEqual(t *testing.T) {
+
+}
+
+func TestFormatter(t *testing.T) {
+
+}
+
+func TestGetFormat(t *testing.T) {
+
+}
+
+func TestName_String(t *testing.T) {
+
+}
+
+func TestNewHex(t *testing.T) {
+
+}
+
+func TestNewName(t *testing.T) {
+
+}
+
+func TestParse(t *testing.T) {
+
+}
 func TestUUID_Simple(t *testing.T) {
 	u := NewV1()
 	outputLn(u)
 
 	u, _ = Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 	u = NewV3(u, Name("test"))
-	outputLn(u)
 	if !strings.EqualFold("45a113ac-c7f2-30b0-90a5-a399ab912716", u.String()) {
 		t.Errorf("Expected string representation to be %s, but got: %s", "45a113ac-c7f2-30b0-90a5-a399ab912716", u.String())
 	}
 
 	u = NewV4()
-	outputLn(u)
 
 	u = NewV5(u, Name("test"))
-	outputLn(u)
 }
 
-func TestUUID_New(t *testing.T) {
-	u := New(uuid_bytes)
-	if u == nil {
-		t.Error("Expected a valid UUID")
-	}
-	if u.Version() != 2 {
-		t.Errorf("Expected correct version %d, but got %d", 2, u.Version())
-	}
-	if u.Variant() != ReservedNCS {
-		t.Errorf("Expected ReservedNCS variant %x, but got %x", ReservedNCS, u.Variant())
-	}
-	if !parseUUIDRegex.MatchString(u.String()) {
-		t.Errorf("Expected string representation to be valid, given: %s", u.String())
-	}
+func TestNew(t *testing.T) {
+
+	for k, _ := range namespaces {
+
+	u := New(k.Bytes())
+
+	assert.NotNil(t, u, "Expected a valid non nil UUID")
+	assert.Equal(t, 1, u.Version(), "Expected correct version %d, but got %d", 2, u.Version())
+	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected ReservedNCS variant %x, but got %x", ReservedNCS, u.Variant())
+	assert.Equal(t, k, u.String(), "Stringer versions should equal")
+}
 }
 
 func TestUUID_NewBulk(t *testing.T) {
 	for i := 0; i < 1000000; i++ {
 		New(uuid_bytes)
 	}
+}
+
+func TestFormatTo(t *testing.T) {
+	id := array(array_bytes)
+	uid := &uuid{size: length, node: make([]byte, 6)}
+
+	uid.Unmarshal(id.Bytes())
+
+	assert.Equal(t, id.String(), uid.String())
 }
 
 const (

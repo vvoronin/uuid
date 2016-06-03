@@ -8,10 +8,10 @@ package savers
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/twinj/uuid"
-	"testing"
-	"time"
 	"os"
 	"path"
+	"testing"
+	"time"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 )
 
 func SetupFileSystemStateSaver(pPath string) *FileSystemSaver {
-	return &FileSystemSaver{Path: pPath, Report: true, Duration: saveDuration * time.Second }
+	return &FileSystemSaver{Path: pPath, Report: true, Duration: saveDuration * time.Second}
 }
 
 // Tests that the schedule is run on the timeDuration
@@ -32,7 +32,7 @@ func TestFileSystemSaver_SaveSchedule(t *testing.T) {
 	count := 0
 
 	past := time.Now()
-	for ; count == 10; {
+	for count == 10 {
 		if uuid.Now() > saver.Timestamp {
 			time.Sleep(saver.Duration)
 			count++
@@ -42,13 +42,13 @@ func TestFileSystemSaver_SaveSchedule(t *testing.T) {
 	}
 	d := time.Since(past)
 
-	assert.Equal(t, int(d / saver.Duration), count, "Should be as many saves as second increments")
+	assert.Equal(t, int(d/saver.Duration), count, "Should be as many saves as second increments")
 }
 
 func TestFileSystemSaver_Read(t *testing.T) {
 	paths := []string{
-		path.Join(os.TempDir(), "test", "github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"),
-		path.Join(os.TempDir(), "github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"),
+		path.Join(os.TempDir(), "test", "github.com.twinj.uuid.generator-"+uuid.NewV4().String()+".gob"),
+		path.Join(os.TempDir(), "github.com.twinj.uuid.generator-"+uuid.NewV4().String()+".gob"),
 		path.Join("github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"),
 		path.Join("/github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"),
 		path.Join("/github.com.twinj.uuid.generator-" + uuid.NewV4().String()),

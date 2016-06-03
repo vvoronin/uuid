@@ -1,2 +1,4 @@
 uuid
 *.iml
+savers/*generator-*
+savers/generator-*
