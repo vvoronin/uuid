@@ -11,6 +11,9 @@ import (
 
 const (
 	gregorianToUNIXOffset = 122192928e9
+
+	// set the following to the number of 100ns ticks of the actual
+	// resolution of your system's clock
 	defaultSpinResolution = 1024
 )
 

@@ -11,6 +11,8 @@ import (
 	"crypto/sha1"
 )
 
+// ****************************************************
+
 const (
 	length = 16
 
@@ -24,22 +26,39 @@ const (
 )
 
 var (
-	// nodeID is the default Namespace node
-	nodeId = []byte{
-		// 00.192.79.212.48.200
-		0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8,
-	}
 	// The following standard UUIDs are for use with V3 or V5 UUIDs.
-	NamespaceDNS UUID = &uuid{0x6ba7b810, 0x9dad, 0x11d1, 0x80, 0xb4, nodeId, length}
-	NamespaceURL UUID = &uuid{0x6ba7b811, 0x9dad, 0x11d1, 0x80, 0xb4, nodeId, length}
-	NamespaceOID UUID = &uuid{0x6ba7b812, 0x9dad, 0x11d1, 0x80, 0xb4, nodeId, length}
-	NamespaceX500 UUID = &uuid{0x6ba7b814, 0x9dad, 0x11d1, 0x80, 0xb4, nodeId, length}
+	NamespaceDNS UUID = namespaceUuid(0x6ba7b810)
+	NamespaceURL UUID = namespaceUuid(0x6ba7b811)
+	NamespaceOID UUID = namespaceUuid(0x6ba7b812)
+	NamespaceX500 UUID = namespaceUuid(0x6ba7b814)
 
+	generator *Generator
+)
+
+// ****************************************************
+
+func init() {
+	registerDefaultGenerator()
+}
+
+func namespaceUuid(pID uint32) UUID {
+	// nodeID is the default Namespace node
+	// 00.192.79.212.48.200
+	return &uuid{pID, 0x9dad, 0x11d1, 0x80, 0xb4, uint8(length),
+		[]byte{0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8},
+	}
+}
+
+func registerDefaultGenerator() {
 	generator = newGenerator(
-		(&spinner{Resolution:defaultSpinResolution, Timestamp: Now(), Count:0}).next,
+		(&spinner{
+			Resolution: defaultSpinResolution,
+			Timestamp:  Now(),
+			Count:      0,
+		}).next,
 		getHardwareAddress,
 		CleanHyphen)
-)
+}
 
 // Generate a new RFC4122 version 1 UUID
 // based on a 60 bit timestamp and node id
@@ -50,7 +69,8 @@ func NewV1() UUID {
 // Generate a new DCE version 2 UUID
 // based on a 60 bit timestamp and node id
 func NewV2(pDomain DCEDomain) UUID {
-	return generator.NewV2()
+	panic("Not yet implemented")
+	//return generator.NewV2()
 }
 
 // Generates a new RFC4122 version 3 UUID
@@ -70,7 +90,7 @@ func NewV3(pNs UUID, pName UniqueName) UUID {
 // A cryptographically secure random UUID.
 func NewV4() UUID {
 	o := new(array)
-	// Read random values (or pseudo-randomly) into Array type.
+	// Read random values (or pseudo-random) into array type.
 	_, err := rand.Read(o[:length])
 	if err != nil {
 		panic(err)
