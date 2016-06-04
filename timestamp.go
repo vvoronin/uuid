@@ -53,22 +53,22 @@ func Now() Timestamp {
 // Unix base time is January 1, 1970.
 // Converts time to 100 nanosecond ticks since epoch
 func Convert(pTime time.Time) Timestamp {
-	return Timestamp(pTime.UnixNano() / 100 + gregorianToUNIXOffset)
+	return Timestamp(pTime.UnixNano()/100 + gregorianToUNIXOffset)
 }
 
 // Converts UUID Timestamp to UTC time.Time
 func (o Timestamp) Time() time.Time {
-	return time.Unix(0, int64((o - gregorianToUNIXOffset) * 100)).UTC()
+	return time.Unix(0, int64((o-gregorianToUNIXOffset)*100)).UTC()
 }
 
 // Returns the timestamp as modified by the duration
 func (o Timestamp) Add(pDuration time.Duration) Timestamp {
-	return o + Timestamp(pDuration / 100)
+	return o + Timestamp(pDuration/100)
 }
 
 // Returns the timestamp as modified by the duration
 func (o Timestamp) Sub(pDuration time.Duration) Timestamp {
-	return o - Timestamp(pDuration / 100)
+	return o - Timestamp(pDuration/100)
 }
 
 // Returns the timestamp as modified by the duration

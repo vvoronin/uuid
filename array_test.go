@@ -11,32 +11,27 @@ import (
 )
 
 var (
-	array_bytes = [length]byte{
-		0xAA, 0xCF, 0xEE, 0x12,
-		0xD4, 0x00,
-		0x27, 0x23,
-		0x00,
-		0xD3,
-		0x23, 0x12, 0x4A, 0x11, 0x89, 0xFF,
-	}
-	idString = "aacfee12-d400-2723-00d3-23124a1189ff"
+
 )
 
 func TestArray_Bytes(t *testing.T) {
-	id := array(array_bytes)
-	assert.Equal(t, array_bytes[:], id.Bytes(), "Bytes should be the same")
+	id := array(uuidBytes)
+	assert.Equal(t, id[:], uuidId.Bytes(), "Bytes should be the same")
 }
 
-func TestArray_Format(t *testing.T) {
-	id := array(array_bytes)
-	assert.Equal(t, idString, id.Format(string(CleanHyphen)), "The Format given should match the output")
+func TestArray_Unmarshal(t *testing.T) {
+	id := array(uuidBytes)
+	id2 := &array{}
+	id2.Unmarshal(uuidBytes[:])
+
+	assert.Equal(t, id2.String(), id.String(), "String should be the same")
 }
 
 func TestArray_MarshalBinary(t *testing.T) {
-	id := array(array_bytes)
+	id := array(uuidBytes)
 	bytes, err := id.MarshalBinary()
 	assert.Nil(t, err, "There should be no error")
-	assert.Equal(t, array_bytes[:], bytes, "Byte should be the same")
+	assert.Equal(t, uuidBytes[:], bytes, "Byte should be the same")
 }
 
 func TestArray_Size(t *testing.T) {
@@ -45,7 +40,7 @@ func TestArray_Size(t *testing.T) {
 }
 
 func TestArray_String(t *testing.T) {
-	id := array(array_bytes)
+	id := array(uuidBytes)
 	assert.Equal(t, idString, id.String(), "The Format given should match the output")
 }
 
@@ -57,7 +52,7 @@ func TestArray_UnmarshalBinary(t *testing.T) {
 
 	assert.Equal(t, "uuid.UnmarshalBinary: invalid length", err.Error(), "Expect length error")
 
-	err = u.UnmarshalBinary(array_bytes[:])
+	err = u.UnmarshalBinary(uuidBytes[:])
 
 	assert.Nil(t, err, "There should be no error but got %s", err)
 
@@ -91,5 +86,47 @@ func TestArray_Version(t *testing.T) {
 	}
 }
 
+func TestArray_VariantBits(t *testing.T) {
+	bytes := new(array)
+	copy(bytes[:], uuidBytes[:])
 
+	for _, v := range uuidVariants {
+		for i := 0; i <= 255; i++ {
+			bytes[variantIndex] = byte(i)
+			id := createArray(bytes[:], 4, v)
+			b := id[variantIndex] >> 4
+			tVariantConstraint(v, b, id, t)
+			output(id)
+			assert.Equal(t, v, id.Variant(), "%x does not resolve to %x", id.Variant(), v)
+			output("\n")
+		}
+	}
+}
 
+func TestArray_VersionBits(t *testing.T) {
+	id := &array{}
+
+	bytes := new(array)
+	copy(bytes[:], uuidBytes[:])
+
+	for v := 0; v < 16; v++ {
+		for i := 0; i <= 255; i++ {
+			bytes[versionIndex] = byte(i)
+			id.Unmarshal(bytes[:])
+			id.setVersion(v)
+			output(id)
+			assert.Equal(t, v, id.Version(), "%x does not resolve to %x", id.Version(), v)
+			output("\n")
+		}
+	}
+}
+
+// *******************************************************
+
+func createArray(pData []byte, pVersion int, pVariant uint8) *array {
+	o := new(array)
+	o.Unmarshal(pData)
+	o.setVersion(pVersion)
+	o.setVariant(pVariant)
+	return o
+}

@@ -8,7 +8,7 @@
 //
 // The original version was from Krzysztof Kowalik <chris@nu7hat.ch>
 // Unfortunately, that version was non compliant with RFC4122.
-// I forked it but have since heavily redesigned it.
+// I have since heavily redesigned it.
 //
 // The example code in the specification was also used as reference
 // for design.
@@ -33,10 +33,10 @@ import (
 )
 
 const (
-	ReservedNCS       byte = 0x00
-	ReservedRFC4122   byte = 0x80 // or and A0 if masked with 1F
-	ReservedMicrosoft byte = 0xC0
-	ReservedFuture    byte = 0xE0
+	ReservedNCS       uint8 = 0x00
+	ReservedRFC4122   uint8 = 0x80 // or and A0 if masked with 1F
+	ReservedMicrosoft uint8 = 0xC0
+	ReservedFuture    uint8 = 0xE0
 )
 
 /*  Keep for reference of byte setup which works for user implementation
@@ -47,7 +47,7 @@ const (
 
 // UUID DCE domains.
 
-type DCEDomain byte
+type DCEDomain uint8
 
 const (
 	DomainPerson DCEDomain = iota
@@ -61,7 +61,7 @@ const (
 	// or closing bracket or any of the hyphens are optional.
 	// It is only used to extract the main bytes to create a UUID,
 	// so these imperfections are of no consequence.
-	hexPattern = `^(urn\:uuid\:)?[\{(\[]?([A-Fa-f0-9]{8})-?([A-Fa-f0-9]{4})-?([1-5][A-Fa-f0-9]{3})-?([A-Fa-f0-9]{4})-?([A-Fa-f0-9]{12})[\]\})]?$`
+	hexPattern = `^(urn\:uuid\:)?[\{\(\[]?([[:xdigit:]]{8})-?([[:xdigit:]]{4})-?([1-5][[:xdigit:]]{3})-?([[:xdigit:]]{4})-?([[:xdigit:]]{12})[\]\}\)]?$`
 )
 
 var (
@@ -103,7 +103,7 @@ type UUID interface {
 	// ReservedFuture,
 	// ReservedNCS.
 	// This may behave differently across non RFC4122 UUIDs
-	Variant() byte
+	Variant() uint8
 
 	// A UUID can be used as a Name within a namespace
 	// Is simply just a String() string, method
@@ -217,27 +217,21 @@ const (
 	GoIdFormat    Format = "[%X-%X-%x-%X%X-%x]"
 )
 
-func newGenerator(pSpinner func() Timestamp, pNode func() Node, pDefaultFormat Format) (generator *Generator) {
+func newGenerator(fNext func() Timestamp, fId func() Node, pFmt Format) (generator *Generator) {
 	generator = new(Generator)
-	generator.format = string(pDefaultFormat)
-	generator.next = pSpinner
-	generator.node = pNode
+	generator.Fmt = string(pFmt)
+	generator.Next = fNext
+	generator.Id = fId
 	return
-}
-
-// Gets the current default format pattern
-func GetFormat() string {
-	return generator.format
 }
 
 // Switches the default printing format for ALL UUID strings
 // A valid format will have 6 groups if the supplied Format does not
 func SwitchFormat(pFormat Format) {
-	form := string(pFormat)
-	if strings.Count(form, "%") != 6 {
+	if strings.Count(string(pFormat), "%") != 6 {
 		panic(errors.New("uuid.switchFormat: invalid formatting"))
 	}
-	generator.format = form
+	generator.Fmt = string(pFormat)
 }
 
 // Same as SwitchFormat but will make it uppercase
@@ -251,21 +245,21 @@ func Equal(p1 UUID, p2 UUID) bool {
 	return bytes.Equal(p1.Bytes(), p2.Bytes())
 }
 
-// Format a UUID into a human readable string which matches the given Format
+// Print a UUID into a human readable string which matches the given Format
 // Use this for one time formatting when setting the default using SwitchFormat
-// is overkill.
-func Formatter(pUUID UUID, pFormat Format) string {
-	form := string(pFormat)
-	if strings.Count(form, "%") != 6 {
-		panic(errors.New("uuid.Formatter: invalid formatting"))
+// The format must cater for each 6 UUID value groups
+func Sprintf(pFormat Format, pId UUID) string {
+	fmt := string(pFormat)
+	if strings.Count(fmt, "%") != 6 {
+		panic(errors.New("uuid.Print: invalid format"))
 	}
-	return formatter(pUUID, form)
+	return formatter(pId, fmt)
 }
 
 // ***************************************************  Helpers
 
 // Retrieves the variant from the given byte
-func variant(pVariant byte) byte {
+func variant(pVariant uint8) uint8 {
 	switch pVariant & variantGet {
 	case ReservedRFC4122, 0xA0:
 		return ReservedRFC4122
@@ -278,7 +272,7 @@ func variant(pVariant byte) byte {
 }
 
 // not strictly required
-func setVariant(pByte *byte, pVariant byte) {
+func setVariant(pByte *byte, pVariant uint8) {
 	switch pVariant {
 	case ReservedRFC4122:
 		*pByte &= variantSet
@@ -293,7 +287,7 @@ func setVariant(pByte *byte, pVariant byte) {
 }
 
 // format a UUID into a human readable string
-func formatter(pUUID UUID, pFormat string) string {
-	b := pUUID.Bytes()
-	return fmt.Sprintf(pFormat, b[0:4], b[4:6], b[6:8], b[8:9], b[9:10], b[10:pUUID.Size()])
+func formatter(pId UUID, pFormat string) string {
+	b := pId.Bytes()
+	return fmt.Sprintf(pFormat, b[0:4], b[4:6], b[6:8], b[8:9], b[9:10], b[10:pId.Size()])
 }

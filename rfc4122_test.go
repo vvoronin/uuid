@@ -6,18 +6,26 @@ package uuid
  ***************/
 
 import (
+	"github.com/stretchr/testify/assert"
 	"net/url"
 	"testing"
-	"github.com/stretchr/testify/assert"
-)
-
-var (
-	goLang Name = "https://google.com/golang.org?q=golang"
 )
 
 const (
 	generate = 10000
 )
+
+var (
+	goLang     Name = "https://google.com/golang.org?q=golang"
+	namespaces      = make(map[UUID]string)
+)
+
+func init() {
+	namespaces[NamespaceX500] = "6ba7b814-9dad-11d1-80b4-00c04fd430c8"
+	namespaces[NamespaceOID] = "6ba7b812-9dad-11d1-80b4-00c04fd430c8"
+	namespaces[NamespaceURL] = "6ba7b811-9dad-11d1-80b4-00c04fd430c8"
+	namespaces[NamespaceDNS] = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+}
 
 func TestNewV1(t *testing.T) {
 	u := NewV1()
@@ -84,7 +92,6 @@ func TestNewV5(t *testing.T) {
 	u2 := NewV5(NamespaceURL, ur)
 	assert.Equal(t, u, u2, "Expected UUIDs generated with same namespace and name to equal")
 
-
 	// Different NS same name MUST NOT be equal
 	u3 := NewV5(NamespaceDNS, ur)
 	assert.NotEqual(t, u, u3, "Expected UUIDs generated with different namespace and same name to be different")
@@ -128,17 +135,14 @@ func TestUUID_NewV5Bulk(t *testing.T) {
 	}
 }
 
-// A small test to test uniqueness across all UUIDs created
 func Test_EachIsUnique(t *testing.T) {
-	s := 1000
+	s := 1024
 	ids := make([]UUID, s)
 	for i := 0; i < s; i++ {
 		u := NewV1()
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			if Equal(ids[j], u) {
-				t.Error("Should not create the same V1 UUID", u, ids[j])
-			}
+			assert.NotEqual(t, u.Bytes(), ids[j].Bytes(), "Should not create the same V1 UUID")
 		}
 	}
 	ids = make([]UUID, s)
@@ -146,9 +150,8 @@ func Test_EachIsUnique(t *testing.T) {
 		u := NewV3(NamespaceDNS, NewName(string(i), Name(goLang)))
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			if Equal(ids[j], u) {
-				t.Error("Should not create the same V3 UUID", u, ids[j])
-			}
+			assert.NotEqual(t, u.Bytes(), ids[j].Bytes(), "Should not create the same V3 UUID")
+
 		}
 	}
 	ids = make([]UUID, s)
@@ -156,9 +159,7 @@ func Test_EachIsUnique(t *testing.T) {
 		u := NewV4()
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			if Equal(ids[j], u) {
-				t.Error("Should not create the same V4 UUID", u, ids[j])
-			}
+			assert.NotEqual(t, u.Bytes(), ids[j].Bytes(), "Should not create the same V4 UUID")
 		}
 	}
 	ids = make([]UUID, s)
@@ -166,35 +167,12 @@ func Test_EachIsUnique(t *testing.T) {
 		u := NewV5(NamespaceDNS, NewName(string(i), Name(goLang)))
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			if Equal(ids[j], u) {
-				t.Error("Should not create the same V5 UUID", u, ids[j])
-			}
+			assert.NotEqual(t, u.Bytes(), ids[j].Bytes(), "Should not create the same V5 UUID")
 		}
 	}
 }
 
-func Test_Rfc4122(t *testing.T) {
-	id, err := Parse("7d444840-9dc0-11d1-b245-5ffdce74fad2")
-
-	assert.Nil(t, err, "There should be no error")
-	assert.True(t, Equal(id, id), "The two ids should be equal")
-	assert.False(t, Equal(id, NamespaceDNS), "The two ids should not be equal")
-
-	v3 := NewV3(NamespaceDNS, Name("www.widgets.com"))
-
-	assert.Equal(t, "e902893a-9d22-3c7e-a7b8-d6e313b71d9f", v3.String(), "The strings shoud be the same")
-}
-
-var namespaces = make(map[UUID]string)
-
-func init() {
-	namespaces[NamespaceX500] = "6ba7b814-9dad-11d1-80b4-00c04fd430c8"
-	namespaces[NamespaceOID] = "6ba7b812-9dad-11d1-80b4-00c04fd430c8"
-	namespaces[NamespaceURL] = "6ba7b811-9dad-11d1-80b4-00c04fd430c8"
-	namespaces[NamespaceDNS] = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
-}
-
-func TestNameSpaceUUIDs(t *testing.T) {
+func Test_NameSpaceUUIDs(t *testing.T) {
 	for k, v := range namespaces {
 
 		arrayId, _ := Parse(v)

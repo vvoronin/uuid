@@ -16,22 +16,24 @@ import (
 	"sync"
 )
 
-// **************************************************** State
+// ****************************************************
 
 var (
 	posixUID = uint32(os.Getuid())
 	posixGID = uint32(os.Getgid())
 )
 
+// ****************************************************
+
 // Run this method before any calls to NewV1 or NewV2 to save the state to
-// YOu must implement the uuid.Saver interface and are completely responsible
+// You must implement the uuid.Saver interface and are completely responsible
 // for the non violable storage of the state
-func SetupSaver(pStateStorage Saver) {
+func RegisterSaver(pSaver Saver) {
 	generator.Do(func() {
 		defer generator.init()
 		generator.Lock()
 		defer generator.Unlock()
-		generator.Saver = pStateStorage
+		generator.Saver = pSaver
 	})
 }
 
@@ -62,7 +64,7 @@ type Store struct {
 }
 
 func (o Store) String() string {
-	return fmt.Sprint(o.Timestamp, o.Sequence, o.Node)
+	return fmt.Sprintf("Timestamp[%s]-Sequence[%d]-Node[%x]", o.Timestamp, o.Sequence, o.Node)
 }
 
 type Generator struct {
@@ -72,10 +74,10 @@ type Generator struct {
 	Saver
 	*Store
 
-	next func() Timestamp
-	node func() Node
+	Next func() Timestamp
+	Id   func() Node
 
-	format string
+	Fmt string
 }
 
 // Generate a new RFC4122 version 1 UUID
@@ -85,17 +87,17 @@ func (o *Generator) NewV1() UUID {
 
 	id := new(uuid)
 
-	id.timeLow = uint32(store.Timestamp & 0xffffffff)
-	id.timeMid = uint16((store.Timestamp >> 32) & 0xffff)
+	id.timeLow = uint32(store.Timestamp)
+	id.timeMid = uint16(store.Timestamp >> 32)
 	id.timeHiAndVersion = uint16((store.Timestamp >> 48) & 0x0fff)
-	id.timeHiAndVersion |= uint16(1 << 12)
-	id.sequenceLow = byte(store.Sequence & 0xff)
-	id.sequenceHiAndVariant = byte((store.Sequence & 0x3f00) >> 8)
+	id.timeHiAndVersion |= (1 << 12)
+	id.sequenceLow = uint8(store.Sequence)
+	id.sequenceHiAndVariant = uint8((store.Sequence & 0x3f00) >> 8)
 	id.sequenceHiAndVariant |= ReservedRFC4122
 
-	id.node = make([]byte, len(store.Node))
+	id.node = makeNode()
 
-	copy(id.node[:], store.Node)
+	copy(id.node[:], store.Node[:])
 	id.size = length
 
 	return id
@@ -146,7 +148,7 @@ func (o *Generator) read() *Store {
 
 	// Get the current time as a 60-bit count of 100-nanosecond intervals
 	// since 00:00:00.00, 15 October 1582.
-	now := o.next()
+	now := o.Next()
 
 	// If the last timestamp is later than
 	// the current timestamp, increment the clock sequence value.
@@ -178,7 +180,6 @@ func (o *Generator) init() {
 
 	if o.Saver != nil {
 		err, storage = o.Read()
-
 		if err != nil {
 			o.Saver = nil
 		}
@@ -186,10 +187,10 @@ func (o *Generator) init() {
 
 	// Get the current time as a 60-bit count of 100-nanosecond intervals
 	// since 00:00:00.00, 15 October 1582.
-	now := o.next()
+	now := o.Next()
 
 	//  Get the current node ID.
-	node := o.node()
+	node := o.Id()
 
 	// If the state was unavailable (e.g., non-existent or corrupted), or
 	// the saved node ID is different than the current node ID, generate
@@ -271,7 +272,7 @@ func getHardwareAddress() (node Node) {
 	log.Println("uuid.getHardwareAddress: address error: will generate random node id instead", err)
 
 	// TODO write test for when random
-	node = make([]byte, 6)
+	node = makeNode()
 
 	if _, err := rand.Read(node); err != nil {
 		log.Panicln("uuid.getHardwareAddress: could not get cryto random bytes", err)
@@ -282,4 +283,8 @@ func getHardwareAddress() (node Node) {
 	// Mark as randomly generated
 	node[0] |= 0x01
 	return
+}
+
+func makeNode() []byte {
+	return make([]byte, 6)
 }

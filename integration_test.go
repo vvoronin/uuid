@@ -4,57 +4,16 @@ import (
 	"fmt"
 	"github.com/twinj/uuid"
 	"github.com/twinj/uuid/savers"
-	"testing"
 	"time"
 )
-
-const (
-	print = "version %d variant %x: %s\n"
-)
-
-func Test_AllVersions(t *testing.T) {
-	Test_NewV1(nil)
-	Test_NewV3(nil)
-	Test_NewV4(nil)
-	Test_NewV5(nil)
-}
-
-func Test_NewV1(t *testing.T) {
-	u1 := uuid.NewV1()
-	fmt.Printf(print, u1.Version(), u1.Variant(), u1)
-}
-
-func Test_NewV3(t *testing.T) {
-	u, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
-	u3 := uuid.NewV3(u, uuid.Name("test"))
-	fmt.Printf(print, u3.Version(), u3.Variant(), u3)
-}
-
-func Test_NewV4(t *testing.T) {
-	u4 := uuid.NewV4()
-	fmt.Printf(print, u4.Version(), u4.Variant(), u4)
-}
-
-func Test_NewV5(t *testing.T) {
-	u5 := uuid.NewV5(uuid.NamespaceURL, uuid.Name("test"))
-	fmt.Printf(print, u5.Version(), u5.Variant(), u5)
-}
-
-func Test_Parse(t *testing.T) {
-	u, err := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
-	if err != nil {
-		fmt.Println("error:", err)
-		return
-	}
-	fmt.Println(u)
-}
 
 func Example() {
 	saver := new(savers.FileSystemSaver)
 	saver.Report = true
 	saver.Duration = time.Second * 3
+
 	// Run before any v1 or v2 UUIDs to ensure the saver takes
-	uuid.SetupSaver(saver)
+	uuid.RegisterSaver(saver)
 
 	u1 := uuid.NewV1()
 	fmt.Printf("version %d variant %x: %s\n", u1.Version(), u1.Variant(), u1)
@@ -71,14 +30,14 @@ func Example() {
 		fmt.Printf("Will never happen")
 	}
 
-	fmt.Printf(uuid.Formatter(u5, uuid.CurlyHyphen))
+	fmt.Print(uuid.Sprintf(uuid.CurlyHyphen, u5))
 
 	uuid.SwitchFormat(uuid.BracketHyphen)
 }
 
 func ExampleNewV1() {
 	u1 := uuid.NewV1()
-	fmt.Printf(print, u1.Version(), u1.Variant(), u1)
+	fmt.Printf("version %d variant %x: %s\n", u1.Version(), u1.Variant(), u1)
 }
 
 func ExampleNewV3() {
@@ -105,20 +64,20 @@ func ExampleParse() {
 	fmt.Println(u)
 }
 
-func ExampleSetupSaver() {
+func ExampleRegisterSaver() {
 	saver := new(savers.FileSystemSaver)
 	saver.Report = true
 	saver.Duration = 3 * time.Second
 
 	// Run before any v1 or v2 UUIDs to ensure the saver takes
-	uuid.SetupSaver(saver)
+	uuid.RegisterSaver(saver)
 	u1 := uuid.NewV1()
 	fmt.Printf("version %d variant %x: %s\n", u1.Version(), u1.Variant(), u1)
 }
 
-func ExampleFormatter() {
+func ExampleSprintf() {
 	u4 := uuid.NewV4()
-	fmt.Printf(uuid.Formatter(u4, uuid.CurlyHyphen))
+	fmt.Print(uuid.Sprintf(uuid.CurlyHyphen, u4))
 }
 
 func ExampleSwitchFormat() {

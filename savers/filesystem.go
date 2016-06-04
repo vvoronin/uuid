@@ -66,10 +66,7 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 		if os.IsNotExist(err) {
 			dir, file := path.Split(o.Path)
 			if dir == "" || dir == "/" {
-				dir, err = os.Getwd()
-				if err != nil {
-					dir = os.TempDir()
-				}
+				dir = os.TempDir()
 			}
 			o.Path = path.Join(dir, file)
 
@@ -84,6 +81,7 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 			}
 
 			log.Println("uuid.FileSystemSaver created", o.Path)
+
 			// If new encode blank store
 			o.encode(&uuid.Store{})
 		} else {
