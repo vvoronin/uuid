@@ -80,55 +80,50 @@ type Generator struct {
 	Fmt string
 }
 
-// Generate a new RFC4122 version 1 UUID
+// NewV1 generates a new RFC4122 version 1 UUID
 // based on a 60 bit timestamp and node id
 func (o *Generator) NewV1() UUID {
 	store := o.read()
 
 	id := new(uuid)
-
 	id.timeLow = uint32(store.Timestamp)
-	id.timeMid = uint16(store.Timestamp >> 32)
-	id.timeHiAndVersion = uint16((store.Timestamp >> 48) & 0x0fff)
-	id.timeHiAndVersion |= (1 << 12)
-	id.sequenceLow = uint8(store.Sequence)
-	id.sequenceHiAndVariant = uint8((store.Sequence & 0x3f00) >> 8)
-	id.sequenceHiAndVariant |= ReservedRFC4122
-
-	id.node = make([]byte, 6)
-
-	copy(id.node[:], store.Node[:])
-	id.size = length
-
-	return id
+	return makeUuid(id, store, uint8(store.Sequence), 1)
 }
 
-// Generate a new DCE version 2 UUID
-// based on a 60 bit timestamp and node id
-func (o *Generator) NewV2() UUID {
-	//store := o.read()
+// NewV2 generates a new DCE version 2 UUID
+// based on a 60 bit timestamp, node id and POSIX UID or GUID
+func (o *Generator) NewV2(pDomain DCEDomain) UUID {
+	store := o.read()
 
 	id := new(uuid)
 
-	//switch pDomain {
-	//	case DomainPerson:
-	//		binary.BigEndian.PutUint32(u[0:], posixUID)
-	//	case DomainGroup:
-	//	binary.BigEndian.PutUint32(u[0:], posixGID)
-	//}
-	//
-	//o.timeLow = uint32(now & 0xffffffff)
-	//o.timeMid = uint16((now >> 32) & 0xffff)
-	//o.timeHiAndVersion = uint16((now >> 48) & 0x0fff)
-	//o.timeHiAndVersion |= uint16(1 << 12)
-	//o.sequenceLow = byte(sequence & 0xff)
-	//o.sequenceHiAndVariant = byte((sequence & 0x3f00) >> 8)
-	//o.sequenceHiAndVariant |= ReservedRFC4122
-	//o.node = make([]byte, len(node))
-	//copy(o.node[:], node)
-	//o.size = length
+	switch pDomain {
+	case DomainPerson:
+		id.timeLow = posixUID
+	case DomainGroup:
+		id.timeLow = posixGID
+	}
 
-	return id
+	return makeUuid(id, store, uint8(pDomain), 2)
+}
+
+func makeUuid(pId *uuid, pStore *Store, pSequenceLow uint8, pVersion uint16) UUID {
+
+	pId.timeMid = uint16(pStore.Timestamp >> 32)
+	pId.timeHiAndVersion = uint16((pStore.Timestamp >> 48) & 0x0fff)
+	pId.timeHiAndVersion |= (pVersion << 12)
+
+	pId.sequenceHiAndVariant = uint8((pStore.Sequence & 0x3f00) >> 8)
+	pId.sequenceHiAndVariant |= ReservedRFC4122
+
+	pId.sequenceLow = pSequenceLow
+
+	pId.node = make([]byte, 6)
+
+	copy(pId.node[:], pStore.Node[:])
+	pId.size = length
+
+	return pId
 }
 
 func (o *Generator) read() *Store {

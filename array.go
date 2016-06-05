@@ -49,9 +49,9 @@ func (o array) String() string {
 
 // ****************************************************
 
-func (o *array) setVersion(pVersion int) {
+func (o *array) setVersion(pVersion uint8) {
 	o[versionIndex] &= 0x0f
-	o[versionIndex] |= byte(pVersion) << 4
+	o[versionIndex] |= pVersion << 4
 }
 
 func (o *array) setVariant(pVariant uint8) {

@@ -81,9 +81,9 @@ func (o uuid) String() string {
 
 // Sets the four most significant bits (bits 12 through 15) of the
 // timeHiAndVersion field to the 4-bit version number.
-func (o *uuid) setVersion(pVersion int) {
+func (o *uuid) setVersion(pVersion uint16) {
 	o.timeHiAndVersion &= 0x0fff
-	o.timeHiAndVersion |= uint16(pVersion) << 12
+	o.timeHiAndVersion |= pVersion << 12
 }
 
 func (o *uuid) setVariant(pVariant uint8) {

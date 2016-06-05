@@ -112,7 +112,7 @@ func TestUuid_Version(t *testing.T) {
 		for i := 0; i <= 255; i++ {
 			bytes[versionIndex] = byte(i)
 			id.Unmarshal(bytes[:])
-			id.setVersion(v)
+			id.setVersion(uint16(v))
 			output(id)
 			assert.Equal(t, v, id.Version(), "%x does not resolve to %x", id.Version(), v)
 			output("\n")
@@ -138,7 +138,7 @@ func didUuidSetVariantPanic(bytes []byte) bool {
 
 // *******************************************************
 
-func createUuid(pData []byte, pVersion int, pVariant uint8) *uuid {
+func createUuid(pData []byte, pVersion uint16, pVariant uint8) *uuid {
 	o := &uuid{size: length, node: make([]byte, 6)}
 	o.Unmarshal(pData)
 	o.setVersion(pVersion)

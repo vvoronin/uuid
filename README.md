@@ -6,7 +6,8 @@ Go UUID implementation
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/twinj/uuid?branch=master&svg=true)](https://ci.appveyor.com/project/twinj/uuid)
 [![Build Status](https://travis-ci.org/twinj/uuid.png?branch=master)](https://travis-ci.org/twinj/uuid)
 
-**This project is currently pre 1.0.**
+**This project is currently pre 1.0.0**
+
 
 This package provides RFC 4122 and DCE 1.1 compliant UUIDs.
 It will generate the following:
@@ -44,7 +45,7 @@ Any supported version of Go.
 
 # Recent Changes
 
-* Improved builds and tests
+* Improved builds and 100% test coverage
 * Library overhaul to cleanup exports that are not useful for a user
 * Improved file system Saver interface, breaking changes.
     To use a saver make sure you pass it in via the uuid.SetupSaver(Saver) method before a UUID is generated, so as to take affect.

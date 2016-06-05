@@ -66,11 +66,10 @@ func NewV1() UUID {
 	return generator.NewV1()
 }
 
-// Generate a new DCE version 2 UUID
-// based on a 60 bit timestamp and node id
+// Generate a new DCE Security version UUID
+// based on a 60 bit timestamp, node id and POSIX UID or GUID
 func NewV2(pDomain DCEDomain) UUID {
-	panic("Not yet implemented")
-	//return generator.NewV2()
+	return generator.NewV2(pDomain)
 }
 
 // Generates a new RFC4122 version 3 UUID

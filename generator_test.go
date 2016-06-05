@@ -13,8 +13,6 @@ import (
 )
 
 func TestGenerator_NewV1(t *testing.T) {
-	registerDefaultGenerator()
-
 	u := NewV1()
 
 	assert.Equal(t, 1, u.Version(), "Expected correct version")
@@ -23,7 +21,19 @@ func TestGenerator_NewV1(t *testing.T) {
 }
 
 func TestGenerator_NewV2(t *testing.T) {
+	u := NewV2(DomainGroup)
 
+	assert.Equal(t, 2, u.Version(), "Expected correct version")
+	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
+	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
+	assert.Equal(t, uint8(DomainGroup), u.Bytes()[9], "Expected string representation to be valid")
+
+	u = NewV2(DomainPerson)
+
+	assert.Equal(t, 2, u.Version(), "Expected correct version")
+	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
+	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
+	assert.Equal(t, uint8(DomainPerson), u.Bytes()[9], "Expected string representation to be valid")
 }
 
 type save struct {

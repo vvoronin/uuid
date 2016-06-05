@@ -39,14 +39,6 @@ const (
 	ReservedFuture    uint8 = 0xE0
 )
 
-/*  Keep for reference of byte setup which works for user implementation
-const (
-	takeBack byte = 0xF0
-)
-*/
-
-// UUID DCE domains.
-
 type DCEDomain uint8
 
 const (
@@ -74,7 +66,6 @@ type Sequence uint16
 // ******************************************************  UUID
 
 // Interface for all UUIDs
-// Each implementation must also implement the UniqueName interface
 type UUID interface {
 	encoding.BinaryMarshaler
 	encoding.BinaryUnmarshaler
@@ -258,7 +249,6 @@ func Sprintf(pFormat Format, pId UUID) string {
 
 // ***************************************************  Helpers
 
-// Retrieves the variant from the given byte
 func variant(pVariant uint8) uint8 {
 	switch pVariant & variantGet {
 	case ReservedRFC4122, 0xA0:
@@ -271,7 +261,6 @@ func variant(pVariant uint8) uint8 {
 	return ReservedNCS
 }
 
-// not strictly required
 func setVariant(pByte *byte, pVariant uint8) {
 	switch pVariant {
 	case ReservedRFC4122:
@@ -286,7 +275,6 @@ func setVariant(pByte *byte, pVariant uint8) {
 	*pByte |= pVariant
 }
 
-// format a UUID into a human readable string
 func formatter(pId UUID, pFormat string) string {
 	b := pId.Bytes()
 	return fmt.Sprintf(pFormat, b[0:4], b[4:6], b[6:8], b[8:9], b[9:10], b[10:pId.Size()])

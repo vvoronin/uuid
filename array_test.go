@@ -120,7 +120,7 @@ func TestArray_Version(t *testing.T) {
 		for i := 0; i <= 255; i++ {
 			bytes[versionIndex] = byte(i)
 			id.Unmarshal(bytes[:])
-			id.setVersion(v)
+			id.setVersion(uint8(v))
 			output(id)
 			assert.Equal(t, v, id.Version(), "%x does not resolve to %x", id.Version(), v)
 			output("\n")
@@ -130,7 +130,7 @@ func TestArray_Version(t *testing.T) {
 
 // *******************************************************
 
-func createArray(pData []byte, pVersion int, pVariant uint8) *array {
+func createArray(pData []byte, pVersion uint8, pVariant uint8) *array {
 	o := new(array)
 	o.Unmarshal(pData)
 	o.setVersion(pVersion)
