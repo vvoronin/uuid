@@ -38,91 +38,65 @@ type FileSystemSaver struct {
 func (o *FileSystemSaver) Save(pStore *uuid.Store) {
 
 	if pStore.Timestamp >= o.Timestamp {
-		err := o.open()
-		defer o.file.Close()
+		err := o.openAndDo(o.encode, pStore)
 		if err == nil {
-			// do the save
-			err = o.encode(pStore)
-			if err == nil {
-				if o.Report {
-					log.Printf("UUID Saved State Storage: %s", pStore)
-				}
+			if o.Report {
+				log.Printf("UUID Saved State Storage: %s", pStore)
 			}
-		}
-		if err != nil {
-			log.Println("uuid.FileSystemSaver.Save:", err)
 		}
 		o.Timestamp = pStore.Add(o.Duration)
 	}
 }
 
 func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
-	gob.Register(uuid.Store{})
-
-	err = o.open()
-	defer o.file.Close()
-
-	if err != nil {
-		if os.IsNotExist(err) {
-			dir, file := path.Split(o.Path)
-			if dir == "" || dir == "/" {
-				dir = os.TempDir()
-			}
-			o.Path = path.Join(dir, file)
-
-			err = os.MkdirAll(dir, os.ModeDir|0755)
-			if err != nil {
-				goto error
-			}
-
-			o.file, err = os.Create(o.Path)
-			if err != nil {
-				goto error
-			}
-
-			log.Println("uuid.FileSystemSaver created", o.Path)
-
-			// If new encode blank store
-			o.encode(&uuid.Store{})
-		} else {
-			goto error
-		}
-	}
-	return o.decode()
-
-error:
-	log.Println("uuid.FileSystemSaver.Read: error will autogenerate", err)
-	return
-}
-
-func (o *FileSystemSaver) reset() {
-	o.file.Seek(0, 0)
-}
-
-func (o *FileSystemSaver) open() (err error) {
-	o.file, err = os.OpenFile(o.Path, os.O_RDWR, os.ModeExclusive)
-	return
-}
-
-func (o *FileSystemSaver) encode(pStore *uuid.Store) error {
-	// ensure reader state is ready for use
-	enc := gob.NewEncoder(o.file)
-	err := enc.Encode(&pStore)
-	if err != nil {
-		log.Println("uuid.FileSystemSaver.encode error:", err)
-	}
-	return err
-}
-
-func (o *FileSystemSaver) decode() (err error, store uuid.Store) {
-	// ensure reader state is ready for use
-	o.reset()
-	dec := gob.NewDecoder(o.file)
 	store = uuid.Store{}
-	err = dec.Decode(&store)
-	if err != nil {
-		log.Println("uuid.FileSystemSaver.decode error:", err)
+	gob.Register(&uuid.Store{})
+
+	if _, err = os.Stat(o.Path); os.IsNotExist(err) {
+		dir, file := path.Split(o.Path)
+		if dir == "" || dir == "/" {
+			dir = os.TempDir()
+		}
+		o.Path = path.Join(dir, file)
+
+		err = os.MkdirAll(dir, os.ModeDir|0755)
+		if err == nil {
+			// If new encode blank store
+			err = o.openAndDo(o.encode, &store)
+			if err == nil {
+				log.Println("uuid.FileSystemSaver created", o.Path)
+			}
+		}
+		log.Println("uuid.FileSystemSaver.Read: error will autogenerate", err)
 		return
 	}
+
+	o.openAndDo(o.decode, &store)
 	return
+}
+
+func (o *FileSystemSaver) openAndDo(fDo func(*uuid.Store), pStore *uuid.Store) (err error) {
+	o.file, err = os.OpenFile(o.Path, os.O_RDWR|os.O_CREATE, os.ModeExclusive)
+	defer o.file.Close()
+	if err == nil {
+		fDo(pStore)
+	} else {
+		log.Println("uuid.FileSystemSaver.openAndDo error:", err)
+	}
+	return
+}
+
+func (o *FileSystemSaver) encode(pStore *uuid.Store) {
+	// ensure reader state is ready for use
+	enc := gob.NewEncoder(o.file)
+	// swallow error for encode as its only for cyclic pointers
+	enc.Encode(pStore)
+}
+
+func (o *FileSystemSaver) decode(pStore *uuid.Store) {
+	// ensure reader state is ready for use
+	o.file.Seek(0, 0)
+	dec := gob.NewDecoder(o.file)
+	// swallow error for encode as its only for cyclic pointers
+	dec.Decode(pStore)
 }

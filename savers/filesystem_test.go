@@ -10,6 +10,7 @@ import (
 	"github.com/twinj/uuid"
 	"os"
 	"path"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -18,13 +19,13 @@ const (
 	saveDuration = 3
 )
 
-func SetupFileSystemStateSaver(pPath string) *FileSystemSaver {
-	return &FileSystemSaver{Path: pPath, Report: true, Duration: saveDuration * time.Second}
+func SetupFileSystemStateSaver(pPath string, pReport bool) *FileSystemSaver {
+	return &FileSystemSaver{Path: pPath, Report: pReport, Duration: saveDuration * time.Second}
 }
 
 // Tests that the schedule is run on the timeDuration
 func TestFileSystemSaver_SaveSchedule(t *testing.T) {
-	saver := SetupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"))
+	saver := SetupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-"+uuid.NewV4().String()+".gob"), true)
 
 	// Read is always called first
 	saver.Read()
@@ -57,28 +58,64 @@ func TestFileSystemSaver_Read(t *testing.T) {
 
 	for i := range paths {
 
-		saver := SetupFileSystemStateSaver(paths[i])
-
+		saver := SetupFileSystemStateSaver(paths[i], true)
 		err, _ := saver.Read()
 
-		assert.Nil(t, err, "Path failure %d %s", i, paths[i])
+		assert.NoError(t, err, "Path failure %d %s", i, paths[i])
 	}
+
+	// Empty path
+	saver := SetupFileSystemStateSaver("", true)
+	err, _ := saver.Read()
+
+	assert.Error(t, err, "Expect path failure")
+
+	// No permissions
+	if runtime.GOOS == "windows" {
+		saver := SetupFileSystemStateSaver("C:/windows/generator-delete.gob", true)
+		err, _ := saver.Read()
+		assert.Error(t, err, "Expect path failure")
+
+		saver = SetupFileSystemStateSaver(path.Join("C:/windows", uuid.NewV4().String(), "generator-delete.gob"), true)
+		err, _ = saver.Read()
+		assert.Error(t, err, "Expect path failure")
+	}
+
+	// No permissions
+	if runtime.GOOS == "linux" {
+		saver := SetupFileSystemStateSaver("/root/generator-delete.gob", true)
+		err, _ := saver.Read()
+		assert.Error(t, err, "Expect path failure")
+
+		saver = SetupFileSystemStateSaver(path.Join("/root", uuid.NewV4().String(), "generator-delete.gob"), true)
+		err, _ = saver.Read()
+		assert.Error(t, err, "Expect path failure")
+	}
+
 }
 
 func TestFileSystemSaver_Save(t *testing.T) {
 
-	saver := SetupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"))
+	saver := SetupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-"+uuid.NewV4().String()+".gob"), true)
 
 	// Read is always called first
 	saver.Read()
 
 	store := &uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
 	saver.Save(store)
+
+	saver = SetupFileSystemStateSaver(path.Join("/generator-"+uuid.NewV4().String()+".gob"), false)
+
+	// Read is always called first
+	saver.Read()
+
+	store = &uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
+	saver.Save(store)
 }
 
 func TestFileSystemSaver_SaveAndRead(t *testing.T) {
 
-	saver := SetupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-" + uuid.NewV4().String() + ".gob"))
+	saver := SetupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-"+uuid.NewV4().String()+".gob"), true)
 
 	// Read is always called first
 	saver.Read()
