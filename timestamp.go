@@ -110,24 +110,21 @@ type spinner struct {
 }
 
 func (o *spinner) next() Timestamp {
-	var now Timestamp
 	for {
-		now = Now()
-
+		now := Now()
 		// if clock reading changed since last UUID generated
-		if o.Timestamp != now {
-			// reset count of UUIDs with this timestamp
-			o.Count = 0
-			o.Timestamp = now
-			break
-		}
-		if o.Count < o.Resolution {
+		if o.Timestamp == now {
 			o.Count++
+			if o.Count == o.Resolution {
+				continue
+			}
 			break
-
 		}
-		// going too fast for the clock wait
+
+		// reset count of UUIDs with this timestamp
+		o.Count = 0
+		o.Timestamp = now
+		break
 	}
-	// add the count of UUIDs to low order bits of the clock reading
-	return now + Timestamp(o.Count)
+	return o.Timestamp + Timestamp(o.Count)
 }

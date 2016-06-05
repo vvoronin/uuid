@@ -18,22 +18,41 @@ func TestEpoch(t *testing.T) {
 	assert.True(t, gregorianToUNIXOffset == 122192928000000000)
 }
 
-func TestTimestampSize(t *testing.T) {
+func TestNow(t *testing.T) {
 	assert.True(t, Now() > gregorianToUNIXOffset)
 }
 
-func TestNowToTime(t *testing.T) {
+func TestTimestamp_Add(t *testing.T) {
+	now := Now()
+	assert.True(t, now.Add(time.Second) == now+Timestamp((time.Second/100)), "The times should be equal")
+}
+
+func TestTimestamp_String(t *testing.T) {
+	now := Now()
+	nowTime := now.Time()
+	assert.Equal(t, now.String(), nowTime.String(), "The time strings should be equal")
+}
+
+func TestTimestamp_Sub(t *testing.T) {
+	now := Now()
+	assert.True(t, now.Sub(time.Second) == now-Timestamp((time.Second/100)), "The times should be equal")
+}
+
+func TestTimestamp_Time(t *testing.T) {
+
+	assert.True(t, Now().Time().Location() == time.UTC)
+
+}
+
+func TestConvert(t *testing.T) {
 	now := time.Now()
 	nano := now.UnixNano()
 	convertedNano := Convert(now).Time().UnixNano()
 	assert.True(t, nano/100*100 == convertedNano, "Times do not match %d %d", nano, convertedNano)
+
 }
 
-func TestTimestampToTimeShouldBeUTC(t *testing.T) {
-	assert.True(t, Now().Time().Location() == time.UTC)
-}
-
-func TestDuplicateTimestampsSingleRoutine(t *testing.T) {
+func TestSpinnerNext(t *testing.T) {
 	size := defaultSpinResolution * 10
 
 	spin := spinner{}
@@ -53,18 +72,14 @@ func TestDuplicateTimestampsSingleRoutine(t *testing.T) {
 			assert.NotEqual(t, "Timestamps should never be equal", times[j], times[k])
 		}
 	}
-}
 
-// Tests that the schedule saves properly when uuid are called in go routines
-func TestDuplicateTimestampsMultipleRoutine(t *testing.T) {
-
-	size := defaultSpinResolution * 10
+	size = defaultSpinResolution * 10
 	waitSize := 3
 
-	spin := spinner{}
+	spin = spinner{}
 	spin.Resolution = defaultSpinResolution
 
-	times := make([]Timestamp, size)
+	times = make([]Timestamp, size)
 
 	var wg sync.WaitGroup
 	wg.Add(waitSize)
@@ -98,5 +113,4 @@ func TestDuplicateTimestampsMultipleRoutine(t *testing.T) {
 			assert.NotEqual(t, "Timestamps should never be equal", times[j], times[k])
 		}
 	}
-
 }

@@ -85,9 +85,19 @@ type Generator struct {
 func (o *Generator) NewV1() UUID {
 	store := o.read()
 
-	id := new(uuid)
-	id.timeLow = uint32(store.Timestamp)
-	return makeUuid(id, store, uint8(store.Sequence), 1)
+	id := new(array)
+
+	binary.BigEndian.PutUint32(id[:], uint32(store.Timestamp))
+	binary.BigEndian.PutUint16(id[4:], uint16(store.Timestamp>>32))
+	binary.BigEndian.PutUint16(id[6:], uint16(store.Timestamp>>48)&0x0fff)
+	binary.BigEndian.PutUint16(id[8:], uint16(store.Sequence))
+
+	copy(id[10:], store.Node[:])
+
+	id.setVersion(1)
+	id.setRFC4122Variant()
+
+	return id
 }
 
 // NewV2 generates a new DCE version 2 UUID
@@ -121,6 +131,7 @@ func makeUuid(pId *uuid, pStore *Store, pSequenceLow uint8, pVersion uint16) UUI
 	pId.node = make([]byte, 6)
 
 	copy(pId.node[:], pStore.Node[:])
+
 	pId.size = length
 
 	return pId

@@ -17,7 +17,7 @@ import (
 var (
 	uuid_goLang Name = "https://google.com/golang.org?q=golang"
 
-	printer bool = false
+	printer bool = true
 
 	uuidBytes = [length]byte{
 		0xaa, 0xcf, 0xee, 0x12,
@@ -140,29 +140,6 @@ const (
 	bracketHyphenHexPattern = `^\(` + hyphen + `\)$`
 )
 
-func TestFormat(t *testing.T) {
-	ids := []UUID{NewV4(), NewV1()}
-	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen, GoIdFormat}
-	patterns := []string{curlyHyphenHexPattern, cleanHexPattern, curlyHexPattern, bracketHexPattern, cleanHyphenHexPattern, bracketHyphenHexPattern, hyphen}
-
-	// Reset default
-	SwitchFormat(CleanHyphen)
-
-	for _, u := range ids {
-		for i := range formats {
-			SwitchFormatUpperCase(formats[i])
-			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(u.String()), "Uppercase format %s must compile pattern %s", formats[i], patterns[i])
-
-			SwitchFormat(formats[i])
-			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(u.String()), "Format %s must compile pattern %s", formats[i], patterns[i])
-			outputLn(u)
-		}
-	}
-
-	// Reset default
-	SwitchFormat(CleanHyphen)
-}
-
 func TestSwitchFormat(t *testing.T) {
 	ids := []UUID{NewV4(), NewV1()}
 	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen, GoIdFormat}
@@ -173,9 +150,6 @@ func TestSwitchFormat(t *testing.T) {
 
 	for _, u := range ids {
 		for i := range formats {
-			SwitchFormatUpperCase(formats[i])
-			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(u.String()), "Uppercase format %s must compile pattern %s", formats[i], patterns[i])
-
 			SwitchFormat(formats[i])
 			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(u.String()), "Format %s must compile pattern %s", formats[i], patterns[i])
 			outputLn(u)

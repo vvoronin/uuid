@@ -71,7 +71,7 @@ func TestArray_Variant(t *testing.T) {
 		assert.NotEqual(t, 0, uuidId.Variant(), "The variant should be non zero")
 	}
 
-	bytes := new(array)
+	bytes := array{}
 	copy(bytes[:], uuidBytes[:])
 
 	for _, v := range uuidVariants {
@@ -79,7 +79,7 @@ func TestArray_Variant(t *testing.T) {
 			bytes[variantIndex] = byte(i)
 			id := createArray(bytes[:], 4, v)
 			b := id[variantIndex] >> 4
-			tVariantConstraint(v, b, id, t)
+			tVariantConstraint(v, b, &id, t)
 			output(id)
 			assert.Equal(t, v, id.Variant(), "%x does not resolve to %x", id.Variant(), v)
 			output("\n")
@@ -113,7 +113,7 @@ func TestArray_Version(t *testing.T) {
 
 	id := &array{}
 
-	bytes := new(array)
+	bytes := array{}
 	copy(bytes[:], uuidBytes[:])
 
 	for v := 0; v < 16; v++ {
@@ -130,8 +130,8 @@ func TestArray_Version(t *testing.T) {
 
 // *******************************************************
 
-func createArray(pData []byte, pVersion uint8, pVariant uint8) *array {
-	o := new(array)
+func createArray(pData []byte, pVersion uint8, pVariant uint8) array {
+	o := array{}
 	o.Unmarshal(pData)
 	o.setVersion(pVersion)
 	o.setVariant(pVariant)

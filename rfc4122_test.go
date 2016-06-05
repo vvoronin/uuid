@@ -6,6 +6,7 @@ package uuid
  ***************/
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"net/url"
 	"testing"
@@ -113,7 +114,10 @@ func TestNewV5(t *testing.T) {
 
 func TestUUID_NewV1Bulk(t *testing.T) {
 	for i := 0; i < generate; i++ {
-		NewV1()
+		id := NewV1()
+
+		fmt.Println(id)
+		fmt.Println(formatter(id, string(CleanHyphen)))
 	}
 }
 
@@ -125,7 +129,7 @@ func TestUUID_NewV3Bulk(t *testing.T) {
 
 func TestUUID_NewV4Bulk(t *testing.T) {
 	for i := 0; i < generate; i++ {
-		NewV4()
+		fmt.Println(NewV4())
 	}
 }
 
@@ -136,13 +140,21 @@ func TestUUID_NewV5Bulk(t *testing.T) {
 }
 
 func Test_EachIsUnique(t *testing.T) {
-	s := 1024
+	s := defaultSpinResolution
 	ids := make([]UUID, s)
 	for i := 0; i < s; i++ {
 		u := NewV1()
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			assert.NotEqual(t, u.Bytes(), ids[j].Bytes(), "Should not create the same V1 UUID")
+			assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V1 UUID")
+		}
+	}
+	ids = make([]UUID, s)
+	for i := 0; i < s; i++ {
+		u := NewV2(DomainGroup)
+		ids[i] = u
+		for j := 0; j < i; j++ {
+			assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V1 UUID")
 		}
 	}
 	ids = make([]UUID, s)
@@ -150,7 +162,7 @@ func Test_EachIsUnique(t *testing.T) {
 		u := NewV3(NamespaceDNS, NewName(string(i), Name(goLang)))
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			assert.NotEqual(t, u.Bytes(), ids[j].Bytes(), "Should not create the same V3 UUID")
+			assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V3 UUID")
 
 		}
 	}
@@ -159,7 +171,7 @@ func Test_EachIsUnique(t *testing.T) {
 		u := NewV4()
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			assert.NotEqual(t, u.Bytes(), ids[j].Bytes(), "Should not create the same V4 UUID")
+			assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V4 UUID")
 		}
 	}
 	ids = make([]UUID, s)
@@ -167,7 +179,7 @@ func Test_EachIsUnique(t *testing.T) {
 		u := NewV5(NamespaceDNS, NewName(string(i), Name(goLang)))
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			assert.NotEqual(t, u.Bytes(), ids[j].Bytes(), "Should not create the same V5 UUID")
+			assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V5 UUID")
 		}
 	}
 }

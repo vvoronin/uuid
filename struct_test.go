@@ -76,7 +76,7 @@ func TestUuid_Variant(t *testing.T) {
 		assert.NotEqual(t, 0, newId.Variant(), "The variant should be non zero")
 	}
 
-	bytes := new(array)
+	bytes := array{}
 	copy(bytes[:], uuidBytes[:])
 
 	for _, v := range uuidVariants {
@@ -84,7 +84,7 @@ func TestUuid_Variant(t *testing.T) {
 			bytes[variantIndex] = byte(i)
 			id := createUuid(bytes[:], 4, v)
 			b := id.sequenceHiAndVariant >> 4
-			tVariantConstraint(v, b, id, t)
+			tVariantConstraint(v, b, &id, t)
 			output(id)
 			assert.Equal(t, v, id.Variant(), "%x does not resolve to %x", id.Variant(), v)
 			output("\n")
@@ -105,7 +105,7 @@ func TestUuid_Version(t *testing.T) {
 
 	id := &uuid{size: length, node: make([]byte, 6)}
 
-	bytes := new(array)
+	bytes := array{}
 	copy(bytes[:], uuidBytes[:])
 
 	for v := 0; v < 16; v++ {
@@ -138,8 +138,8 @@ func didUuidSetVariantPanic(bytes []byte) bool {
 
 // *******************************************************
 
-func createUuid(pData []byte, pVersion uint16, pVariant uint8) *uuid {
-	o := &uuid{size: length, node: make([]byte, 6)}
+func createUuid(pData []byte, pVersion uint16, pVariant uint8) uuid {
+	o := uuid{size: length, node: make([]byte, 6)}
 	o.Unmarshal(pData)
 	o.setVersion(pVersion)
 	o.setVariant(pVariant)

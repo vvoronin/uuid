@@ -13,7 +13,7 @@
 // The example code in the specification was also used as reference
 // for design.
 //
-// Copyright (C) 2014 twinj@github.com  2014 MIT style licence
+// Copyright (C) 2016 twinj@github.com  2014 MIT style licence
 package uuid
 
 /****************
@@ -232,7 +232,7 @@ func SwitchFormatUpperCase(pFormat Format) {
 }
 
 // Compares whether each UUID is the same
-func Equal(p1 UUID, p2 UUID) bool {
+func Equal(p1, p2 UUID) bool {
 	return bytes.Equal(p1.Bytes(), p2.Bytes())
 }
 
