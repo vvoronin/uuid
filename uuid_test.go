@@ -270,18 +270,6 @@ func TestUUID_Sum(t *testing.T) {
 	output(u.Bytes())
 }
 
-func BenchmarkUUID_Parse(b *testing.B) {
-	s := "f3593cff-ee92-40df-4086-87825b523f13"
-	for i := 0; i < b.N; i++ {
-		_, err := Parse(s)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-	b.StopTimer()
-	b.ReportAllocs()
-}
-
 // *******************************************************
 
 func tVariantConstraint(v byte, b byte, o UUID, t *testing.T) {
