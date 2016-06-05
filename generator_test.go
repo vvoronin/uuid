@@ -111,6 +111,66 @@ func TestGeneratorInit(t *testing.T) {
 	assert.NotEqual(t, Sequence(2), generator.Sequence, "Sequence should not be same as storage")
 	assert.NotEqual(t, Sequence(3), generator.Sequence, "Sequence should not be incremented but be random")
 	assert.Equal(t, generator.Node, node, generator.Sequence, "Node should be equal")
+
+	registerDefaultGenerator()
+}
+
+func TestGeneratorRead(t *testing.T) {
+	// A new time that is older than stored time should cause the sequence to increment
+	now := Now()
+	i := 0
+
+	timestamps := []Timestamp{
+		now.Sub(time.Second),
+		now.Sub(time.Second * 2),
+	}
+
+	generator = newGenerator(
+		func() Timestamp {
+			return timestamps[i]
+		},
+		func() Node {
+			return []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb}
+		},
+		CleanHyphen)
+
+	storageStamp := registerSaver(now.Add(time.Second), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+
+	i++
+
+	store := generator.read()
+
+	assert.True(t, store.Sequence != 0, "Should not return an empty store")
+	assert.True(t, store.Timestamp != 0, "Should not return an empty store")
+	assert.NotEmpty(t, store.Node, "Should not return an empty store")
+
+	assert.True(t, store.Timestamp < storageStamp, "Increment sequence when old timestamp newer than new")
+	assert.Equal(t, Sequence(4), store.Sequence, "Successfull read should have incremented sequence")
+
+	// A new time that is older than stored time should cause the sequence to increment
+	now, node := registerTestGenerator(Now().Sub(time.Second), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+	storageStamp = registerSaver(now.Add(time.Second), node)
+
+	store = generator.read()
+
+	assert.NotEqual(t, 0, store.Sequence, "Should return an empty store")
+	assert.NotEmpty(t, store.Node, "Should not return an empty store")
+
+	// A new time that is older than stored time should cause the sequence to increment
+	registerTestGenerator(Now().Sub(time.Second), nil)
+	storageStamp = registerSaver(now.Add(time.Second), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+
+	store = generator.read()
+	assert.NotEmpty(t, store.Node, "Should not return an empty store")
+	assert.NotEqual(t, []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb}, store.Node, "Should not return an empty store")
+
+	registerDefaultGenerator()
+
+}
+
+func TestGeneratorSave(t *testing.T) {
+	registerTestGenerator(Now(), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+	generator.save()
 	registerDefaultGenerator()
 }
 
@@ -120,7 +180,7 @@ func TestStore_String(t *testing.T) {
 }
 
 func TestGetHardwareAddress(t *testing.T) {
-	addr := getHardwareAddress()
+	addr := findFirstHardwareAddress()
 	assert.NotEmpty(t, addr, "There should be a node id")
 }
 

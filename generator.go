@@ -95,7 +95,7 @@ func (o *Generator) NewV1() UUID {
 	id.sequenceHiAndVariant = uint8((store.Sequence & 0x3f00) >> 8)
 	id.sequenceHiAndVariant |= ReservedRFC4122
 
-	id.node = makeNode()
+	id.node = make([]byte, 6)
 
 	copy(id.node[:], store.Node[:])
 	id.size = length
@@ -189,8 +189,17 @@ func (o *Generator) init() {
 	// since 00:00:00.00, 15 October 1582.
 	now := o.Next()
 
-	//  Get the current node ID.
+	//  Get the current node id
 	node := o.Id()
+
+	if node == nil {
+		log.Println("uuid.Generator.init: address error: will generate random node id instead", err)
+
+		node = make([]byte, 6)
+		rand.Read(node)
+		// Mark as randomly generated
+		node[0] |= 0x01
+	}
 
 	// If the state was unavailable (e.g., non-existent or corrupted), or
 	// the saved node ID is different than the current node ID, generate
@@ -216,13 +225,8 @@ func (o *Generator) init() {
 		// across systems.  This provides maximum protection against node
 		// identifiers that may move or switch from system to system rapidly.
 		// The initial value MUST NOT be correlated to the node identifier.
-		// TODO write test for when random
-		err := binary.Read(rand.Reader, binary.LittleEndian, &storage.Sequence)
-		if err != nil {
-			log.Println("uuid.Generator.init error:", err)
-		} else {
-			log.Printf("uuid.Generator.init initialised random sequence: [%d]", storage.Sequence)
-		}
+		binary.Read(rand.Reader, binary.BigEndian, &storage.Sequence)
+		log.Printf("uuid.Generator.init initialised random sequence: [%d]", storage.Sequence)
 
 		// If the state was available, but the saved timestamp is later than
 		// the current timestamp, increment the clock sequence value.
@@ -247,44 +251,17 @@ func (o *Generator) save() {
 	}
 }
 
-func getHardwareAddress() (node Node) {
+func findFirstHardwareAddress() (node Node) {
 	interfaces, err := net.Interfaces()
 	if err == nil {
 		for _, i := range interfaces {
-			// Initially I could multi-cast out the Flags to get
-			// whether the interface was up but started failing
-			if (i.Flags & (1 << net.FlagUp)) != 0 {
-				//if inter.Flags.String() != "0" {
-				if addrs, err := i.Addrs(); err == nil {
-					for _, a := range addrs {
-						if a.String() != "0.0.0.0" && !bytes.Equal(i.HardwareAddr, make([]byte, len(i.HardwareAddr))) {
-							// Don't use random as we have a real address
-							node = Node(i.HardwareAddr)
-							log.Println("uuid.getHardwareAddress:", node)
-
-							return
-						}
-					}
-				}
+			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
+				// Don't use random as we have a real address
+				node = Node(i.HardwareAddr)
+				log.Println("uuid.getHardwareAddress:", node)
+				break
 			}
 		}
 	}
-	log.Println("uuid.getHardwareAddress: address error: will generate random node id instead", err)
-
-	// TODO write test for when random
-	node = makeNode()
-
-	if _, err := rand.Read(node); err != nil {
-		log.Panicln("uuid.getHardwareAddress: could not get cryto random bytes", err)
-	}
-
-	log.Println("uuid.getHardwareAddress: generated node", node)
-
-	// Mark as randomly generated
-	node[0] |= 0x01
 	return
-}
-
-func makeNode() []byte {
-	return make([]byte, 6)
 }

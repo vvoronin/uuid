@@ -27,9 +27,9 @@ const (
 
 var (
 	// The following standard UUIDs are for use with V3 or V5 UUIDs.
-	NamespaceDNS UUID = namespaceUuid(0x6ba7b810)
-	NamespaceURL UUID = namespaceUuid(0x6ba7b811)
-	NamespaceOID UUID = namespaceUuid(0x6ba7b812)
+	NamespaceDNS  UUID = namespaceUuid(0x6ba7b810)
+	NamespaceURL  UUID = namespaceUuid(0x6ba7b811)
+	NamespaceOID  UUID = namespaceUuid(0x6ba7b812)
 	NamespaceX500 UUID = namespaceUuid(0x6ba7b814)
 
 	generator *Generator
@@ -56,7 +56,7 @@ func registerDefaultGenerator() {
 			Timestamp:  Now(),
 			Count:      0,
 		}).next,
-		getHardwareAddress,
+		findFirstHardwareAddress,
 		CleanHyphen)
 }
 
@@ -91,13 +91,9 @@ func NewV3(pNs UUID, pName UniqueName) UUID {
 func NewV4() UUID {
 	o := new(array)
 	// Read random values (or pseudo-random) into array type.
-	_, err := rand.Read(o[:length])
-	if err != nil {
-		panic(err)
-	}
+	rand.Read(o[:length])
 	o.setRFC4122Variant()
 	o.setVersion(4)
-
 	return o
 }
 

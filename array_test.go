@@ -10,10 +10,6 @@ import (
 	"testing"
 )
 
-var (
-
-)
-
 func TestArray_Bytes(t *testing.T) {
 	id := array(uuidBytes)
 	assert.Equal(t, id[:], uuidId.Bytes(), "Bytes should be the same")
@@ -74,19 +70,7 @@ func TestArray_Variant(t *testing.T) {
 
 		assert.NotEqual(t, 0, uuidId.Variant(), "The variant should be non zero")
 	}
-}
 
-func TestArray_Version(t *testing.T) {
-	for _, v := range namespaces {
-		id, _ := Parse(v)
-		uuidId := &array{}
-		uuidId.UnmarshalBinary(id.Bytes())
-
-		assert.NotEqual(t, 0, uuidId.Version(), "The version should be non zero")
-	}
-}
-
-func TestArray_VariantBits(t *testing.T) {
 	bytes := new(array)
 	copy(bytes[:], uuidBytes[:])
 
@@ -101,9 +85,32 @@ func TestArray_VariantBits(t *testing.T) {
 			output("\n")
 		}
 	}
+
+	assert.True(t, didArraySetVariantPanic(bytes[:]), "Array creation should panic  if invalid variant")
 }
 
-func TestArray_VersionBits(t *testing.T) {
+func didArraySetVariantPanic(bytes []byte) bool {
+	return func() (didPanic bool) {
+		defer func() {
+			if recover() != nil {
+				didPanic = true
+			}
+		}()
+
+		createArray(bytes[:], 4, 0xbb)
+		return
+	}()
+}
+
+func TestArray_Version(t *testing.T) {
+	for _, v := range namespaces {
+		id, _ := Parse(v)
+		uuidId := &array{}
+		uuidId.UnmarshalBinary(id.Bytes())
+
+		assert.NotEqual(t, 0, uuidId.Version(), "The version should be non zero")
+	}
+
 	id := &array{}
 
 	bytes := new(array)

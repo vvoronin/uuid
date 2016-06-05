@@ -66,15 +66,11 @@ var (
 )
 
 func TestEqual(t *testing.T) {
-
-}
-
-func TestFormatter(t *testing.T) {
-
-}
-
-func TestName_String(t *testing.T) {
-
+	for k, v := range namespaces {
+		u, _ := Parse(v)
+		assert.True(t, Equal(k, u), "Id's should be equal")
+		assert.Equal(t, k.String(), u.String(), "Stringer versions should equal")
+	}
 }
 
 func TestNewHex(t *testing.T) {
@@ -83,10 +79,21 @@ func TestNewHex(t *testing.T) {
 	assert.Equal(t, 4, u.Version(), "Expected correct version")
 	assert.Equal(t, ReservedNCS, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
+
+	assert.True(t, didNewHexPanic(), "Hex string should panic when invalid")
 }
 
-func TestNewName(t *testing.T) {
+func didNewHexPanic() bool {
+	return func() (didPanic bool) {
+		defer func() {
+			if recover() != nil {
+				didPanic = true
+			}
+		}()
 
+		NewHex("*********-------)()()()()(")
+		return
+	}()
 }
 
 func TestParse(t *testing.T) {
@@ -105,7 +112,6 @@ func TestParse(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-
 	for k, _ := range namespaces {
 
 		u := New(k.Bytes())
@@ -157,6 +163,63 @@ func TestFormat(t *testing.T) {
 	SwitchFormat(CleanHyphen)
 }
 
+func TestSwitchFormat(t *testing.T) {
+	ids := []UUID{NewV4(), NewV1()}
+	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen, GoIdFormat}
+	patterns := []string{curlyHyphenHexPattern, cleanHexPattern, curlyHexPattern, bracketHexPattern, cleanHyphenHexPattern, bracketHyphenHexPattern, hyphen}
+
+	// Reset default
+	SwitchFormat(CleanHyphen)
+
+	for _, u := range ids {
+		for i := range formats {
+			SwitchFormatUpperCase(formats[i])
+			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(u.String()), "Uppercase format %s must compile pattern %s", formats[i], patterns[i])
+
+			SwitchFormat(formats[i])
+			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(u.String()), "Format %s must compile pattern %s", formats[i], patterns[i])
+			outputLn(u)
+		}
+	}
+
+	assert.True(t, didSwitchFormatPanic(), "Switch format should panic when format invalid")
+
+	// Reset default
+	SwitchFormat(CleanHyphen)
+}
+
+func didSwitchFormatPanic() bool {
+	return func() (didPanic bool) {
+		defer func() {
+			if recover() != nil {
+				didPanic = true
+			}
+		}()
+
+		SwitchFormat("%%%%%%%%%%%%%")
+		return
+	}()
+}
+
+func TestSwitchFormatUpperCase(t *testing.T) {
+	ids := []UUID{NewV4(), NewV1()}
+	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen, GoIdFormat}
+	patterns := []string{curlyHyphenHexPattern, cleanHexPattern, curlyHexPattern, bracketHexPattern, cleanHyphenHexPattern, bracketHyphenHexPattern, hyphen}
+
+	// Reset default
+	SwitchFormat(CleanHyphen)
+
+	for _, u := range ids {
+		for i := range formats {
+			SwitchFormatUpperCase(formats[i])
+			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(u.String()), "Uppercase format %s must compile pattern %s", formats[i], patterns[i])
+		}
+	}
+
+	// Reset default
+	SwitchFormat(CleanHyphen)
+}
+
 func TestSprintf(t *testing.T) {
 	ids := []UUID{NewV4(), NewV1()}
 	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen, GoIdFormat}
@@ -168,6 +231,21 @@ func TestSprintf(t *testing.T) {
 			outputLn(Sprintf(formats[i], u))
 		}
 	}
+
+	assert.True(t, didSprintfPanic(), "Sprinf should panic when format invalid")
+}
+
+func didSprintfPanic() bool {
+	return func() (didPanic bool) {
+		defer func() {
+			if recover() != nil {
+				didPanic = true
+			}
+		}()
+
+		Sprintf("*********-------)()()()()(", NamespaceDNS)
+		return
+	}()
 }
 
 func TestUUID_NewHexBulk(t *testing.T) {

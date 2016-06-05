@@ -89,10 +89,3 @@ func (o *uuid) setVersion(pVersion int) {
 func (o *uuid) setVariant(pVariant uint8) {
 	setVariant(&o.sequenceHiAndVariant, pVariant)
 }
-
-// Set the three most significant bits (bits 0, 1 and 2) of the
-// sequenceHiAndVariant to variant mask 0x80.
-func (o *uuid) setRFC4122Variant() {
-	o.sequenceHiAndVariant &= variantSet
-	o.sequenceHiAndVariant |= ReservedRFC4122
-}

@@ -75,21 +75,7 @@ func TestUuid_Variant(t *testing.T) {
 
 		assert.NotEqual(t, 0, newId.Variant(), "The variant should be non zero")
 	}
-}
 
-func TestUuid_Version(t *testing.T) {
-	for _, v := range namespaces {
-
-		id, _ := Parse(v)
-
-		newId := &uuid{size: 16, node: make([]byte, 6)}
-		newId.UnmarshalBinary(id.Bytes())
-
-		assert.NotEqual(t, 0, newId.Version(), "The version should be non zero")
-	}
-}
-
-func TestUuid_VariantBits(t *testing.T) {
 	bytes := new(array)
 	copy(bytes[:], uuidBytes[:])
 
@@ -106,10 +92,17 @@ func TestUuid_VariantBits(t *testing.T) {
 	}
 }
 
+func TestUuid_Version(t *testing.T) {
+	for _, v := range namespaces {
 
-// Tests all possible version numbers and that
-// each number returned is the same
-func TestUuid_VersionBits(t *testing.T) {
+		id, _ := Parse(v)
+
+		newId := &uuid{size: 16, node: make([]byte, 6)}
+		newId.UnmarshalBinary(id.Bytes())
+
+		assert.NotEqual(t, 0, newId.Version(), "The version should be non zero")
+	}
+
 	id := &uuid{size: length, node: make([]byte, 6)}
 
 	bytes := new(array)
@@ -125,8 +118,23 @@ func TestUuid_VersionBits(t *testing.T) {
 			output("\n")
 		}
 	}
+
+	assert.True(t, didUuidSetVariantPanic(bytes[:]), "Uuid creation should panic  if invalid variant")
+
 }
 
+func didUuidSetVariantPanic(bytes []byte) bool {
+	return func() (didPanic bool) {
+		defer func() {
+			if recover() != nil {
+				didPanic = true
+			}
+		}()
+
+		createUuid(bytes[:], 4, 0xbb)
+		return
+	}()
+}
 
 // *******************************************************
 

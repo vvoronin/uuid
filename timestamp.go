@@ -71,11 +71,6 @@ func (o Timestamp) Sub(pDuration time.Duration) Timestamp {
 	return o - Timestamp(pDuration/100)
 }
 
-// Returns the timestamp as modified by the duration
-func (o Timestamp) Duration() time.Duration {
-	return time.Duration(Now() - o)
-}
-
 // Converts UUID Timestamp to time.Time and then calls the Stringer
 func (o Timestamp) String() string {
 	return o.Time().String()
