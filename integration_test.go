@@ -19,7 +19,7 @@ func Example() {
 	fmt.Printf("version %d variant %x: %s\n", u1.Version(), u1.Variant(), u1)
 
 	uP, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
-	u3 := uuid.NewV3(uP, uuid.Name("test"))
+	u3 := uuid.NewV3(uP.HashName(), uuid.Name("test"))
 
 	u4 := uuid.NewV4()
 	fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
@@ -42,7 +42,7 @@ func ExampleNewV1() {
 
 func ExampleNewV3() {
 	u, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
-	u3 := uuid.NewV3(u, uuid.Name("test"))
+	u3 := uuid.NewV3(u.HashName(), uuid.Name("test"))
 	fmt.Printf("version %d variant %x: %s\n", u3.Version(), u3.Variant(), u3)
 }
 

@@ -1,41 +1,91 @@
 package uuid
 
-/***************
- * Date: 14/02/14
- * Time: 7:44 PM
- ***************/
-
 import (
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha1"
+	"fmt"
+	"encoding/hex"
 )
 
-// ****************************************************
+// **************************************************** Namespaces
 
 const (
-	length = 16
+	// The following standard UUIDs are for use with V3 or V5 UUIDs.
+	// Note the big endian order for
+	NamespaceDNS Name = "\x10\xb8\xa7k\xad\x9d\xd1\x11\x80\xb4\x00\xc0O\xd40\xc8"
+	NamespaceURL Name = "\x11\xb8\xa7k\xad\x9d\xd1\x11\x80\xb4\x00\xc0O\xd40\xc8"
+	NamespaceOID Name = "\x12\xb8\xa7k\xad\x9d\xd1\x11\x80\xb4\x00\xc0O\xd40\xc8"
+	NamespaceX500 Name = "\x14\xb8\xa7k\xad\x9d\xd1\x11\x80\xb4\x00\xc0O\xd40\xc8"
+)
 
-	// 3f used by RFC4122 although 1f works for all
-	variantSet = 0x3f
+func mainTest() {
+	fmt.Println("6ba7b8109dad11d180b400c04fd430c8")
+	fmt.Println(len("6ba7b8109dad11d180b400c04fd430c8"))
 
-	// rather than using 0xc0 we use 0xe0 to retrieve the variant
-	// The result is the same for all other variants
-	// 0x80 and 0xa0 are used to identify RFC4122 compliance
-	variantGet = 0xe0
+	o, _ := hex.DecodeString("6ba7b8109dad11d180b400c04fd430c8")
+	fmt.Printf("%#v\n", o)
+	fmt.Printf("%#v\n", string(o))
+	fmt.Printf("%#v\n", []byte(string(o)))
+
+	o, _ = hex.DecodeString("6ba7b8119dad11d180b400c04fd430c8")
+	fmt.Printf("%#v\n", o)
+	fmt.Printf("%#v\n", string(o))
+
+	o, _ = hex.DecodeString("6ba7b8119dad11d180b400c04fd430c8")
+	fmt.Printf("%#v\n", o)
+	fmt.Printf("%#v\n", string(o))
+
+	o, _ = hex.DecodeString("6ba7b8129dad11d180b400c04fd430c8")
+	fmt.Printf("%#v\n", o)
+	fmt.Printf("%#v\n", string(o))
+
+	o, _ = hex.DecodeString("6ba7b8149dad11d180b400c04fd430c8")
+	fmt.Printf("%#v\n", string(o))
+	fmt.Printf("%#v\n", []byte("\x6b\xa7\xb8\x10\x9d\xad\xd1\x11\x80\xb4\x00\xc0\x4f\xd4\x30\xc8"))
+
+	h := md5.New()
+	h.Write([]byte("\x10\xb8\xa7\x6b"))
+	h.Write([]byte("\xad\x9d"))
+	h.Write([]byte("\xd1\x11"))
+	h.Write([]byte("\x80\xb4"))
+	h.Write([]byte("\x00\xc0\x4f\xd4\x30\xc8"))
+	h.Write([]byte("www.widgets.com"))
+	fmt.Printf("%x\n", h.Sum(nil))
+
+	h = md5.New()
+	h.Write([]byte("\x6b\xa7\xb8\x10"))
+	h.Write([]byte("\xad\x9d"))
+	h.Write([]byte("\xd1\x11"))
+	h.Write([]byte("\x80\xb4"))
+	h.Write([]byte("\x00\xc0\x4f\xd4\x30\xc8"))
+	h.Write([]byte("www.widgets.com"))
+	fmt.Printf("%x\n", h.Sum(nil))
+
+	h = md5.New()
+	h.Write([]byte("\x6b\xa7\xb8\x10\x9d\xad\x11\xd1\x80\xb4\x00\xc0\x4f\xd4\x30\xc8"))
+	h.Write([]byte("www.widgets.com"))
+	fmt.Printf("%x\n", h.Sum(nil))
+
+	// e902893a-9d22-3c7e-a7b8-d6e313b71d9f
+	// 3a8902e9-229d-7e7c-e7b8-d6e313b71d9f
+
+	h = md5.New()
+	h.Write([]byte("k\xa7\xb8\x10\x9d\xad\x11р\xb4\x00\xc0O\xd40\xc8"))
+	h.Write([]byte("www.widgets.com"))
+	fmt.Printf("%x\n", h.Sum(nil))
+}
+
+var (
+	namespaceDNS UUID = FromName(NamespaceDNS)
+	namespaceURL UUID = FromName(NamespaceURL)
+	namespaceOID UUID = FromName(NamespaceOID)
+	namespaceX500 UUID = FromName(NamespaceX500)
 )
 
 var (
-	// The following standard UUIDs are for use with V3 or V5 UUIDs.
-	NamespaceDNS  UUID = NewHex("6ba7b8109dad11d180b400c04fd430c8")
-	NamespaceURL  UUID = NewHex("6ba7b8119dad11d180b400c04fd430c8")
-	NamespaceOID  UUID = NewHex("6ba7b8129dad11d180b400c04fd430c8")
-	NamespaceX500 UUID = NewHex("6ba7b8149dad11d180b400c04fd430c8")
-
 	generator *Generator
 )
-
-// ****************************************************
 
 func init() {
 	registerDefaultGenerator()
@@ -59,8 +109,8 @@ func NewV1() UUID {
 }
 
 // Generate a new DCE Security version UUID
-// based on a 60 bit timestamp, node id and POSIX UID or GUID
-func NewV2(pDomain DCEDomain) UUID {
+// based on a 60 bit timestamp, node id and POSIX UID
+func NewV2(pDomain Domain) UUID {
 	return generator.NewV2(pDomain)
 }
 
@@ -68,62 +118,28 @@ func NewV2(pDomain DCEDomain) UUID {
 // Based on the MD5 hash of a namespace UUID and
 // any type which implements the UniqueName interface for the name.
 // For strings and slices cast to a Name type
-func NewV3(pNs UUID, pName UniqueName) UUID {
-	// Benchmarks faster
-	o := &array{}
-
-	h := md5.New()
-	h.Write(pNs.Bytes())
-	h.Write([]byte(pName.String()))
-	copy(o[:], h.Sum(nil))
-
-	o[versionIndex] &= 0x0f
-	o[versionIndex] |= 3 << 4
-	o[variantIndex] &= variantSet
-	o[variantIndex] |= ReservedRFC4122
-	return o
-}
-
-// Generates a new RFC4122 version 3 UUID
-// Based on the MD5 hash of a namespace UUID and
-// any type which implements the UniqueName interface for the name.
-// For strings and slices cast to a Name type
-func V3(pNs []byte, pName string) UUID {
-	o := array{}
-	// Set all bits to MD5 hash generated from namespace and name.
-	h := md5.New()
-	h.Write(pNs)
-	h.Write([]byte(pName))
-	copy(o[:], h.Sum(nil))
-
-	o[versionIndex] &= 0x0f
-	o[versionIndex] |= 3 << 4
-	o[variantIndex] &= variantSet
-	o[variantIndex] |= ReservedRFC4122
+func NewV3(pNamespace Name, pNames ...UniqueName) UUID {
+	n := digest(md5.New(), pNamespace, pNames...)
+	o := fromName(n)
+	o.setRFC4122Version(3)
 	return &o
 }
 
 // Generates a new RFC4122 version 4 UUID
 // A cryptographically secure random UUID.
 func NewV4() UUID {
-	// Benchmarks faster
-	o := &array{}
-
-	// Read random values (or pseudo-random) into array type.
-	rand.Read(o[:length])
-	o.setVersion(4)
-	o.setRFC4122Variant()
-	return o
+	o := make(array, length)
+	rand.Read(o)
+	o.setRFC4122Version(4)
+	return &o
 }
 
-// Generates a new RFC4122 version 5 UUID
+// NewV5 generates an RFC4122 version 5 UUID
 // based on the SHA-1 hash of a namespace
 // UUID and a unique name.
-func NewV5(pNs UUID, pName UniqueName) UUID {
-	// Benchmarks faster
-	o := &array{}
-	digest(o, pNs, pName, sha1.New())
-	o.setVersion(5)
-	o.setRFC4122Variant()
-	return o
+func NewV5(pNamespace Name, pNames ...UniqueName) UUID {
+	n := digest(sha1.New(), pNamespace, pNames...)
+	o := fromName(n)
+	o.setRFC4122Version(5)
+	return &o
 }

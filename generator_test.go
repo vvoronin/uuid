@@ -1,21 +1,27 @@
 package uuid
 
-/****************
- * Date: 14/02/14
- * Time: 9:08 PM
- ***************/
-
 import (
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+	"fmt"
+	"github.com/twinj/uuid/version"
 )
+
+var (
+	nodeBytes = []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb, 0x44, 0xcc}
+)
+
+func TestPosixIds(t *testing.T) {
+	fmt.Print(posixGID, posixUID)
+	assert.True(t, posixUID != 0)
+}
 
 func TestGenerator_NewV1(t *testing.T) {
 	u := NewV1()
 
-	assert.Equal(t, 1, u.Version(), "Expected correct version")
+	assert.Equal(t, version.One, u.Version(), "Expected correct version")
 	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 }
@@ -23,17 +29,17 @@ func TestGenerator_NewV1(t *testing.T) {
 func TestGenerator_NewV2(t *testing.T) {
 	u := NewV2(DomainGroup)
 
-	assert.Equal(t, 2, u.Version(), "Expected correct version")
+	assert.Equal(t, version.Two, u.Version(), "Expected correct version")
 	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 	assert.Equal(t, uint8(DomainGroup), u.Bytes()[9], "Expected string representation to be valid")
 
-	u = NewV2(DomainPerson)
+	u = NewV2(DomainUser)
 
-	assert.Equal(t, 2, u.Version(), "Expected correct version")
+	assert.Equal(t, version.Two, u.Version(), "Expected correct version")
 	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
-	assert.Equal(t, uint8(DomainPerson), u.Bytes()[9], "Expected string representation to be valid")
+	assert.Equal(t, uint8(DomainUser), u.Bytes()[9], "Expected string representation to be valid")
 }
 
 type save struct {
@@ -91,7 +97,7 @@ func TestSaverRead(t *testing.T) {
 }
 
 func TestSaverSave(t *testing.T) {
-	registerTestGenerator(Now().Add(1024), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+	registerTestGenerator(Now().Add(1024), nodeBytes)
 
 	saver := &save{}
 	RegisterSaver(saver)
@@ -105,7 +111,7 @@ func TestSaverSave(t *testing.T) {
 
 func TestGeneratorInit(t *testing.T) {
 	// A new time that is older than stored time should cause the sequence to increment
-	now, node := registerTestGenerator(Now(), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+	now, node := registerTestGenerator(Now(), nodeBytes)
 	storageStamp := registerSaver(now.Add(time.Second), node)
 
 	assert.NotNil(t, generator.Store, "Generator should not return an empty store")
@@ -113,8 +119,8 @@ func TestGeneratorInit(t *testing.T) {
 	assert.Equal(t, Sequence(3), generator.Sequence, "Successfull read should have incremented sequence")
 
 	// Nodes not the same should generate a random sequence
-	now, node = registerTestGenerator(Now(), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
-	storageStamp = registerSaver(now.Sub(time.Second), []byte{0xaa, 0xee, 0xaa, 0xbb})
+	now, node = registerTestGenerator(Now(), nodeBytes)
+	storageStamp = registerSaver(now.Sub(time.Second), []byte{0xaa, 0xee, 0xaa, 0xbb, 0x44, 0xcc})
 
 	assert.NotNil(t, generator.Store, "Generator should not return an empty store")
 	assert.True(t, generator.Timestamp > storageStamp, "New timestamp should be newer than old")
@@ -140,11 +146,11 @@ func TestGeneratorRead(t *testing.T) {
 			return timestamps[i]
 		},
 		func() Node {
-			return []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb}
+			return nodeBytes
 		},
 		CleanHyphen)
 
-	storageStamp := registerSaver(now.Add(time.Second), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+	storageStamp := registerSaver(now.Add(time.Second), nodeBytes)
 
 	i++
 
@@ -158,7 +164,7 @@ func TestGeneratorRead(t *testing.T) {
 	assert.Equal(t, Sequence(4), store.Sequence, "Successfull read should have incremented sequence")
 
 	// A new time that is older than stored time should cause the sequence to increment
-	now, node := registerTestGenerator(Now().Sub(time.Second), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+	now, node := registerTestGenerator(Now().Sub(time.Second), nodeBytes)
 	storageStamp = registerSaver(now.Add(time.Second), node)
 
 	store = generator.read()

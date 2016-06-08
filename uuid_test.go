@@ -12,14 +12,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
+	"github.com/twinj/uuid/version"
 )
 
 var (
-	uuid_goLang Name = "https://google.com/golang.org?q=golang"
+	goLang Name = "https://google.com/golang.org?q=golang"
 
-	printer bool = true
+	printer bool = false
 
-	uuidBytes = [length]byte{
+	uuidBytes = []byte{
 		0xaa, 0xcf, 0xee, 0x12,
 		0xd4, 0x00,
 		0x27, 0x23,
@@ -34,6 +35,10 @@ var (
 		ReservedNCS, ReservedRFC4122, ReservedMicrosoft, ReservedFuture,
 	}
 	namespaceUuids = []UUID{
+		namespaceDNS, namespaceURL, namespaceOID, namespaceX500,
+	}
+
+	namespaceNames = []Name{
 		NamespaceDNS, NamespaceURL, NamespaceOID, NamespaceX500,
 	}
 
@@ -74,10 +79,10 @@ func TestEqual(t *testing.T) {
 }
 
 func TestNewHex(t *testing.T) {
-	s := "f3593cffee9240df408687825b523f13"
+	s := "e902893a9d223c7ea7b8d6e313b71d9f"
 	u := NewHex(s)
-	assert.Equal(t, 4, u.Version(), "Expected correct version")
-	assert.Equal(t, ReservedNCS, u.Variant(), "Expected correct variant")
+	assert.Equal(t, version.Three, u.Version(), "Expected correct version")
+	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 
 	assert.True(t, didNewHexPanic(), "Hex string should panic when invalid")
@@ -117,7 +122,7 @@ func TestNew(t *testing.T) {
 		u := New(k.Bytes())
 
 		assert.NotNil(t, u, "Expected a valid non nil UUID")
-		assert.Equal(t, 1, u.Version(), "Expected correct version %d, but got %d", 2, u.Version())
+		assert.Equal(t, version.One, u.Version(), "Expected correct version %d, but got %d", 2, u.Version())
 		assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected ReservedNCS variant %x, but got %x", ReservedNCS, u.Variant())
 		assert.Equal(t, k.String(), u.String(), "Stringer versions should equal")
 	}
@@ -130,13 +135,13 @@ func TestUUID_NewBulk(t *testing.T) {
 }
 
 const (
-	clean                   = `[[:xdigit:]]{8}[[:xdigit:]]{4}[1-5][[:xdigit:]]{3}[[:xdigit:]]{4}[[:xdigit:]]{12}`
-	cleanHexPattern         = `^` + clean + `$`
-	curlyHexPattern         = `^\{` + clean + `\}$`
-	bracketHexPattern       = `^\(` + clean + `\)$`
-	hyphen                  = `[[:xdigit:]]{8}-[[:xdigit:]]{4}-[1-5][[:xdigit:]]{3}-[[:xdigit:]]{4}-[[:xdigit:]]{12}`
-	cleanHyphenHexPattern   = `^` + hyphen + `$`
-	curlyHyphenHexPattern   = `^\{` + hyphen + `\}$`
+	clean = `[[:xdigit:]]{8}[[:xdigit:]]{4}[1-5][[:xdigit:]]{3}[[:xdigit:]]{4}[[:xdigit:]]{12}`
+	cleanHexPattern = `^` + clean + `$`
+	curlyHexPattern = `^\{` + clean + `\}$`
+	bracketHexPattern = `^\(` + clean + `\)$`
+	hyphen = `[[:xdigit:]]{8}-[[:xdigit:]]{4}-[1-5][[:xdigit:]]{3}-[[:xdigit:]]{4}-[[:xdigit:]]{12}`
+	cleanHyphenHexPattern = `^` + hyphen + `$`
+	curlyHyphenHexPattern = `^\{` + hyphen + `\}$`
 	bracketHyphenHexPattern = `^\(` + hyphen + `\)$`
 )
 
@@ -175,25 +180,6 @@ func didSwitchFormatPanic() bool {
 	}()
 }
 
-func TestSwitchFormatUpperCase(t *testing.T) {
-	ids := []UUID{NewV4(), NewV1()}
-	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen, GoIdFormat}
-	patterns := []string{curlyHyphenHexPattern, cleanHexPattern, curlyHexPattern, bracketHexPattern, cleanHyphenHexPattern, bracketHyphenHexPattern, hyphen}
-
-	// Reset default
-	SwitchFormat(CleanHyphen)
-
-	for _, u := range ids {
-		for i := range formats {
-			SwitchFormatUpperCase(formats[i])
-			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(u.String()), "Uppercase format %s must compile pattern %s", formats[i], patterns[i])
-		}
-	}
-
-	// Reset default
-	SwitchFormat(CleanHyphen)
-}
-
 func TestSprintf(t *testing.T) {
 	ids := []UUID{NewV4(), NewV1()}
 	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen, GoIdFormat}
@@ -217,7 +203,7 @@ func didSprintfPanic() bool {
 			}
 		}()
 
-		Sprintf("*********-------)()()()()(", NamespaceDNS)
+		Sprintf("*********-------)()()()()(", namespaceDNS)
 		return
 	}()
 }
@@ -229,15 +215,15 @@ func TestUUID_NewHexBulk(t *testing.T) {
 	}
 }
 
-func TestUUID_Sum(t *testing.T) {
-	u := new(array)
-	digest(u, NamespaceDNS, uuid_goLang, md5.New())
+func TestDigest(t *testing.T) {
+	n := digest(md5.New(), NamespaceDNS, goLang)
+	u := fromName(n)
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")
 	}
 	output(u.Bytes())
-	u = new(array)
-	digest(u, NamespaceDNS, uuid_goLang, sha1.New())
+	n = digest(sha1.New(), NamespaceDNS, goLang)
+	u = fromName(n)
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")
 	}

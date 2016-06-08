@@ -1,26 +1,23 @@
 package uuid
 
-/****************
- * Date: 15/02/14
- * Time: 12:49 PM
- ***************/
-
 import (
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"github.com/twinj/uuid/version"
 )
 
 func TestArray_Bytes(t *testing.T) {
-	id := array(uuidBytes)
-	assert.Equal(t, id[:], uuidId.Bytes(), "Bytes should be the same")
+	id := make(array, length)
+	copy(id, namespaceDNS.Bytes())
+	assert.Equal(t, id.Bytes(), namespaceDNS.Bytes(), "Bytes should be the same")
 }
 
 func TestArray_Unmarshal(t *testing.T) {
 	id := array(uuidBytes)
-	id2 := &array{}
-	id2.Unmarshal(uuidBytes[:])
+	id2 := make(array, length)
+	id2.unmarshal(uuidBytes)
 
-	assert.Equal(t, id2.String(), id.String(), "String should be the same")
+	assert.Equal(t, id.String(), id2.String(), "String should be the same")
 }
 
 func TestArray_MarshalBinary(t *testing.T) {
@@ -42,7 +39,7 @@ func TestArray_String(t *testing.T) {
 
 func TestArray_UnmarshalBinary(t *testing.T) {
 
-	u := new(array)
+	u := make(array, length)
 
 	err := u.UnmarshalBinary([]byte{1, 2, 3, 4, 5})
 
@@ -54,7 +51,7 @@ func TestArray_UnmarshalBinary(t *testing.T) {
 
 	for k, v := range namespaces {
 		id, _ := Parse(v)
-		uuidId := &array{}
+		uuidId := make(array, length)
 		uuidId.UnmarshalBinary(id.Bytes())
 
 		assert.Equal(t, id.Bytes(), uuidId.Bytes(), "The array id should equal the uuid id")
@@ -65,21 +62,21 @@ func TestArray_UnmarshalBinary(t *testing.T) {
 func TestArray_Variant(t *testing.T) {
 	for _, v := range namespaces {
 		id, _ := Parse(v)
-		uuidId := &array{}
+		uuidId := make(array, length)
 		uuidId.UnmarshalBinary(id.Bytes())
 
 		assert.NotEqual(t, 0, uuidId.Variant(), "The variant should be non zero")
 	}
 
-	bytes := array{}
-	copy(bytes[:], uuidBytes[:])
+	bytes := make(array, length)
+	copy(bytes, uuidBytes[:])
 
 	for _, v := range uuidVariants {
 		for i := 0; i <= 255; i++ {
 			bytes[variantIndex] = byte(i)
-			id := createArray(bytes[:], 4, v)
+			id := createArray(bytes, 4, v)
 			b := id[variantIndex] >> 4
-			tVariantConstraint(v, b, &id, t)
+			tVariantConstraint(v, b, id, t)
 			output(id)
 			assert.Equal(t, v, id.Variant(), "%x does not resolve to %x", id.Variant(), v)
 			output("\n")
@@ -103,26 +100,24 @@ func didArraySetVariantPanic(bytes []byte) bool {
 }
 
 func TestArray_Version(t *testing.T) {
-	for _, v := range namespaces {
-		id, _ := Parse(v)
-		uuidId := &array{}
-		uuidId.UnmarshalBinary(id.Bytes())
-
-		assert.NotEqual(t, 0, uuidId.Version(), "The version should be non zero")
+	for k, _ := range namespaces {
+		id := make(array, length)
+		id.UnmarshalBinary(k.Bytes())
+		assert.Equal(t, version.One, id.Version(), "The version should be 1")
 	}
 
-	id := &array{}
+	id := make(array, length)
 
-	bytes := array{}
-	copy(bytes[:], uuidBytes[:])
+	bytes := make(array, length)
+	copy(bytes, uuidBytes[:])
 
 	for v := 0; v < 16; v++ {
 		for i := 0; i <= 255; i++ {
 			bytes[versionIndex] = byte(i)
-			id.Unmarshal(bytes[:])
-			id.setVersion(uint8(v))
+			id.unmarshal(bytes)
+			id.setVersion(v)
 			output(id)
-			assert.Equal(t, v, id.Version(), "%x does not resolve to %x", id.Version(), v)
+			assert.Equal(t, version.Version(v), id.version(), "%x does not resolve to %x", id.Version(), v)
 			output("\n")
 		}
 	}
@@ -130,9 +125,9 @@ func TestArray_Version(t *testing.T) {
 
 // *******************************************************
 
-func createArray(pData []byte, pVersion uint8, pVariant uint8) array {
-	o := array{}
-	o.Unmarshal(pData)
+func createArray(pData []byte, pVersion int, pVariant uint8) array {
+	o := make(array, length)
+	o.unmarshal(pData)
 	o.setVersion(pVersion)
 	o.setVariant(pVariant)
 	return o

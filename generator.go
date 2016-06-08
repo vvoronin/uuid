@@ -16,15 +16,6 @@ import (
 	"sync"
 )
 
-// ****************************************************
-
-var (
-	posixUID = uint32(os.Getuid())
-	posixGID = uint32(os.Getgid())
-)
-
-// ****************************************************
-
 // Run this method before any calls to NewV1 or NewV2 to save the state to
 // You must implement the uuid.Saver interface and are completely responsible
 // for the non violable storage of the state
@@ -77,64 +68,77 @@ type Generator struct {
 	Next func() Timestamp
 	Id   func() Node
 
-	Fmt string
+	Fmt  string
 }
 
 // NewV1 generates a new RFC4122 version 1 UUID
 // based on a 60 bit timestamp and node id
 func (o *Generator) NewV1() UUID {
 	store := o.read()
-
-	id := new(array)
-
-	binary.BigEndian.PutUint32(id[:], uint32(store.Timestamp))
-	binary.BigEndian.PutUint16(id[4:], uint16(store.Timestamp>>32))
-	binary.BigEndian.PutUint16(id[6:], uint16(store.Timestamp>>48)&0x0fff)
-	binary.BigEndian.PutUint16(id[8:], uint16(store.Sequence))
-
-	copy(id[10:], store.Node[:])
-
-	id.setVersion(1)
-	id.setRFC4122Variant()
-
-	return id
+	id := makeUuid(
+		uint32(store.Timestamp),
+		uint16(store.Timestamp >> 32),
+		uint16((store.Timestamp >> 48) & 0x0fff),
+		uint16(store.Sequence),
+		store.Node)
+	id.setRFC4122Version(1)
+	return &id
 }
 
 // NewV2 generates a new DCE version 2 UUID
 // based on a 60 bit timestamp, node id and POSIX UID or GUID
-func (o *Generator) NewV2(pDomain DCEDomain) UUID {
+func (o *Generator) NewV2(pDomain Domain) UUID {
 	store := o.read()
 
-	id := new(uuid)
+	var domain uint32
+	fmt.Println(posixUID)
+	fmt.Println(posixGID)
 
 	switch pDomain {
-	case DomainPerson:
-		id.timeLow = posixUID
+	case DomainUser:
+		domain = uint32(os.Getuid())
 	case DomainGroup:
-		id.timeLow = posixGID
+		domain = uint32(os.Getgid())
 	}
 
-	return makeUuid(id, store, uint8(pDomain), 2)
+	id := makeUuid(
+		domain,
+		uint16(store.Timestamp >> 32),
+		uint16((store.Timestamp >> 48) & 0X0fff),
+		uint16(store.Sequence),
+		store.Node)
+
+	id[9] = byte(pDomain)
+
+	id.setRFC4122Version(2)
+
+	return &id
 }
 
-func makeUuid(pId *uuid, pStore *Store, pSequenceLow uint8, pVersion uint16) UUID {
+func makeUuid(pLow uint32, pMid, pHi, pHiAndV uint16, pId Node) (id array) {
+	id = make(array, length)
 
-	pId.timeMid = uint16(pStore.Timestamp >> 32)
-	pId.timeHiAndVersion = uint16((pStore.Timestamp >> 48) & 0x0fff)
-	pId.timeHiAndVersion |= (pVersion << 12)
+	id[0] = byte(pLow >> 24)
+	id[1] = byte(pLow >> 16)
+	id[2] = byte(pLow >> 8)
+	id[3] = byte(pLow)
 
-	pId.sequenceHiAndVariant = uint8((pStore.Sequence & 0x3f00) >> 8)
-	pId.sequenceHiAndVariant |= ReservedRFC4122
+	id[4] = byte(pMid >> 8)
+	id[5] = byte(pMid)
 
-	pId.sequenceLow = pSequenceLow
+	id[6] = byte(pHi >> 8)
+	id[7] = byte(pHi)
 
-	pId.node = make([]byte, 6)
+	id[8] = byte(pHiAndV >> 8)
+	id[9] = byte(pHiAndV)
 
-	copy(pId.node[:], pStore.Node[:])
-
-	pId.size = length
-
-	return pId
+	id[10] = pId[0]
+	id[11] = pId[1]
+	id[12] = pId[2]
+	id[13] = pId[3]
+	id[14] = pId[4]
+	id[15] = pId[5]
+	return
 }
 
 func (o *Generator) read() *Store {
@@ -174,7 +178,7 @@ func (o *Generator) init() {
 	// and node ID used to generate the last UUID.
 	var (
 		storage Store
-		err     error
+		err error
 	)
 
 	// Save the state (current timestamp, clock sequence, and node ID)
@@ -261,7 +265,7 @@ func findFirstHardwareAddress() (node Node) {
 	interfaces, err := net.Interfaces()
 	if err == nil {
 		for _, i := range interfaces {
-			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
+			if i.Flags & net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
 				// Don't use random as we have a real address
 				node = Node(i.HardwareAddr)
 				log.Println("uuid.getHardwareAddress:", node)

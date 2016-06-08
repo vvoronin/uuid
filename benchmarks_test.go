@@ -31,15 +31,17 @@ func BenchmarkNewV3(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		uuid.NewV3(uuid.NamespaceDNS, uuid.Name("www.example.com"))
 	}
+	b.StopTimer()
+	b.ReportAllocs()
 }
 
-func BenchmarkV3(b *testing.B) {
-	id := uuid.NamespaceDNS.Bytes()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		uuid.V3(id, "www.example.com")
-	}
-}
+//func BenchmarkV3(b *testing.B) {
+//	id := uuid.NamespaceDNS.Bytes()
+//	b.ResetTimer()
+//	for i := 0; i < b.N; i++ {
+//		uuid.V3(id, "www.example.com")
+//	}
+//}
 
 func BenchmarkNewV4(b *testing.B) {
 	for i := 0; i < b.N; i++ {
