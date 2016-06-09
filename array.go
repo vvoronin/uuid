@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"github.com/twinj/uuid/version"
-	"encoding/binary"
 )
 
 const (
@@ -71,9 +70,9 @@ func (o array) HashName() (name Name) {
 	groups := [][]byte{
 		o[:4], o[4:6], o[6:8],
 	}
-	for _,v := range groups {
 
-		binary.BigEndian.
+	// The hash
+	for _,v := range groups {
 		for i, j := 0, len(v)-1; i < j; i, j = i+1, j-1 {
 			v[i], v[j] = v[j], v[i]
 		}

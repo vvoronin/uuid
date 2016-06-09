@@ -5,8 +5,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"fmt"
 	"github.com/twinj/uuid/version"
+	"os"
 )
 
 var (
@@ -14,8 +14,7 @@ var (
 )
 
 func TestPosixIds(t *testing.T) {
-	fmt.Print(posixGID, posixUID)
-	assert.True(t, posixUID != 0)
+	assert.True(t, os.Getuid() != 0)
 }
 
 func TestGenerator_NewV1(t *testing.T) {

@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"testing"
 	"github.com/twinj/uuid/version"
+	"encoding/hex"
+	"encoding/binary"
 )
 
 const (
@@ -31,10 +33,27 @@ func init() {
 
 func TestFromName(t *testing.T) {
 
-	u := NewV1()
-	fmt.Printf("%#v\n", u.Bytes())
-	fmt.Printf("%#v\n", namespaceDNS.Bytes())
-	fmt.Printf("%#v\n", string(namespaceDNS.String()))
+	h, _:= hex.DecodeString("01fffffffffffffe")
+	fmt.Printf("%#v\n", h)
+	now := binary.BigEndian.Uint64(h)
+	fmt.Printf("%#v\n", now)
+	fmt.Printf("%d\n", now)
+	fmt.Println(Timestamp(now).String())
+
+	h, _= hex.DecodeString("01d19dad6ba7b810")
+	fmt.Printf("%#v\n", h)
+
+	now = binary.BigEndian.Uint64(h)
+	fmt.Printf("%#v\n", now)
+	fmt.Printf("%d\n", now)
+
+	fmt.Println(Timestamp(now).String())
+
+	//
+	//u := NewV1()
+	//fmt.Printf("%#v\n", u.Bytes())
+	//fmt.Printf("%#v\n", namespaceDNS.Bytes())
+	//fmt.Printf("%#v\n", string(namespaceDNS.String()))
 
 }
 

@@ -91,8 +91,6 @@ func (o *Generator) NewV2(pDomain Domain) UUID {
 	store := o.read()
 
 	var domain uint32
-	fmt.Println(posixUID)
-	fmt.Println(posixGID)
 
 	switch pDomain {
 	case DomainUser:
