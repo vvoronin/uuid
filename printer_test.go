@@ -3,27 +3,48 @@ package uuid
 import (
 	"github.com/stretchr/testify/assert"
 	"regexp"
+	"strings"
 	"testing"
 )
 
 const (
-	clean                   = `[[:xdigit:]]{8}[[:xdigit:]]{4}[1-5][[:xdigit:]]{3}[[:xdigit:]]{4}[[:xdigit:]]{12}`
+	clean                   = `[0-9a-f]{8}[0-9a-f]{4}[1-5][0-9a-f]{3}[0-9a-f]{4}[0-9a-f]{12}`
 	cleanHexPattern         = `^` + clean + `$`
 	curlyHexPattern         = `^\{` + clean + `\}$`
 	bracketHexPattern       = `^\(` + clean + `\)$`
-	hyphen                  = `[[:xdigit:]]{8}-[[:xdigit:]]{4}-[1-5][[:xdigit:]]{3}-[[:xdigit:]]{4}-[[:xdigit:]]{12}`
+	hyphen                  = `[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}`
 	cleanHyphenHexPattern   = `^` + hyphen + `$`
 	curlyHyphenHexPattern   = `^\{` + hyphen + `\}$`
 	bracketHyphenHexPattern = `^\(` + hyphen + `\)$`
+	urnHexPattern           = `^urn:uuid:` + hyphen + `$`
+)
+
+var (
+	formats = []Format{
+		CanonicalCurly,
+		Hex,
+		HexCurly,
+		HexBracket,
+		Canonical,
+		CanonicalBracket,
+		Urn,
+	}
+	patterns = []string{
+		curlyHyphenHexPattern,
+		cleanHexPattern,
+		curlyHexPattern,
+		bracketHexPattern,
+		cleanHyphenHexPattern,
+		bracketHyphenHexPattern,
+		urnHexPattern,
+	}
 )
 
 func TestSwitchFormat(t *testing.T) {
 	ids := []UUID{NewV4(), NewV4()}
-	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen}
-	patterns := []string{curlyHyphenHexPattern, cleanHexPattern, curlyHexPattern, bracketHexPattern, cleanHyphenHexPattern, bracketHyphenHexPattern}
 
 	// Reset default
-	SwitchFormat(CleanHyphen)
+	SwitchFormat(Canonical)
 
 	for _, u := range ids {
 		for i := range formats {
@@ -33,35 +54,52 @@ func TestSwitchFormat(t *testing.T) {
 		}
 	}
 
-	assert.True(t, didSwitchFormatPanic(), "Switch format should panic when format invalid")
+	assert.True(t, didSwitchFormatPanic(""), "Switch format should panic when format invalid")
+	assert.True(t, didSwitchFormatPanic("%c%c%c%x%x%x"), "Switch format should panic when format invalid")
+	assert.True(t, didSwitchFormatPanic("%x%X%x"), "Switch format should panic when format invalid")
+	assert.True(t, didSwitchFormatPanic("%x%x%x%x%x%%%%"), "Switch format should panic when format invalid")
 
 	// Reset default
-	SwitchFormat(CleanHyphen)
+	SwitchFormat(Canonical)
+}
+
+func didSwitchFormatPanic(pFormat string) bool {
+	return func() (didPanic bool) {
+		defer func() {
+			if recover() != nil {
+				didPanic = true
+			}
+		}()
+
+		SwitchFormat(Format(pFormat))
+		return
+	}()
 }
 
 func TestSwitchFormatToUpper(t *testing.T) {
 	ids := []UUID{NewV4(), NewV4()}
-	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen}
-	patterns := []string{curlyHyphenHexPattern, cleanHexPattern, curlyHexPattern, bracketHexPattern, cleanHyphenHexPattern, bracketHyphenHexPattern}
 
 	// Reset default
-	SwitchFormat(CleanHyphen)
+	SwitchFormat(Canonical)
 
 	for _, u := range ids {
 		for i := range formats {
-			SwitchFormat(formats[i])
-			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(u.String()), "Format %s must compile pattern %s", formats[i], patterns[i])
+			SwitchFormatToUpper(formats[i])
+			assert.True(t, regexp.MustCompile(strings.ToUpper(patterns[i])).MatchString(u.String()), "Format %s must compile pattern %s", formats[i], patterns[i])
 			outputLn(u)
 		}
 	}
 
-	assert.True(t, didSwitchFormatPanic(), "Switch format should panic when format invalid")
+	assert.True(t, didSwitchFormatToUpperPanic(""), "Switch format should panic when format invalid")
+	assert.True(t, didSwitchFormatToUpperPanic("%c%c%c%x%x%x"), "Switch format should panic when format invalid")
+	assert.True(t, didSwitchFormatToUpperPanic("%x%X%x"), "Switch format should panic when format invalid")
+	assert.True(t, didSwitchFormatToUpperPanic("%x%x%x%x%x%%%%"), "Switch format should panic when format invalid")
 
 	// Reset default
-	SwitchFormat(CleanHyphen)
+	SwitchFormat(Canonical)
 }
 
-func didSwitchFormatPanic() bool {
+func didSwitchFormatToUpperPanic(pFormat string) bool {
 	return func() (didPanic bool) {
 		defer func() {
 			if recover() != nil {
@@ -69,27 +107,37 @@ func didSwitchFormatPanic() bool {
 			}
 		}()
 
-		SwitchFormat("%%%%%%%%%%%%%")
+		SwitchFormatToUpper(Format(pFormat))
 		return
 	}()
 }
 
-func TestSprintf(t *testing.T) {
+func TestFormatter(t *testing.T) {
 	ids := []UUID{NewV4(), NewV4()}
-	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen}
-	patterns := []string{curlyHyphenHexPattern, cleanHexPattern, curlyHexPattern, bracketHexPattern, cleanHyphenHexPattern, bracketHyphenHexPattern}
 
 	for _, u := range ids {
 		for i := range formats {
-			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(Sprintf(formats[i], u)), "Format must compile")
-			outputLn(Sprintf(formats[i], u))
+			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(Formatter(formats[i], u)), "Format must compile")
+			outputLn(Formatter(formats[i], u))
 		}
 	}
 
-	assert.True(t, didSprintfPanic(), "Sprinf should panic when format invalid")
+	for k, v := range namespaces {
+		s := Formatter(Canonical, k)
+		assert.Equal(t, v, s, "Should match")
+
+		s = Formatter(Format(strings.ToUpper(string(Canonical))), k)
+		assert.Equal(t, strings.ToUpper(v), s, "Should match")
+	}
+
+	assert.True(t, didFormatterPanic(""), "Should panic when format invalid")
+	assert.True(t, didFormatterPanic("%c%c%c%x%x%x"), "Should panic when format invalid")
+	assert.True(t, didFormatterPanic("%x%X%x"), "Should panic when format invalid")
+	assert.True(t, didFormatterPanic("%x%x%x%x%x%%%%"), "Should panic when format invalid")
+
 }
 
-func didSprintfPanic() bool {
+func didFormatterPanic(pFormat string) bool {
 	return func() (didPanic bool) {
 		defer func() {
 			if recover() != nil {
@@ -97,7 +145,19 @@ func didSprintfPanic() bool {
 			}
 		}()
 
-		Sprintf("%s*********-------)()()()()(", NameSpaceDNS)
+		Formatter(Format(pFormat), NameSpaceDNS)
 		return
 	}()
+}
+
+// *******************************************************
+
+func BenchmarkFormatter(b *testing.B) {
+	id := NewV2(DomainGroup)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Formatter("{%X-%X-%X-%x-%X}", id)
+	}
+	b.StopTimer()
+	b.ReportAllocs()
 }

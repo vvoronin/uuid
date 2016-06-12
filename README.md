@@ -5,6 +5,7 @@ Go UUID implementation
 [![GoDoc](http://godoc.org/github.com/twinj/uuid?status.png)](http://godoc.org/github.com/twinj/uuid)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/twinj/uuid?branch=master&svg=true)](https://ci.appveyor.com/project/twinj/uuid)
 [![Build Status](https://travis-ci.org/twinj/uuid.png?branch=master)](https://travis-ci.org/twinj/uuid)
+[![Coverage Status](https://coveralls.io/repos/github/twinj/uuid/badge.svg?branch=master)](https://coveralls.io/github/twinj/uuid?branch=master)
 
 **This project is currently pre 1.0.0**
 
@@ -71,12 +72,12 @@ for more information.
 
 	uuid.SetupSaver(...)
 
-	u1 := uuid.V1()
+	u1 := uuid.NewV1()
 
 	uP, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
-	u3 := uuid.V3(uP, uuid.Name("test"))
-	u4 := uuid.V4()
+	u3 := uuid.NewV3(uP, uuid.Name("test"))
+	u4 := uuid.NewV4()
 	fmt.Printf(print, u4.Version(), u4.Variant(), u4)
 
 	u5 := uuid.NewV5(uuid.NamespaceURL, uuid.Name("test"))

@@ -31,9 +31,9 @@ func Example() {
 		fmt.Println("Will never happen")
 	}
 
-	fmt.Println(uuid.Sprintf(uuid.CurlyHyphen, u5))
+	fmt.Println(uuid.Formatter(uuid.CanonicalCurly, u5))
 
-	uuid.SwitchFormat(uuid.BracketHyphen)
+	uuid.SwitchFormat(uuid.CanonicalBracket)
 }
 
 func ExampleNewV1() {
@@ -77,13 +77,13 @@ func ExampleRegisterSaver() {
 	fmt.Printf("version %d variant %x: %s\n", u1.Version(), u1.Variant(), u1)
 }
 
-func ExampleSprintf() {
+func ExampleFormatter() {
 	u4 := uuid.NewV4()
-	fmt.Println(uuid.Sprintf(uuid.CurlyHyphen, u4))
+	fmt.Println(uuid.Formatter(uuid.CanonicalCurly, u4))
 }
 
 func ExampleSwitchFormat() {
-	uuid.SwitchFormat(uuid.BracketHyphen)
+	uuid.SwitchFormat(uuid.CanonicalBracket)
 	u4 := uuid.NewV4()
 	fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
 }

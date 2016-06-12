@@ -10,18 +10,19 @@ import (
 type Format string
 
 const (
-	Clean   = "%x%x%x%x%x"
-	Curly   = "{%x%x%x%x%x}"
-	Bracket = "(%x%x%x%x%x)"
+	Hex        Format = "%x%x%x%x%x"
+	HexCurly   Format = "{%x%x%x%x%x}"
+	HexBracket Format = "(%x%x%x%x%x)"
 
 	// This is the canonical format.
-	CleanHyphen = "%x-%x-%x-%x-%x"
+	Canonical Format = "%x-%x-%x-%x-%x"
 
-	CurlyHyphen   = "{%x-%x-%x-%x-%x}"
-	BracketHyphen = "(%x-%x-%x-%x-%x)"
+	CanonicalCurly   Format = "{%x-%x-%x-%x-%x}"
+	CanonicalBracket Format = "(%x-%x-%x-%x-%x)"
+	Urn              Format = "urn:uuid:" + Canonical
 )
 
-var printFormat Format = CurlyHyphen
+var printFormat Format = Canonical
 
 // SwitchFormat switches the default printing format for ALL UUIDs.
 //
@@ -33,9 +34,10 @@ var printFormat Format = CurlyHyphen
 // and 10 times slower in comparison to the canonical format.
 //
 // A valid format will have 5 groups of [%x|%X] or follow the pattern,
-// ^*%[xX]*%[xX]*%[xX]*%[xX]*%[xX]*$. If the supplied format does not meet this
-// standard the function will panic. Constants have been provided for the most
-// likely formats.
+// *%[xX]*%[xX]*%[xX]*%[xX]*%[xX]*. If the supplied format does not meet this
+// standard the function will panic. Note any extra uses of [%] outside of the
+// [%x|%X] will also cause a panic.
+// Constants have been provided for the most likely formats.
 func SwitchFormat(pFormat Format) {
 	checkFormat(string(pFormat))
 	printFormat = pFormat
@@ -44,19 +46,19 @@ func SwitchFormat(pFormat Format) {
 // SwitchFormatToUpper is a convenience function to set the Format to upper case
 // versions of the given constants.
 func SwitchFormatToUpper(pFormat Format) {
-	checkFormat(string(pFormat))
-	printFormat = Format(strings.ToUpper(string(pFormat)))
+	SwitchFormat(Format(strings.ToUpper(string(pFormat))))
 }
 
-// Sprintf will return a string representation of the given UUID.
+// Formatter will return a string representation of the given UUID.
 //
 // Use this for one time formatting when setting the default using
 // uuid.SwitchFormat
 //
 // A valid format will have 5 groups of [%x|%X] or follow the pattern,
-// ^*%[xX]*%[xX]*%[xX]*%[xX]*%[xX]*$. If the supplied format does not meet this
-// standard the function will panic.
-func Sprintf(pFormat Format, pId UUID) string {
+// *%[xX]*%[xX]*%[xX]*%[xX]*%[xX]*. If the supplied format does not meet this
+// standard the function will panic. Note any extra uses of [%] outside of the
+// [%x|%X] will also cause a panic.
+func Formatter(pFormat Format, pId UUID) string {
 	checkFormat(string(pFormat))
 	return formatPrint(pId.Bytes(), string(pFormat))
 }
@@ -64,6 +66,10 @@ func Sprintf(pFormat Format, pId UUID) string {
 func checkFormat(pFormat string) {
 	s := strings.ToLower(pFormat)
 	if strings.Count(s, "%x") != 5 {
+		panic(errors.New("uuid.Print: invalid format"))
+	}
+	s = strings.Replace(s, "%x", "", -1)
+	if strings.Count(s, "%") > 0 {
 		panic(errors.New("uuid.Print: invalid format"))
 	}
 }
@@ -87,11 +93,10 @@ func formatPrint(pSrc []byte, pFormat string) string {
 	var u bool
 	for _, v := range groups {
 		ls = s
-		for s < end && (pFormat[s] != '%') {
-			s++
-			copy(buf[p:], pFormat[ls:s])
-			p += s - ls
+		for ; s < end && pFormat[s] != '%'; s++ {
 		}
+		copy(buf[p:], pFormat[ls:s])
+		p += s - ls
 		s++
 		u = pFormat[s] == 'X'
 		s++
@@ -109,11 +114,10 @@ func formatPrint(pSrc []byte, pFormat string) string {
 		p += v + v
 	}
 	ls = s
-	for s < end && (pFormat[s] != '%') {
-		s++
-		copy(buf[p:], pFormat[ls:s])
-		p += s - ls
+	for ; s < end && pFormat[s] != '%'; s++ {
 	}
+	copy(buf[p:], pFormat[ls:s])
+	p += s - ls
 	return string(buf)
 }
 

@@ -45,7 +45,7 @@ func (o Uuid) Bytes() []byte {
 }
 
 func (o Uuid) String() string {
-	if printFormat == CleanHyphen {
+	if printFormat == Canonical {
 		return canonicalPrint(o)
 	}
 	return formatPrint(o, string(printFormat))
