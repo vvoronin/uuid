@@ -36,6 +36,17 @@ func TestUuid_Size2(t *testing.T) {
 	assert.Equal(t, 16, Nil.Size(), "The size of the array should be sixteen")
 }
 
+func TestNameSpace_String(t *testing.T) {
+	id := Uuid(uuidBytes)
+	id2 := PromoteToNameSpace(id)
+	assert.Equal(t, idString, id2.String(), "The Format given should match the output")
+}
+
+func TestUuid_String2(t *testing.T) {
+	id := uuid(uuidBytes)
+	assert.Equal(t, idString, id.String(), "The Format given should match the output")
+}
+
 func TestNameSpace_Variant(t *testing.T) {
 	for _, v := range namespaces {
 		id, _ := Parse(v)
