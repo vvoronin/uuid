@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"fmt"
 )
 
 const (
@@ -117,16 +118,16 @@ func TestFormatter(t *testing.T) {
 
 	for _, u := range ids {
 		for i := range formats {
-			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(Formatter(formats[i], u)), "Format must compile")
-			outputLn(Formatter(formats[i], u))
+			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(Formatter(u, formats[i])), "Format must compile")
+			outputLn(Formatter(u, formats[i]))
 		}
 	}
 
 	for k, v := range namespaces {
-		s := Formatter(Canonical, k)
+		s := Formatter(k, Canonical)
 		assert.Equal(t, v, s, "Should match")
 
-		s = Formatter(Format(strings.ToUpper(string(Canonical))), k)
+		s = Formatter(k, Format(strings.ToUpper(string(Canonical))))
 		assert.Equal(t, strings.ToUpper(v), s, "Should match")
 	}
 
@@ -145,7 +146,7 @@ func didFormatterPanic(pFormat string) bool {
 			}
 		}()
 
-		Formatter(Format(pFormat), NameSpaceDNS)
+		Formatter(NameSpaceDNS, Format(pFormat))
 		return
 	}()
 }
@@ -156,8 +157,14 @@ func BenchmarkFormatter(b *testing.B) {
 	id := NewV2(DomainGroup)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		Formatter("{%X-%X-%X-%x-%X}", id)
+		Formatter(id, "{%X-%X-%X-%x-%X}")
 	}
 	b.StopTimer()
 	b.ReportAllocs()
+}
+
+func TestNewV12(t *testing.T) {
+	for i:= 0; i < 2048; i++ {
+		  fmt.Println(NewV1())
+	}
 }

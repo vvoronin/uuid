@@ -58,7 +58,7 @@ func SwitchFormatToUpper(pFormat Format) {
 // *%[xX]*%[xX]*%[xX]*%[xX]*%[xX]*. If the supplied format does not meet this
 // standard the function will panic. Note any extra uses of [%] outside of the
 // [%x|%X] will also cause a panic.
-func Formatter(pFormat Format, pId UUID) string {
+func Formatter(pId UUID, pFormat Format) string {
 	checkFormat(string(pFormat))
 	return formatPrint(pId.Bytes(), string(pFormat))
 }

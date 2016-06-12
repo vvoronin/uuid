@@ -5,6 +5,7 @@ import (
 	"github.com/twinj/uuid"
 	"github.com/twinj/uuid/savers"
 	"time"
+	"net/url"
 )
 
 func Example() {
@@ -15,23 +16,34 @@ func Example() {
 	// Run before any v1 or v2 UUIDs to ensure the savers takes
 	uuid.RegisterSaver(saver)
 
+	up, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+	fmt.Printf("version %d variant %x: %s\n", up.Version(), up.Variant(), up)
+
+	uuid.New(up.Bytes())
+
 	u1 := uuid.NewV1()
 	fmt.Printf("version %d variant %x: %s\n", u1.Version(), u1.Variant(), u1)
-
-	uP, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
-	uP = uuid.PromoteToNameSpace(uP)
-	u3 := uuid.NewV3(uP.(uuid.NameSpace), uuid.Name("test"))
 
 	u4 := uuid.NewV4()
 	fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
 
-	u5 := uuid.NewV5(uuid.NameSpaceURL, uuid.Name("test"))
+	newNameSpace := uuid.PromoteToNameSpace(u1)
+	u3 := uuid.NewV3(newNameSpace, u4)
+
+	url, _ := url.Parse("www.widgets.com")
+
+	u5 := uuid.NewV5(uuid.NameSpaceURL, url)
 
 	if uuid.Equal(u1, u3) {
 		fmt.Println("Will never happen")
 	}
 
-	fmt.Println(uuid.Formatter(uuid.CanonicalCurly, u5))
+	if uuid.Compare(uuid.NameSpaceDNS, uuid.NameSpaceDNS) == 0 {
+		fmt.Println("They are equal")
+	}
+
+	// Default Format is Canonical
+	fmt.Println(uuid.Formatter(u5, uuid.CanonicalCurly))
 
 	uuid.SwitchFormat(uuid.CanonicalBracket)
 }
@@ -39,6 +51,11 @@ func Example() {
 func ExampleNewV1() {
 	u1 := uuid.NewV1()
 	fmt.Printf("version %d variant %s: %s\n", u1.Version(), u1.Variant(), u1)
+}
+
+func ExampleNewV2() {
+	u2 := uuid.NewV2(uuid.DomainUser)
+	fmt.Printf("version %d variant %s: %s\n", u2.Version(), u2.Variant(), u2)
 }
 
 func ExampleNewV3() {
@@ -79,7 +96,7 @@ func ExampleRegisterSaver() {
 
 func ExampleFormatter() {
 	u4 := uuid.NewV4()
-	fmt.Println(uuid.Formatter(uuid.CanonicalCurly, u4))
+	fmt.Println(uuid.Formatter(u4, uuid.CanonicalCurly))
 }
 
 func ExampleSwitchFormat() {

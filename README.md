@@ -30,9 +30,32 @@ Any supported version of Go.
 # Design considerations
 
 * Ensure UUIDs are unique across a use case
-    Proper test coverage has determined that the UUID timestamp spinner works correctly, cross multiple clock resolutions
+    Proper test coverage has determined thant the UUID timestamp spinner works correctly, cross multiple clock resolutions
+    The generator produces timestamps that roll out sequentially and will only modify the sequence on rare circumstances
+    It is highly recommended that you register a Saver if you use V1 or V2 UUIDs as it will ensure a higher probability
+    of uniqueness.
+
+    Example V1 output:
+    5fb1a280-30f0-11e6-9614-005056c00001
+    5fb1a281-30f0-11e6-9614-005056c00001
+    5fb1a282-30f0-11e6-9614-005056c00001
+    5fb1a283-30f0-11e6-9614-005056c00001
+    5fb1a284-30f0-11e6-9614-005056c00001
+    5fb1a285-30f0-11e6-9614-005056c00001
+    5fb1a286-30f0-11e6-9614-005056c00001
+    5fb1a287-30f0-11e6-9614-005056c00001
+    5fb1a288-30f0-11e6-9614-005056c00001
+    5fb1a289-30f0-11e6-9614-005056c00001
+    5fb1a28a-30f0-11e6-9614-005056c00001
+    5fb1a28b-30f0-11e6-9614-005056c00001
+    5fb1a28c-30f0-11e6-9614-005056c00001
+    5fb1a28d-30f0-11e6-9614-005056c00001
+    5fb1a28e-30f0-11e6-9614-005056c00001
+    5fb1a28f-30f0-11e6-9614-005056c00001
+    5fb1a290-30f0-11e6-9614-005056c00001
+
 * Generator should work on all app servers.
-    No Os locking threads or file system dependant storage.
+    No Os locking threads or file system dependant storage
     Saver interface exists for the user to provide their own Saver implementations
     for V1 and V2 UUIDs. The interface could theoretically be applied to your own UUID implementation.
     Have provided a savers which works on a standard OS environment.
@@ -70,24 +93,38 @@ Use the `go` tool:
 See [documentation and examples](http://godoc.org/github.com/twinj/uuid)
 for more information.
 
-	uuid.SetupSaver(...)
+	saver := new(savers.FileSystemSaver)
+	saver.Report = true
+	saver.Duration = time.Second * 3
 
-	u1 := uuid.NewV1()
+	// Run before any v1 or v2 UUIDs to ensure the savers takes
+	uuid.RegisterSaver(saver)
 
 	uP, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
-	u3 := uuid.NewV3(uP, uuid.Name("test"))
-	u4 := uuid.NewV4()
-	fmt.Printf(print, u4.Version(), u4.Variant(), u4)
+	u1 := uuid.NewV1()
+	fmt.Printf("version %d variant %x: %s\n", u1.Version(), u1.Variant(), u1)
 
-	u5 := uuid.NewV5(uuid.NamespaceURL, uuid.Name("test"))
+	u4 := uuid.NewV4()
+	fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
+
+	newNameSpace := uuid.PromoteToNameSpace(u1)
+	u3 := uuid.NewV3(newNameSpace, u4)
+
+	u5 := uuid.NewV5(uuid.NameSpaceURL, url.Parse("www.widgets.com"))
 
 	if uuid.Equal(u1, u3) {
-		fmt.Printf("Will never happen")
+		fmt.Println("Will never happen")
 	}
-	fmt.Printf(uuid.Formatter(u5, uuid.CurlyHyphen))
 
-	uuid.SwitchFormat(uuid.BracketHyphen)
+	if uuid.Compare(uuid.NameSpaceDNS, uuid.NameSpaceDNS) == 0 {
+		fmt.Println("They are equal")
+	}
+
+	// Default Format is Canonical
+	fmt.Println(uuid.Formatter(u5, uuid.CanonicalCurly))
+
+	uuid.SwitchFormat(uuid.CanonicalBracket)
 
 ## Coverage
 
