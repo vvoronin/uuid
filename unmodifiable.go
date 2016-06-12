@@ -1,46 +1,71 @@
 package uuid
 
-
 import (
 	"github.com/twinj/uuid/version"
 )
 
-var _ UUID = &Unmodifiable{}
+// **************************************************** Fixed UUID
 
-// A clean UUID type for simpler UUID versions
-type Unmodifiable struct {
-	*array
-}
+var _ UUID = new(uuid)
 
-func (Unmodifiable) Size() int {
+type uuid string
+
+func (uuid) Size() int {
 	return length
 }
 
-func (o Unmodifiable) Version() version.Version {
-	return o.array.Version()
+func (o uuid) Version() version.Version {
+	return Uuid(o).Version()
 }
 
-func (o Unmodifiable) Variant() uint8 {
-	return o.array.Variant()
+func (o uuid) Variant() uint8 {
+	return Uuid(o).Variant()
 }
 
-func (o Unmodifiable) Bytes() (u []byte) {
-	u = append(u, *o.array...)
-	return
+func (o uuid) Bytes() []byte {
+	return Uuid(o).Bytes()
 }
 
-func (o Unmodifiable) MarshalBinary() ([]byte, error) {
-	return o.Bytes(), nil
+func (o uuid) String() string {
+	return Uuid(o).String()
 }
 
-func (o Unmodifiable) UnmarshalBinary(pData []byte) error {
-	return nil
+// **************************************************** Hashable UUID
+
+var _ UUID = new(NameSpace)
+
+// NameSpace represents a UUID that is used as a NameSpace for V3 and V5 UUIDs.
+// A NameSpace could be used for any digestible UUID implementation. Its
+// underlying structure is for use for hashing and ensuring these hashes are the
+// same across system types as per RFC4122. The visual representation of this
+// UUID should remain identical to its original. While you could cast any Uuid
+// to one of these it is recommended that you do not as the bytes need to be
+// reordered. Use the PromoteToNameSpace function for this purpose.
+type NameSpace string
+
+// Size returns the length of the UUID.
+func (o NameSpace) Size() int {
+	return len(o)
 }
 
-func (o Unmodifiable) HashName() (name Name) {
-	return o.array.HashName()
+// Version returns the implementation version.
+func (o NameSpace) Version() version.Version {
+	return Uuid(o).Version()
 }
 
-func (o Unmodifiable) String() string {
-	return o.array.String()
+// Variant returns the origin implementation of the UUID
+func (o NameSpace) Variant() uint8 {
+	return Uuid(o).Variant()
+}
+
+// Bytes returns natural order []byte slice as represented by a standard UUID.
+func (o NameSpace) Bytes() []byte {
+	b := []byte(o)
+	changeOrder(b)
+	return b
+}
+
+// String returns a canonical string representation of this NameSpace UUID,
+func (o NameSpace) String() string {
+	return Uuid(o.Bytes()).String()
 }

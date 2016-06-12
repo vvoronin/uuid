@@ -35,10 +35,10 @@ type FileSystemSaver struct {
 	uuid.Timestamp
 }
 
-func (o *FileSystemSaver) Save(pStore *uuid.Store) {
+func (o *FileSystemSaver) Save(pStore uuid.Store) {
 
 	if pStore.Timestamp >= o.Timestamp {
-		err := o.openAndDo(o.encode, pStore)
+		err := o.openAndDo(o.encode, &pStore)
 		if err == nil {
 			if o.Report {
 				log.Printf("UUID Saved State Storage: %s", pStore)
@@ -90,7 +90,7 @@ func (o *FileSystemSaver) encode(pStore *uuid.Store) {
 	// ensure reader state is ready for use
 	enc := gob.NewEncoder(o.file)
 	// swallow error for encode as its only for cyclic pointers
-	enc.Encode(pStore)
+	enc.Encode(&pStore)
 }
 
 func (o *FileSystemSaver) decode(pStore *uuid.Store) {
@@ -98,5 +98,5 @@ func (o *FileSystemSaver) decode(pStore *uuid.Store) {
 	o.file.Seek(0, 0)
 	dec := gob.NewDecoder(o.file)
 	// swallow error for encode as its only for cyclic pointers
-	dec.Decode(pStore)
+	dec.Decode(&pStore)
 }

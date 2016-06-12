@@ -34,7 +34,7 @@ Any supported version of Go.
     No Os locking threads or file system dependant storage.
     Saver interface exists for the user to provide their own Saver implementations
     for V1 and V2 UUIDs. The interface could theoretically be applied to your own UUID implementation.
-    Have provided a saver which works on a standard OS environment.
+    Have provided a savers which works on a standard OS environment.
 * Allow user implementations
 
 # Future considerations
@@ -48,7 +48,7 @@ Any supported version of Go.
 * Improved builds and 100% test coverage
 * Library overhaul to cleanup exports that are not useful for a user
 * Improved file system Saver interface, breaking changes.
-    To use a saver make sure you pass it in via the uuid.SetupSaver(Saver) method before a UUID is generated, so as to take affect.
+    To use a savers make sure you pass it in via the uuid.SetupSaver(Saver) method before a UUID is generated, so as to take affect.
 * Removed use of OS Thread locking and runtime package requirement
 * Changed String() output to CleanHyphen to match the canonical standard
 * Removed default non volatile store and replaced with Saver interface
@@ -71,12 +71,12 @@ for more information.
 
 	uuid.SetupSaver(...)
 
-	u1 := uuid.NewV1()
+	u1 := uuid.V1()
 
 	uP, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
-	u3 := uuid.NewV3(uP, uuid.Name("test"))
-	u4 := uuid.NewV4()
+	u3 := uuid.V3(uP, uuid.Name("test"))
+	u4 := uuid.V4()
 	fmt.Printf(print, u4.Version(), u4.Variant(), u4)
 
 	u5 := uuid.NewV5(uuid.NamespaceURL, uuid.Name("test"))
@@ -88,19 +88,17 @@ for more information.
 
 	uuid.SwitchFormat(uuid.BracketHyphen)
 
+## Coverage
+
+go test -coverprofile cover.out github.com/twinj/uuid
+go tool cover -html=cover.out -o cover.html
+
 ## Links
 
 * [RFC 4122](http://www.ietf.org/rfc/rfc4122.txt)
 * [DCE 1.1: Authentication and Security Services](http://pubs.opengroup.org/onlinepubs/9629399/apdxa.htm)
 
 ## Copyright
-
-This is a derivative work
-
-Original version from
-Copyright (C) 2011 by Krzysztof Kowalik <chris@nu7hat.ch>.
-See [COPYING](https://github.com/nu7hatch/gouuid/tree/master/COPYING)
-file for details.
 
 Copyright (C) 2014 twinj@github.com
 See [LICENSE](https://github.com/twinj/uuid/tree/master/LICENSE)

@@ -38,7 +38,7 @@ func TestFileSystemSaver_SaveSchedule(t *testing.T) {
 			time.Sleep(saver.Duration)
 			count++
 		}
-		store := &uuid.Store{uuid.Now(), 3, []byte{0xff, 0xaa, 0x11}}
+		store := uuid.Store{uuid.Now(), 3, []byte{0xff, 0xaa, 0x11}}
 		saver.Save(store)
 	}
 	d := time.Since(past)
@@ -101,7 +101,7 @@ func TestFileSystemSaver_Save(t *testing.T) {
 	// Read is always called first
 	saver.Read()
 
-	store := &uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
+	store := uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
 	saver.Save(store)
 
 	saver = SetupFileSystemStateSaver(path.Join("/generator-"+uuid.NewV4().String()+".gob"), false)
@@ -109,7 +109,7 @@ func TestFileSystemSaver_Save(t *testing.T) {
 	// Read is always called first
 	saver.Read()
 
-	store = &uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
+	store = uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
 	saver.Save(store)
 }
 
@@ -120,7 +120,7 @@ func TestFileSystemSaver_SaveAndRead(t *testing.T) {
 	// Read is always called first
 	saver.Read()
 
-	store := &uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
+	store := uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
 	saver.Save(store)
 
 	_, saved := saver.Read()

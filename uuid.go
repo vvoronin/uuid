@@ -1,4 +1,4 @@
-// This package provides RFC4122 UUIDs.
+// This package provides RFC4122 and DCE 1.1 UUIDs.
 //
 // NewV1, NewV2, NewV3, NewV4, NewV5, for generating versions 1, 3, 4
 // and 5 UUIDs as specified in RFC-4122.
@@ -13,27 +13,23 @@
 // The example code in the specification was also used as reference
 // for design.
 //
-// Copyright (C) 2016 twinj@github.com  2014 MIT style licence
+// Copyright (C) 2016 twinj@github.com  2014 MIT licence
 package uuid
 
 import (
 	"bytes"
-	"encoding"
 	"encoding/hex"
 	"errors"
-	"fmt"
+	"github.com/twinj/uuid/version"
 	"hash"
 	"regexp"
-	"strings"
-	"github.com/twinj/uuid/version"
-	"encoding/binary"
 )
 
 const (
-	ReservedNCS uint8 = 0x00
-	ReservedRFC4122 uint8 = 0x80 // or and A0 if masked with 1F
+	ReservedNCS       uint8 = 0x00
+	ReservedRFC4122   uint8 = 0x80 // or and A0 if masked with 1F
 	ReservedMicrosoft uint8 = 0xC0
-	ReservedFuture uint8 = 0xE0
+	ReservedFuture    uint8 = 0xE0
 )
 
 type Domain uint8
@@ -56,34 +52,34 @@ var (
 	parseUUIDRegex = regexp.MustCompile(hexPattern)
 )
 
-type Node []byte
-type Sequence uint16
+func NewGenerator(
+	fRandom func([]byte) (int, error),
+	fNext func() Timestamp,
+	fId func() Node) (generator *Generator) {
+	generator = new(Generator)
+	generator.Random = fRandom
+	generator.Next = fNext
+	generator.Id = fId
+	return
+}
 
 // ******************************************************  UUID
 
 // UUID is the common interface implemented by all UUIDs
 type UUID interface {
-	// MarshalBinary (via the embedded encoding.BinaryMarshaler interface) from
-	// the UUID. It never returns an error.
-	encoding.BinaryMarshaler
 
-	// UnmarshalBinary (via the embedded encoding.BinaryUnmarshaler interface) into
-	// the UUID. It never returns an error.
-	encoding.BinaryUnmarshaler
+	// Retrieves the UUID bytes from the underlying type data
+	Bytes() []byte
 
-	// Marshals the UUID bytes or data
-	Bytes() (data []byte)
-
-	// Size is used where different implementations require
-	// different sizes. Should return the number of bytes in
-	// the implementation.
+	// Size is used where different implementations require different sizes.
+	// Should return the number of bytes in the implementation.
 	// Enables unmarshal and Bytes to screen for size
 	Size() int
 
-	// Version returns a version number of the algorithm used
-	// to generate the UUID.
-	// This may may behave independently across non RFC4122 UUIDs
-	Version() version.Version
+	// A UUID can be used as a Name within a namespace
+	// Is simply just a String() string, method
+	// Returns a formatted version of the UUID.
+	UniqueName
 
 	// Variant returns the UUID Variant
 	// This will be one of the constants:
@@ -94,32 +90,28 @@ type UUID interface {
 	// This may behave differently across non RFC4122 UUIDs
 	Variant() uint8
 
-	HashName() Name
-
-	// A UUID can be used as a Name within a namespace
-	// Is simply just a String() string, method
-	// Returns a formatted version of the UUID.
-	UniqueName
+	// Version returns a version number of the algorithm used to generate the
+	// UUID. This may may behave independently across non RFC4122 UUIDs
+	Version() version.Version
 }
 
 // New creates a UUID from a slice of bytes.
-// Will panic if data slice is too small.
-func New(pData []byte) UUID {
-	o := make(array, length)
+func New(pData []byte) Uuid {
+	o := array{}
 	o.unmarshal(pData)
-	return &o
+	return o[:]
 }
 
 // Creates a UUID from a hex string
 // Will panic if hex string is invalid - will panic even with hyphens and brackets
 // Expects a clean string use Parse otherwise.
-func NewHex(pUuid string) UUID {
+func NewHex(pUuid string) Uuid {
 	bytes, err := hex.DecodeString(pUuid)
 	if err != nil {
 		panic(err)
 	}
-	o := array(bytes)
-	return &o
+	o := Uuid(bytes)
+	return o
 }
 
 // Creates a UUID from a valid string representation.
@@ -133,49 +125,80 @@ func NewHex(pUuid string) UUID {
 func Parse(pUUID string) (UUID, error) {
 	md := parseUUIDRegex.FindStringSubmatch(pUUID)
 	if md == nil {
-		return nil, errors.New("uuid.Parse: invalid string")
+		return nil, errors.New("uuid.Parse: invalid string format this is probablt not a UUID")
 	}
 	return NewHex(md[2] + md[3] + md[4] + md[5] + md[6]), nil
 }
 
-func FromName(pName Name) UUID {
-	o := fromName(pName)
-	return &o
-}
-
-func fromName(pName Name) array {
-	o := []byte(pName)
+// The RFC4122 implementation hashed the Namespace UUID in local byte order
+// where they used a struct directly in the hash so its byte order compared to
+// a slice was different. To get the same result as the specification we need
+// to convert to this 'struct' representation
+//
+// type uuid struct {
+// 	timeLow               uint32
+// 	timeMid, timeHiAndVer uint16
+// 	seqHiAndVar, seqLow   uint8
+// 	id                    [6]uint8
+// }
+//
+// var NameSpace_X500 = uuid{
+// 	0x6ba7b814,
+// 	0x9dad,
+// 	0x11d1,
+// 	0x80, 0xb4, []uint8{0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8},
+// }
+//
+// var howTheStructLooksInMemory = [16]uint8{
+// 	0x14, 0xb8, 0xa7, 0x6b, 0xad, 0x9d, 0xd1, 0x11, 0x80, 0xb4, 0x00, 0xc0,
+// 	0x4f, 0xd4, 0x30, 0xc8,
+// }
+//
+// var canonicalX500 = "6ba7b814-9dad-11d1-80b4-00c04fd430c8"
+//
+// var howItStoresInthisPackage = [16]uint8{
+// 	0x6b, 0xa7, 0xb8, 0x14,
+// 	0x9d, 0xad,
+// 	0x11, 0xd1,
+// 	0x80, 0xb4, 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8,
+// }
+//
+// Since we work directly with bytes we need to convert those bytes to match
+// how it was originally implemented to get the same computed hash values. Any
+// string representation or natural representations in this package are
+// expected to be in canonical order which is shown as rtl big-endian. It is
+// possible to store all UUIDs in little endian order to avoid this issue,
+// however, it is more efficient to have the bytes in the order they are
+// represented to the world in so as to avoid overhead in marshalling and
+// unmarshalling, printing and scanning. All overhead is in generation of an id
+// for this reason. Some would argue that it would be better to store in little
+// endian order so generating these would be faster from a benchmark
+// perspective. I feel that this is only in service to computation in contrast
+// to how the Ids are used and read.
+func changeOrder(pName []byte) {
 	groups := [][]byte{
-		o[:4], o[4:6], o[6:8],
+		pName[:4], pName[4:6], pName[6:8],
 	}
-
-	binary.LittleEndian()
 	for _, v := range groups {
-		for i, j := 0, len(v) - 1; i < j; i, j = i + 1, j - 1 {
+		for i, j := 0, len(v)-1; i < j; i, j = i+1, j-1 {
 			v[i], v[j] = v[j], v[i]
 		}
 	}
-	return array(o)
 }
 
-func digest(pHash hash.Hash, pName Name, pNames ...UniqueName) (o Name) {
-	bytes := []byte(pName)
+func digest(pHash hash.Hash, pName []byte, pNames ...UniqueName) []byte {
 	for _, v := range pNames {
-		bytes = append(bytes, v.String()...)
+		pName = append(pName, v.String()...)
 	}
-	pHash.Write(bytes)
-	o = Name(pHash.Sum(nil))
-	return
+	pHash.Write(pName)
+	return pHash.Sum(nil)
 }
-
-// TODO consider how to work with Hash name order and Stringer
 
 // **********************************************  UUID Names
 
-// Name is used to represent UUIDs in network byte order
-//
-// A UUID Name is a simple string which implements UniqueName
-// which satisfies the Stringer interface.
+// A UUID Name is a string which implements UniqueName
+// which satisfies the Stringer interface. It is used to enable V3 and V5 UUIDs
+// to use
 type Name string
 
 // Returns the name as a string. Satisfies the Stringer interface.
@@ -183,75 +206,16 @@ func (o Name) String() string {
 	return string(o)
 }
 
-// NewName will create a unique name from several sources
-func NewName(pSalt string, pNames ...UniqueName) UniqueName {
-	var s string
-	for _, s2 := range pNames {
-		s += s2.String()
-	}
-	return Name(s + pSalt)
-}
-
 // UniqueName is a Stinger interface
 // Made for easy passing of IPs, URLs, the several Address types,
 // Buffers and any other type which implements Stringer
 // string, []byte types and Hash sums will need to be cast to
 // the Name type or some other type which implements
-// Stringer or UniqueName
+// UniqueName
 type UniqueName interface {
 	// Many go types implement this method for use with printing
 	// Will convert the current type to its native string format
 	String() string
-}
-
-// Compare will compare two UUIDs "lexically" and return
-func Compare(pId, pId2 UUID) int {
-	o2 := pId2.Bytes()
-	for i, v := range pId.Bytes() {
-		if v < o2[i] {
-			return -1
-		}
-		if v > o2[i] {
-			return 1
-		}
-	}
-	return 0
-}
-
-// **********************************************  UUID Printing
-
-// A Format is a pattern used by the stringer interface with which to print
-// the UUID.
-type Format string
-
-const (
-	Clean Format = "%x%x%x%x%x%x"
-	Curly Format = "{%x%x%x%x%x%x}"
-	Bracket Format = "(%x%x%x%x%x%x)"
-
-	// This is the default format.
-	CleanHyphen Format = "%x-%x-%x-%x%x-%x"
-
-	CurlyHyphen Format = "{%x-%x-%x-%x%x-%x}"
-	BracketHyphen Format = "(%x-%x-%x-%x%x-%x)"
-	GoIdFormat Format = "[%X-%X-%x-%X%X-%x]"
-)
-
-func newGenerator(fNext func() Timestamp, fId func() Node, pFmt Format) (generator *Generator) {
-	generator = new(Generator)
-	generator.Fmt = string(pFmt)
-	generator.Next = fNext
-	generator.Id = fId
-	return
-}
-
-// Switches the default printing format for ALL UUID strings
-// A valid format will have 6 groups if the supplied Format does not
-func SwitchFormat(pFormat Format) {
-	if strings.Count(string(pFormat), "%") != 6 {
-		panic(errors.New("uuid.switchFormat: invalid formatting"))
-	}
-	generator.Fmt = string(pFormat)
 }
 
 // Compares whether each UUID is the same
@@ -259,15 +223,27 @@ func Equal(p1, p2 UUID) bool {
 	return bytes.Equal(p1.Bytes(), p2.Bytes())
 }
 
-// Print a UUID into a human readable string which matches the given Format
-// Use this for one time formatting when setting the default using SwitchFormat
-// The format must cater for each 6 UUID value groups
-func Sprintf(pFormat Format, pId UUID) string {
-	fmt := string(pFormat)
-	if strings.Count(fmt, "%") != 6 {
-		panic(errors.New("uuid.Print: invalid format"))
+// Compare returns an integer comparing two UUIDs lexicographically.
+// The result will be 0 if a==b, -1 if a < b, and +1 if a > b.
+// A nil argument is equivalent to the Nil UUID.
+func Compare(pId, pId2 UUID) int {
+	var b1, b2 []byte
+
+	if pId == nil {
+		b1 = nil
+	} else {
+		b1 = pId.Bytes()
 	}
-	return formatter(pId, fmt)
+
+	if pId2 == nil {
+		b2 = nil
+	} else {
+		b2 = pId2.Bytes()
+	}
+
+	bytes.Compare(b1, b2)
+
+	return 0
 }
 
 // ***************************************************  Helpers
@@ -296,9 +272,4 @@ func setVariant(pByte *byte, pVariant uint8) {
 		panic(errors.New("uuid.setVariant: invalid variant mask"))
 	}
 	*pByte |= pVariant
-}
-
-func formatter(pId UUID, pFormat string) string {
-	b := pId.Bytes()
-	return fmt.Sprintf(pFormat, b[0:4], b[4:6], b[6:8], b[8:9], b[9:10], b[10:pId.Size()])
 }

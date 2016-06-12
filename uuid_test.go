@@ -10,15 +10,14 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"regexp"
-	"testing"
 	"github.com/twinj/uuid/version"
+	"testing"
 )
 
 var (
 	goLang Name = "https://google.com/golang.org?q=golang"
 
-	printer bool = false
+	printTestOutput bool = false
 
 	uuidBytes = []byte{
 		0xaa, 0xcf, 0xee, 0x12,
@@ -35,11 +34,7 @@ var (
 		ReservedNCS, ReservedRFC4122, ReservedMicrosoft, ReservedFuture,
 	}
 	namespaceUuids = []UUID{
-		namespaceDNS, namespaceURL, namespaceOID, namespaceX500,
-	}
-
-	namespaceNames = []Name{
-		NamespaceDNS, NamespaceURL, NamespaceOID, NamespaceX500,
+		NameSpaceDNS, NameSpaceURL, NameSpaceOID, NameSpaceX500,
 	}
 
 	invalidHexStrings = [...]string{
@@ -122,7 +117,7 @@ func TestNew(t *testing.T) {
 		u := New(k.Bytes())
 
 		assert.NotNil(t, u, "Expected a valid non nil UUID")
-		assert.Equal(t, version.One, u.Version(), "Expected correct version %d, but got %d", 2, u.Version())
+		assert.Equal(t, version.One, u.Version(), "Expected correct version %d, but got %d", version.One, u.Version())
 		assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected ReservedNCS variant %x, but got %x", ReservedNCS, u.Variant())
 		assert.Equal(t, k.String(), u.String(), "Stringer versions should equal")
 	}
@@ -134,80 +129,6 @@ func TestUUID_NewBulk(t *testing.T) {
 	}
 }
 
-const (
-	clean = `[[:xdigit:]]{8}[[:xdigit:]]{4}[1-5][[:xdigit:]]{3}[[:xdigit:]]{4}[[:xdigit:]]{12}`
-	cleanHexPattern = `^` + clean + `$`
-	curlyHexPattern = `^\{` + clean + `\}$`
-	bracketHexPattern = `^\(` + clean + `\)$`
-	hyphen = `[[:xdigit:]]{8}-[[:xdigit:]]{4}-[1-5][[:xdigit:]]{3}-[[:xdigit:]]{4}-[[:xdigit:]]{12}`
-	cleanHyphenHexPattern = `^` + hyphen + `$`
-	curlyHyphenHexPattern = `^\{` + hyphen + `\}$`
-	bracketHyphenHexPattern = `^\(` + hyphen + `\)$`
-)
-
-func TestSwitchFormat(t *testing.T) {
-	ids := []UUID{NewV4(), NewV1()}
-	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen, GoIdFormat}
-	patterns := []string{curlyHyphenHexPattern, cleanHexPattern, curlyHexPattern, bracketHexPattern, cleanHyphenHexPattern, bracketHyphenHexPattern, hyphen}
-
-	// Reset default
-	SwitchFormat(CleanHyphen)
-
-	for _, u := range ids {
-		for i := range formats {
-			SwitchFormat(formats[i])
-			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(u.String()), "Format %s must compile pattern %s", formats[i], patterns[i])
-			outputLn(u)
-		}
-	}
-
-	assert.True(t, didSwitchFormatPanic(), "Switch format should panic when format invalid")
-
-	// Reset default
-	SwitchFormat(CleanHyphen)
-}
-
-func didSwitchFormatPanic() bool {
-	return func() (didPanic bool) {
-		defer func() {
-			if recover() != nil {
-				didPanic = true
-			}
-		}()
-
-		SwitchFormat("%%%%%%%%%%%%%")
-		return
-	}()
-}
-
-func TestSprintf(t *testing.T) {
-	ids := []UUID{NewV4(), NewV1()}
-	formats := []Format{CurlyHyphen, Clean, Curly, Bracket, CleanHyphen, BracketHyphen, GoIdFormat}
-	patterns := []string{curlyHyphenHexPattern, cleanHexPattern, curlyHexPattern, bracketHexPattern, cleanHyphenHexPattern, bracketHyphenHexPattern, hyphen}
-
-	for _, u := range ids {
-		for i := range formats {
-			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(Sprintf(formats[i], u)), "Format must compile")
-			outputLn(Sprintf(formats[i], u))
-		}
-	}
-
-	assert.True(t, didSprintfPanic(), "Sprinf should panic when format invalid")
-}
-
-func didSprintfPanic() bool {
-	return func() (didPanic bool) {
-		defer func() {
-			if recover() != nil {
-				didPanic = true
-			}
-		}()
-
-		Sprintf("*********-------)()()()()(", namespaceDNS)
-		return
-	}()
-}
-
 func TestUUID_NewHexBulk(t *testing.T) {
 	for i := 0; i < 1000000; i++ {
 		s := "f3593cffee9240df408687825b523f13"
@@ -216,14 +137,16 @@ func TestUUID_NewHexBulk(t *testing.T) {
 }
 
 func TestDigest(t *testing.T) {
-	n := digest(md5.New(), NamespaceDNS, goLang)
-	u := fromName(n)
+	id := digest(md5.New(), []byte(NameSpaceDNS), goLang)
+	changeOrder(id)
+	u := Uuid(id)
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")
 	}
 	output(u.Bytes())
-	n = digest(sha1.New(), NamespaceDNS, goLang)
-	u = fromName(n)
+	id = digest(sha1.New(), []byte(NameSpaceDNS), goLang)
+	changeOrder(id)
+	u = Uuid(id)
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")
 	}
@@ -272,19 +195,19 @@ func tVariantConstraint(v byte, b byte, o UUID, t *testing.T) {
 }
 
 func output(a ...interface{}) {
-	if printer {
+	if printTestOutput {
 		fmt.Print(a...)
 	}
 }
 
 func outputLn(a ...interface{}) {
-	if printer {
+	if printTestOutput {
 		fmt.Println(a...)
 	}
 }
 
 func outputF(format string, a ...interface{}) {
-	if printer {
+	if printTestOutput {
 		fmt.Printf(format, a)
 	}
 }

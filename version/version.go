@@ -6,10 +6,10 @@ type Version uint8
 const (
 	Unknown Version = iota // Unknown
 	One                    // Time based
-	Two                  // DCE security via POSIX UIDs
-	Three                 // Namespace hash uses MD5
-	Four                     // Crypto random
-	Five                // Namespace hash uses SHA-1
+	Two                    // DCE security via POSIX UIDs
+	Three                  // Namespace hash uses MD5
+	Four                   // Crypto random
+	Five                   // Namespace hash uses SHA-1
 )
 
 // String returns English description of version.

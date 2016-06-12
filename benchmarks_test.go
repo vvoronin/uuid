@@ -1,27 +1,27 @@
-package uuid_test
+package uuid
 
 import (
-	"github.com/twinj/uuid"
-	_ "github.com/twinj/uuid/savers"
 	"testing"
 	_ "time"
 )
 
+var name UniqueName = Name("www.widgets.com")
+
+func init() {
+	Init()
+}
+
 func BenchmarkNewV1(b *testing.B) {
-	uuid.NewV1()
-	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		uuid.NewV1()
+		NewV1() // Sets up initial store on first run
 	}
 	b.StopTimer()
 	b.ReportAllocs()
 }
 
 func BenchmarkNewV2(b *testing.B) {
-	uuid.NewV1()
-	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		uuid.NewV2(uuid.DomainGroup)
+		NewV2(DomainGroup)
 	}
 	b.StopTimer()
 	b.ReportAllocs()
@@ -29,23 +29,15 @@ func BenchmarkNewV2(b *testing.B) {
 
 func BenchmarkNewV3(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		uuid.NewV3(uuid.NamespaceDNS, uuid.Name("www.example.com"))
+		NewV3(NameSpaceDNS, name)
 	}
 	b.StopTimer()
 	b.ReportAllocs()
 }
 
-//func BenchmarkV3(b *testing.B) {
-//	id := uuid.NamespaceDNS.Bytes()
-//	b.ResetTimer()
-//	for i := 0; i < b.N; i++ {
-//		uuid.V3(id, "www.example.com")
-//	}
-//}
-
 func BenchmarkNewV4(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		uuid.NewV4()
+		NewV4()
 	}
 	b.StopTimer()
 	b.ReportAllocs()
@@ -53,47 +45,18 @@ func BenchmarkNewV4(b *testing.B) {
 
 func BenchmarkNewV5(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		uuid.NewV5(uuid.NamespaceDNS, uuid.Name("www.example.com"))
+		NewV5(NameSpaceDNS, name)
 	}
 	b.StopTimer()
 	b.ReportAllocs()
 }
 
-func BenchmarkArray_Bytes(b *testing.B) {
-	id := uuid.NewV4()
+func BenchmarkNameSpace_Bytes(b *testing.B) {
+	id := make(Uuid, length)
+	id.unmarshal(NameSpaceDNS.Bytes())
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		id.Bytes()
-	}
-	b.StopTimer()
-	b.ReportAllocs()
-}
-
-func BenchmarkUuid_Bytes(b *testing.B) {
-	id := uuid.NewV2(uuid.DomainGroup)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		id.Bytes()
-	}
-	b.StopTimer()
-	b.ReportAllocs()
-}
-
-func BenchmarkArray_String(b *testing.B) {
-	id := uuid.NewV4()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		id.String()
-	}
-	b.StopTimer()
-	b.ReportAllocs()
-}
-
-func BenchmarkUuid_String(b *testing.B) {
-	id := uuid.NewV2(uuid.DomainGroup)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		id.String()
 	}
 	b.StopTimer()
 	b.ReportAllocs()
@@ -101,10 +64,10 @@ func BenchmarkUuid_String(b *testing.B) {
 
 func BenchmarkEqual(b *testing.B) {
 	s := "f3593cff-ee92-40df-4086-87825b523f13"
-	id, _ := uuid.Parse(s)
+	id, _ := Parse(s)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		uuid.Equal(id, id)
+		Equal(id, id)
 	}
 	b.StopTimer()
 	b.ReportAllocs()
@@ -114,7 +77,7 @@ func BenchmarkParse(b *testing.B) {
 	s := "f3593cff-ee92-40df-4086-87825b523f13"
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		uuid.Parse(s)
+		Parse(s)
 	}
 	b.StopTimer()
 	b.ReportAllocs()

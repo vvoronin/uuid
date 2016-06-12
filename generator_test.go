@@ -1,12 +1,13 @@
 package uuid
 
 import (
+	"crypto/rand"
 	"errors"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 	"github.com/twinj/uuid/version"
 	"os"
+	"testing"
+	"time"
 )
 
 var (
@@ -17,23 +18,23 @@ func TestPosixIds(t *testing.T) {
 	assert.True(t, os.Getuid() != 0)
 }
 
-func TestGenerator_NewV1(t *testing.T) {
-	u := NewV1()
+func TestGenerator_V1(t *testing.T) {
+	u := generator.NewV1()
 
 	assert.Equal(t, version.One, u.Version(), "Expected correct version")
 	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 }
 
-func TestGenerator_NewV2(t *testing.T) {
-	u := NewV2(DomainGroup)
+func TestGenerator_V2(t *testing.T) {
+	u := generator.NewV2(DomainGroup)
 
 	assert.Equal(t, version.Two, u.Version(), "Expected correct version")
 	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 	assert.Equal(t, uint8(DomainGroup), u.Bytes()[9], "Expected string representation to be valid")
 
-	u = NewV2(DomainUser)
+	u = generator.NewV2(DomainUser)
 
 	assert.Equal(t, version.Two, u.Version(), "Expected correct version")
 	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
@@ -47,7 +48,7 @@ type save struct {
 	err   error
 }
 
-func (o *save) Save(pStore *Store) {
+func (o *save) Save(pStore Store) {
 	o.saved = true
 }
 
@@ -127,6 +128,17 @@ func TestGeneratorInit(t *testing.T) {
 	assert.NotEqual(t, Sequence(3), generator.Sequence, "Sequence should not be incremented but be random")
 	assert.Equal(t, generator.Node, node, generator.Sequence, "Node should be equal")
 
+	now, node = registerTestGenerator(Now(), nodeBytes)
+
+	// Random read error should alert user
+	generator.Random = func(b []byte) (int, error) {
+		return 0, errors.New("EOF")
+	}
+
+	storageStamp = registerSaver(now.Sub(time.Second), []byte{0xaa, 0xee, 0xaa, 0xbb, 0x44, 0xcc})
+
+	assert.Error(t, generator.err, "Read error should exist")
+
 	registerDefaultGenerator()
 }
 
@@ -140,44 +152,89 @@ func TestGeneratorRead(t *testing.T) {
 		now.Sub(time.Second * 2),
 	}
 
-	generator = newGenerator(
+	generator = NewGenerator(
+		rand.Read,
 		func() Timestamp {
 			return timestamps[i]
 		},
 		func() Node {
 			return nodeBytes
-		},
-		CleanHyphen)
+		})
 
 	storageStamp := registerSaver(now.Add(time.Second), nodeBytes)
 
 	i++
 
-	store := generator.read()
+	generator.read()
 
-	assert.True(t, store.Sequence != 0, "Should not return an empty store")
-	assert.True(t, store.Timestamp != 0, "Should not return an empty store")
-	assert.NotEmpty(t, store.Node, "Should not return an empty store")
+	assert.True(t, generator.Timestamp != 0, "Should not return an empty store")
+	assert.True(t, generator.Timestamp != 0, "Should not return an empty store")
+	assert.NotEmpty(t, generator.Node, "Should not return an empty store")
 
-	assert.True(t, store.Timestamp < storageStamp, "Increment sequence when old timestamp newer than new")
-	assert.Equal(t, Sequence(4), store.Sequence, "Successfull read should have incremented sequence")
+	assert.True(t, generator.Timestamp < storageStamp, "Increment sequence when old timestamp newer than new")
+	assert.Equal(t, Sequence(4), generator.Sequence, "Successfull read should have incremented sequence")
 
 	// A new time that is older than stored time should cause the sequence to increment
 	now, node := registerTestGenerator(Now().Sub(time.Second), nodeBytes)
 	storageStamp = registerSaver(now.Add(time.Second), node)
 
-	store = generator.read()
+	generator.read()
 
-	assert.NotEqual(t, 0, store.Sequence, "Should return an empty store")
-	assert.NotEmpty(t, store.Node, "Should not return an empty store")
+	assert.NotEqual(t, 0, generator.Sequence, "Should return an empty store")
+	assert.NotEmpty(t, generator.Node, "Should not return an empty store")
 
 	// A new time that is older than stored time should cause the sequence to increment
 	registerTestGenerator(Now().Sub(time.Second), nil)
 	storageStamp = registerSaver(now.Add(time.Second), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
 
-	store = generator.read()
-	assert.NotEmpty(t, store.Node, "Should not return an empty store")
-	assert.NotEqual(t, []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb}, store.Node, "Should not return an empty store")
+	generator.read()
+
+	assert.NotEmpty(t, generator.Store, "Should not return an empty store")
+	assert.NotEqual(t, []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb}, generator.Node, "Should not return an empty store")
+
+	registerDefaultGenerator()
+
+}
+
+func TestGeneratorRandom(t *testing.T) {
+	registerTestGenerator(Now(), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+
+	b := make([]byte, 6)
+	n, err := generator.Random(b)
+
+	assert.NoError(t, err, "There should No be an error", err)
+	assert.NotEmpty(t, b, "There should be random data in the slice")
+	assert.Equal(t, 6, n, "Amount read should be same as length")
+
+	generator.Random = func(b []byte) (int, error) {
+		for i := 0; i < len(b); i++ {
+			b[i] = byte(i)
+		}
+		return len(b), nil
+	}
+
+	b = make([]byte, 6)
+	n, err = generator.Random(b)
+	assert.NoError(t, err, "There should No be an error", err)
+	assert.NotEmpty(t, b, "There should be random data in the slice")
+	assert.Equal(t, 6, n, "Amount read should be same as length")
+
+	generator.Random = func(b []byte) (int, error) {
+		return 0, errors.New("EOF")
+	}
+
+	b = make([]byte, 6)
+	c := []byte{}
+	c = append(c, b...)
+
+	n, err = generator.Random(b)
+	assert.Error(t, err, "There should be an error", err)
+	assert.Equal(t, 0, n, "Amount read should be same as length")
+	assert.Equal(t, c, b, "Slice should be empty")
+
+	id := NewV4()
+	assert.Nil(t, id, "There should be no id")
+	assert.Error(t, generator.err, "There should be an error [%s]", err)
 
 	registerDefaultGenerator()
 
@@ -185,6 +242,7 @@ func TestGeneratorRead(t *testing.T) {
 
 func TestGeneratorSave(t *testing.T) {
 	registerTestGenerator(Now(), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+	generator.read()
 	generator.save()
 	registerDefaultGenerator()
 }
@@ -200,14 +258,14 @@ func TestGetHardwareAddress(t *testing.T) {
 }
 
 func registerTestGenerator(pNow Timestamp, pId Node) (Timestamp, Node) {
-	generator = newGenerator(
+	generator = NewGenerator(
+		rand.Read,
 		func() Timestamp {
 			return pNow
 		},
 		func() Node {
 			return pId
-		},
-		CleanHyphen)
+		})
 	return pNow, pId
 }
 

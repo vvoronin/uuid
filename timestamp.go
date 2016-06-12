@@ -43,12 +43,12 @@ type Timestamp uint64
 // Converts Unix formatted time to RFC4122 UUID formatted times
 // UUID UTC base time is October 15, 1582.
 // Unix base time is January 1, 1970.
-// Converts time to 100 nanosecond ticks since epoch
+// Converts time to 100 nanosecond ticks since epoch. Uses time.Now
 func Now() Timestamp {
 	return Convert(time.Now())
 }
 
-// Converts Unix formatted time to RFC4122 UUID formatted times
+// Converts Unix formatted time to RFC4122 UUID formatted time
 // UUID UTC base time is October 15, 1582.
 // Unix base time is January 1, 1970.
 // Converts time to 100 nanosecond ticks since epoch

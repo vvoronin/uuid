@@ -1,8 +1,8 @@
 package version
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestVersion_String(t *testing.T) {

@@ -7,7 +7,6 @@ package uuid
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/binary"
 	"fmt"
 	"log"
@@ -16,9 +15,46 @@ import (
 	"sync"
 )
 
-// Run this method before any calls to NewV1 or NewV2 to save the state to
+// an iterated value to help ensure unique UUID generations values
+// across the same domain, server restarts and clock issues
+type Sequence uint16
+
+// the last node id setup used by the generator
+type Node []byte
+
+// Store is used for storage of UUID generation history to ensure continuous
+// running of the UUID generator between restarts and to monitor synchronicity
+// while generating new V1 or V2 UUIDs
+type Store struct {
+	Timestamp
+	Sequence
+	Node
+}
+
+// String returns a string representation of the Store
+func (o Store) String() string {
+	return fmt.Sprintf("Timestamp[%s]-Sequence[%d]-Node[%x]", o.Timestamp, o.Sequence, o.Node)
+}
+
+// Saver is an interface to setup a non volatile store within your system
+// if you wish to use V1 and V2 UUIDs based on your node id and a constant time
+// it is highly recommended to implement this.
+// A default implementation has been provided. FileSystemStorage, the default
+// behaviour of the package is to generate random sequences where a Saver is not
+// specified.
+type Saver interface {
+	// Read is run once, use this to setup your UUID state machine
+	// Read should also return the UUID state from the non volatile store
+	Read() (error, Store)
+
+	// Save saves the state to the non volatile store and is called only if
+	Save(Store)
+}
+
+// RegisterSaver must be run before any calls to V1 or V2 to save Generator
+// state via teh Store struct.
 // You must implement the uuid.Saver interface and are completely responsible
-// for the non violable storage of the state
+// for the non violable storage of the state.
 func RegisterSaver(pSaver Saver) {
 	generator.Do(func() {
 		defer generator.init()
@@ -28,67 +64,56 @@ func RegisterSaver(pSaver Saver) {
 	})
 }
 
-// Use this interface to setup a non volatile store within your system
-// if you wish to have  v1 and 2 UUIDs based on your node id and constant time
-// it is highly recommended to implement this
-// You could use FileSystemStorage, the default is to generate random sequences
-type Saver interface {
-	// Read is run once, use this to setup your UUID state machine
-	// Read should also return the UUID state from the non volatile store
-	Read() (error, Store)
-
-	// Save saves the state to the non volatile store and is called only if
-	Save(*Store)
-}
-
-// The storage data to ensure continuous running of the UUID generator between restarts
-type Store struct {
-	// the last time UUID was saved
-	Timestamp
-
-	// an iterated value to help ensure different
-	// values across the same domain
-	Sequence
-
-	// the last node which saved a UUID
-	Node
-}
-
-func (o Store) String() string {
-	return fmt.Sprintf("Timestamp[%s]-Sequence[%d]-Node[%x]", o.Timestamp, o.Sequence, o.Node)
-}
-
+// Generator is used to create and monitor the running of V1 and V2 UUIDs.
+// It can be setup to take different implementations for Timestamp, Node and
+// random data retrieval. This is also where the Saver implementation is given.
 type Generator struct {
 	sync.Mutex
 	sync.Once
 
-	Saver
+	err error
+
 	*Store
+	Saver
 
-	Next func() Timestamp
-	Id   func() Node
-
-	Fmt  string
+	Random func([]byte) (int, error)
+	Next   func() Timestamp
+	Id     func() Node
 }
 
-// NewV1 generates a new RFC4122 version 1 UUID
-// based on a 60 bit timestamp and node id
-func (o *Generator) NewV1() UUID {
-	store := o.read()
-	id := makeUuid(
-		uint32(store.Timestamp),
-		uint16(store.Timestamp >> 32),
-		uint16((store.Timestamp >> 48) & 0x0fff),
-		uint16(store.Sequence),
-		store.Node)
-	id.setRFC4122Version(1)
-	return &id
+// Init will initialise the default generator
+func Init() error {
+	generator.Do(generator.init)
+	return generator.Error()
 }
 
-// NewV2 generates a new DCE version 2 UUID
-// based on a 60 bit timestamp, node id and POSIX UID or GUID
-func (o *Generator) NewV2(pDomain Domain) UUID {
-	store := o.read()
+func (o *Generator) Error() (err error) {
+	err = o.err
+	o.err = nil
+	return
+}
+
+// NewV1 generates a new RFC4122 version 1 UUID based on a 60 bit timestamp and
+// node id
+func (o *Generator) NewV1() Uuid {
+	o.read()
+	id := array{}
+	makeUuid(&id,
+		uint32(o.Timestamp),
+		uint16(o.Timestamp>>32),
+		uint16((o.Timestamp>>48)&0x0fff),
+		uint16(o.Sequence),
+		o.Node)
+	(&id).setRFC4122Version(1)
+	return id[:]
+}
+
+// NewV2 generates a new DCE version 2 UUID based on a 60 bit timestamp, node id
+// and POSIX UID or GUID
+func (o *Generator) NewV2(pDomain Domain) Uuid {
+	o.read()
+
+	id := array{}
 
 	var domain uint32
 
@@ -99,47 +124,37 @@ func (o *Generator) NewV2(pDomain Domain) UUID {
 		domain = uint32(os.Getgid())
 	}
 
-	id := makeUuid(
+	makeUuid(&id,
 		domain,
-		uint16(store.Timestamp >> 32),
-		uint16((store.Timestamp >> 48) & 0X0fff),
-		uint16(store.Sequence),
-		store.Node)
-
-	id[9] = byte(pDomain)
+		uint16(o.Timestamp>>32),
+		uint16((o.Timestamp>>48)&0X0fff),
+		uint16(pDomain),
+		o.Node)
 
 	id.setRFC4122Version(2)
-
-	return &id
+	return id[:]
 }
 
-func makeUuid(pLow uint32, pMid, pHi, pHiAndV uint16, pId Node) (id array) {
-	id = make(array, length)
+func makeUuid(pId *array, pLow uint32, pMid, pHi, pHiAndV uint16, pNode Node) {
 
-	id[0] = byte(pLow >> 24)
-	id[1] = byte(pLow >> 16)
-	id[2] = byte(pLow >> 8)
-	id[3] = byte(pLow)
+	pId[0] = byte(pLow >> 24)
+	pId[1] = byte(pLow >> 16)
+	pId[2] = byte(pLow >> 8)
+	pId[3] = byte(pLow)
 
-	id[4] = byte(pMid >> 8)
-	id[5] = byte(pMid)
+	pId[4] = byte(pMid >> 8)
+	pId[5] = byte(pMid)
 
-	id[6] = byte(pHi >> 8)
-	id[7] = byte(pHi)
+	pId[6] = byte(pHi >> 8)
+	pId[7] = byte(pHi)
 
-	id[8] = byte(pHiAndV >> 8)
-	id[9] = byte(pHiAndV)
+	pId[8] = byte(pHiAndV >> 8)
+	pId[9] = byte(pHiAndV)
 
-	id[10] = pId[0]
-	id[11] = pId[1]
-	id[12] = pId[2]
-	id[13] = pId[3]
-	id[14] = pId[4]
-	id[15] = pId[5]
-	return
+	copy(pId[10:], pNode)
 }
 
-func (o *Generator) read() *Store {
+func (o *Generator) read() {
 
 	// From a system-wide shared stable store (e.g., a file), read the
 	// UUID generator state: the values of the timestamp, clock sequence,
@@ -148,7 +163,9 @@ func (o *Generator) read() *Store {
 
 	// Save the state (current timestamp, clock sequence, and node ID)
 	// back to the stable store
-	defer o.save()
+	if o.Saver != nil {
+		defer o.save()
+	}
 
 	// Obtain a lock
 	o.Lock()
@@ -166,8 +183,6 @@ func (o *Generator) read() *Store {
 
 	// Update the timestamp
 	o.Timestamp = now
-
-	return o.Store
 }
 
 func (o *Generator) init() {
@@ -176,12 +191,8 @@ func (o *Generator) init() {
 	// and node ID used to generate the last UUID.
 	var (
 		storage Store
-		err error
+		err     error
 	)
-
-	// Save the state (current timestamp, clock sequence, and node ID)
-	// back to the stable store.
-	defer o.save()
 
 	o.Lock()
 	defer o.Unlock()
@@ -201,10 +212,15 @@ func (o *Generator) init() {
 	node := o.Id()
 
 	if node == nil {
-		log.Println("uuid.Generator.init: address error: will generate random node id instead", err)
+		log.Println("uuid.Generator.init: address error: will generate random node id instead")
 
 		node = make([]byte, 6)
-		rand.Read(node)
+		n, err := o.Random(node)
+		if err != nil {
+			log.Printf("uuid.Generator.init: could not read random bytes into node - read [%d] %s", n, err)
+			o.err = err
+			return
+		}
 		// Mark as randomly generated
 		node[0] |= 0x01
 	}
@@ -233,13 +249,20 @@ func (o *Generator) init() {
 		// across systems.  This provides maximum protection against node
 		// identifiers that may move or switch from system to system rapidly.
 		// The initial value MUST NOT be correlated to the node identifier.
-		binary.Read(rand.Reader, binary.BigEndian, &storage.Sequence)
-		log.Printf("uuid.Generator.init initialised random sequence: [%d]", storage.Sequence)
+		b := make([]byte, 2)
+		n, err := o.Random(b)
+		if err == nil {
+			storage.Sequence = Sequence(binary.BigEndian.Uint16(b))
+			log.Printf("uuid.Generator.init initialised random sequence: [%d]", storage.Sequence)
 
+		} else {
+			log.Printf("uuid.Generator.init: could not read random bytes into sequence - read [%d] %s", n, err)
+			o.err = err
+			return
+		}
+	} else if now < storage.Timestamp {
 		// If the state was available, but the saved timestamp is later than
 		// the current timestamp, increment the clock sequence value.
-
-	} else if now < storage.Timestamp {
 		storage.Sequence++
 	}
 
@@ -250,20 +273,20 @@ func (o *Generator) init() {
 }
 
 func (o *Generator) save() {
-	if o.Saver != nil {
-		go func(pState *Generator) {
+	go func(pState *Generator) {
+		if pState.Saver != nil {
 			pState.Lock()
 			defer pState.Unlock()
-			pState.Save(pState.Store)
-		}(o)
-	}
+			pState.Save(*pState.Store)
+		}
+	}(o)
 }
 
 func findFirstHardwareAddress() (node Node) {
 	interfaces, err := net.Interfaces()
 	if err == nil {
 		for _, i := range interfaces {
-			if i.Flags & net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
+			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
 				// Don't use random as we have a real address
 				node = Node(i.HardwareAddr)
 				log.Println("uuid.getHardwareAddress:", node)
