@@ -6,6 +6,7 @@ package uuid
  ***************/
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/twinj/uuid/version"
 	"net/url"
@@ -27,27 +28,27 @@ func init() {
 	namespaces[NameSpaceDNS] = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
 }
 
-func TestV1(t *testing.T) {
+func TestNewV1(t *testing.T) {
 	u := NewV1()
 
 	assert.Equal(t, version.One, u.Version(), "Expected correct version")
-	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
+	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 }
 
-func TestV2(t *testing.T) {
+func TestNewV2(t *testing.T) {
 	u := NewV2(DomainGroup)
 
 	assert.Equal(t, version.Two, u.Version(), "Expected correct version")
-	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
+	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 }
 
-func TestV3(t *testing.T) {
+func TestNewV3(t *testing.T) {
 	u := NewV3(NameSpaceURL, goLang)
 
 	assert.Equal(t, version.Three, u.Version(), "Expected correct version")
-	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
+	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 
 	ur, _ := url.Parse(string(goLang))
@@ -78,18 +79,18 @@ func TestV3(t *testing.T) {
 	assert.Equal(t, "e902893a-9d22-3c7e-a7b8-d6e313b71d9f", u.String())
 }
 
-func TestV4(t *testing.T) {
+func TestNewV4(t *testing.T) {
 	u := NewV4()
 	assert.Equal(t, version.Four, u.Version(), "Expected correct version")
-	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
+	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 }
 
-func TestV5(t *testing.T) {
+func TestNewV5(t *testing.T) {
 	u := NewV5(NameSpaceURL, goLang)
 
 	assert.Equal(t, version.Five, u.Version(), "Expected correct version")
-	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
+	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 
 	ur, _ := url.Parse(string(goLang))
@@ -119,7 +120,7 @@ func TestV5(t *testing.T) {
 
 func TestUUID_NewV1Bulk(t *testing.T) {
 	for i := 0; i < generate; i++ {
-		NewV1()
+		fmt.Println(NewV1())
 	}
 }
 
@@ -142,7 +143,7 @@ func TestUUID_NewV5Bulk(t *testing.T) {
 }
 
 func Test_EachIsUnique(t *testing.T) {
-	s := 20
+	s := 1024
 	ids := make([]UUID, s)
 	for i := 0; i < s; i++ {
 		u := NewV1()
@@ -195,4 +196,23 @@ func Test_NameSpaceUUIDs(t *testing.T) {
 		assert.Equal(t, v, arrayId.String())
 		assert.Equal(t, v, k.String())
 	}
+}
+
+func TestPromoteToNameSpace(t *testing.T) {
+	id := NewV1()
+
+	ns := PromoteToNameSpace(id)
+
+	assert.NotNil(t, ns, "Should succeed")
+	assert.Equal(t, id.Bytes(), ns.Bytes(), "Bytes shjould be the same despite storage order")
+	assert.Equal(t, id.String(), ns.String(), "Should see the same id despite byte order")
+	assert.NotEqual(t, []byte(id), []byte(ns), "Storage order should be different")
+
+	ns = PromoteToNameSpace(NameSpaceDNS)
+
+	assert.NotNil(t, ns, "Should succeed")
+	assert.Equal(t, NameSpaceDNS.Bytes(), ns.Bytes(), "Bytes shjould be the same despite storage order")
+	assert.Equal(t, NameSpaceDNS.String(), ns.String(), "Should see the same id despite byte order")
+	assert.Equal(t, []byte(NameSpaceDNS), []byte(ns), "Storage order should be same asnd not changed by the fucntion")
+
 }

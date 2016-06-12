@@ -13,7 +13,7 @@ const (
 	Nil uuid = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
 	// The following standard UUIDs are for use with V3 or V5 UUIDs.
-	// Note the little endian order for each octet set - this is to ensure compliant hash outputs
+	// Note the big endian order for each octet set - this is to ensure compliant hash outputs
 	NameSpaceDNS  NameSpace = "\x10\xb8\xa7k\xad\x9d\xd1\x11\x80\xb4\x00\xc0O\xd40\xc8"
 	NameSpaceURL  NameSpace = "\x11\xb8\xa7k\xad\x9d\xd1\x11\x80\xb4\x00\xc0O\xd40\xc8"
 	NameSpaceOID  NameSpace = "\x12\xb8\xa7k\xad\x9d\xd1\x11\x80\xb4\x00\xc0O\xd40\xc8"

@@ -31,7 +31,7 @@ var (
 	idString = "aacfee12-d400-2723-00d3-23124a1189bb"
 
 	uuidVariants = []byte{
-		ReservedNCS, ReservedRFC4122, ReservedMicrosoft, ReservedFuture,
+		VariantNCS, VariantRFC4122, VariantMicrosoft, VariantFuture,
 	}
 	namespaceUuids = []UUID{
 		NameSpaceDNS, NameSpaceURL, NameSpaceOID, NameSpaceX500,
@@ -73,11 +73,25 @@ func TestEqual(t *testing.T) {
 	}
 }
 
+func TestCompare(t *testing.T) {
+	assert.True(t, Compare(NameSpaceDNS, NameSpaceDNS) == 0, "SDNS should be equal to DNS")
+	assert.True(t, Compare(NameSpaceDNS, NameSpaceURL) == -1, "DNS should be less than URL")
+	assert.True(t, Compare(NameSpaceURL, NameSpaceDNS) == 1, "URL should be greater than DNS")
+
+	assert.True(t, Compare(nil, NameSpaceDNS) == -1, "Nil should be less than DNS")
+	assert.True(t, Compare(NameSpaceDNS, nil) == 1, "DNS should be greater than Nil")
+	assert.True(t, Compare(nil, nil) == 0, "nil should equal to nil")
+
+	assert.True(t, Compare(Nil, NameSpaceDNS) == -1, "Nil should be less than DNS")
+	assert.True(t, Compare(NameSpaceDNS, Nil) == 1, "DNS should be greater than Nil")
+	assert.True(t, Compare(Nil, Nil) == 0, "Nil should equal to Nil")
+}
+
 func TestNewHex(t *testing.T) {
 	s := "e902893a9d223c7ea7b8d6e313b71d9f"
 	u := NewHex(s)
 	assert.Equal(t, version.Three, u.Version(), "Expected correct version")
-	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
+	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 
 	assert.True(t, didNewHexPanic(), "Hex string should panic when invalid")
@@ -118,7 +132,7 @@ func TestNew(t *testing.T) {
 
 		assert.NotNil(t, u, "Expected a valid non nil UUID")
 		assert.Equal(t, version.One, u.Version(), "Expected correct version %d, but got %d", version.One, u.Version())
-		assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected ReservedNCS variant %x, but got %x", ReservedNCS, u.Variant())
+		assert.Equal(t, VariantRFC4122, u.Variant(), "Expected ReservedNCS variant %x, but got %x", VariantNCS, u.Variant())
 		assert.Equal(t, k.String(), u.String(), "Stringer versions should equal")
 	}
 }
@@ -158,7 +172,7 @@ func TestDigest(t *testing.T) {
 func tVariantConstraint(v byte, b byte, o UUID, t *testing.T) {
 	output(o)
 	switch v {
-	case ReservedNCS:
+	case VariantNCS:
 		switch b {
 		case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07:
 			outputF(": %X ", b)
@@ -166,7 +180,7 @@ func tVariantConstraint(v byte, b byte, o UUID, t *testing.T) {
 		default:
 			t.Errorf("%X most high bits do not resolve to 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07", b)
 		}
-	case ReservedRFC4122:
+	case VariantRFC4122:
 		switch b {
 		case 0x08, 0x09, 0x0A, 0x0B:
 			outputF(": %X ", b)
@@ -174,7 +188,7 @@ func tVariantConstraint(v byte, b byte, o UUID, t *testing.T) {
 		default:
 			t.Errorf("%X most high bits do not resolve to 0x08, 0x09, 0x0A, 0x0B", b)
 		}
-	case ReservedMicrosoft:
+	case VariantMicrosoft:
 		switch b {
 		case 0x0C, 0x0D:
 			outputF(": %X ", b)
@@ -182,7 +196,7 @@ func tVariantConstraint(v byte, b byte, o UUID, t *testing.T) {
 		default:
 			t.Errorf("%X most high bits do not resolve to 0x0C, 0x0D", b)
 		}
-	case ReservedFuture:
+	case VariantFuture:
 		switch b {
 		case 0x0E, 0x0F:
 			outputF(": %X ", b)

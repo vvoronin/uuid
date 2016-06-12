@@ -2,6 +2,7 @@ package uuid
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/twinj/uuid/version"
 	"testing"
 )
 
@@ -17,7 +18,63 @@ func TestNameSpace_Bytes(t *testing.T) {
 
 	changeOrder(NameSpaceDNS.Bytes())
 	assert.Equal(t, b, NameSpaceDNS.Bytes())
+}
 
+func TestNameSpace_Size(t *testing.T) {
+	assert.Equal(t, 16, NameSpaceDNS.Size(), "The size of the array should be sixteen")
+}
+
+func TestNameSpace_Variant(t *testing.T) {
+	for _, v := range namespaces {
+		id, _ := Parse(v)
+		uuidId := make(Uuid, length)
+		uuidId.unmarshal(id.Bytes())
+		assert.NotEqual(t, 0, uuidId.Variant(), "The variant should be non zero")
+	}
+
+	bytes := make(Uuid, length)
+	copy(bytes, uuidBytes[:])
+
+	for _, v := range uuidVariants {
+		for i := 0; i <= 255; i++ {
+			bytes[variantIndex] = byte(i)
+			id := createUuid(bytes, 4, v)
+			b := id[variantIndex] >> 4
+			tVariantConstraint(v, b, id, t)
+			id2 := PromoteToNameSpace(id)
+			output(id)
+			assert.Equal(t, v, id2.Variant(), "%x does not resolve to %x", id2.Variant(), v)
+			output("\n")
+		}
+	}
+}
+
+func TestNameSpace_Version(t *testing.T) {
+	for k, _ := range namespaces {
+		id := make(Uuid, length)
+		id.unmarshal(k.Bytes())
+		assert.Equal(t, version.One, id.Version(), "The version should be 1")
+	}
+
+	id := make(Uuid, length)
+
+	bytes := make(Uuid, length)
+	copy(bytes, uuidBytes[:])
+
+	assert.Equal(t, version.Unknown, id.Version(), "The version should be 0")
+
+	for v := 0; v < 16; v++ {
+		for i := 0; i <= 255; i++ {
+			bytes[versionIndex] = byte(i)
+			copy(id, bytes)
+			id.setVersion(v)
+			id2 := PromoteToNameSpace(id)
+
+			output(id)
+			assert.Equal(t, version.Version(v), getVersion(Uuid(id2)), "%x does not resolve to %x", getVersion(Uuid(id2)), v)
+			output("\n")
+		}
+	}
 }
 
 func TestMarshaller_MarshalBinary(t *testing.T) {

@@ -30,7 +30,7 @@ func (o Uuid) Size() int {
 }
 
 func (o Uuid) Version() version.Version {
-	if o.Variant() != ReservedRFC4122 {
+	if o.Variant() != VariantRFC4122 {
 		return version.Unknown
 	}
 	return version.Version(o[versionIndex] >> 4)
@@ -84,5 +84,5 @@ func (o *array) setRFC4122Version(pVersion uint8) {
 	o[versionIndex] &= 0x0f
 	o[versionIndex] |= uint8(pVersion << 4)
 	o[variantIndex] &= variantSet
-	o[variantIndex] |= ReservedRFC4122
+	o[variantIndex] |= VariantRFC4122
 }

@@ -26,10 +26,10 @@ import (
 )
 
 const (
-	ReservedNCS       uint8 = 0x00
-	ReservedRFC4122   uint8 = 0x80 // or and A0 if masked with 1F
-	ReservedMicrosoft uint8 = 0xC0
-	ReservedFuture    uint8 = 0xE0
+	VariantNCS       uint8 = 0x00
+	VariantRFC4122   uint8 = 0x80 // or and A0 if masked with 1F
+	VariantMicrosoft uint8 = 0xC0
+	VariantFuture    uint8 = 0xE0
 )
 
 type Domain uint8
@@ -224,49 +224,47 @@ func Equal(p1, p2 UUID) bool {
 }
 
 // Compare returns an integer comparing two UUIDs lexicographically.
-// The result will be 0 if a==b, -1 if a < b, and +1 if a > b.
+// The result will be 0 if pId==pId2, -1 if pId < pId2, and +1 if pId > pId2.
 // A nil argument is equivalent to the Nil UUID.
 func Compare(pId, pId2 UUID) int {
 	var b1, b2 []byte
 
 	if pId == nil {
-		b1 = nil
+		b1 = []byte(Nil)
 	} else {
 		b1 = pId.Bytes()
 	}
 
 	if pId2 == nil {
-		b2 = nil
+		b2 = []byte(Nil)
 	} else {
 		b2 = pId2.Bytes()
 	}
 
-	bytes.Compare(b1, b2)
-
-	return 0
+	return bytes.Compare(b1, b2)
 }
 
 // ***************************************************  Helpers
 
 func variant(pVariant uint8) uint8 {
 	switch pVariant & variantGet {
-	case ReservedRFC4122, 0xA0:
-		return ReservedRFC4122
-	case ReservedMicrosoft:
-		return ReservedMicrosoft
-	case ReservedFuture:
-		return ReservedFuture
+	case VariantRFC4122, 0xA0:
+		return VariantRFC4122
+	case VariantMicrosoft:
+		return VariantMicrosoft
+	case VariantFuture:
+		return VariantFuture
 	}
-	return ReservedNCS
+	return VariantNCS
 }
 
 func setVariant(pByte *byte, pVariant uint8) {
 	switch pVariant {
-	case ReservedRFC4122:
+	case VariantRFC4122:
 		*pByte &= variantSet
-	case ReservedFuture, ReservedMicrosoft:
+	case VariantFuture, VariantMicrosoft:
 		*pByte &= 0x1F
-	case ReservedNCS:
+	case VariantNCS:
 		*pByte &= 0x7F
 	default:
 		panic(errors.New("uuid.setVariant: invalid variant mask"))

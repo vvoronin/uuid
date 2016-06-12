@@ -98,12 +98,14 @@ func (o *Generator) Error() (err error) {
 func (o *Generator) NewV1() Uuid {
 	o.read()
 	id := array{}
+
 	makeUuid(&id,
 		uint32(o.Timestamp),
 		uint16(o.Timestamp>>32),
-		uint16((o.Timestamp>>48)&0x0fff),
+		uint16(o.Timestamp>>48),
 		uint16(o.Sequence),
 		o.Node)
+
 	(&id).setRFC4122Version(1)
 	return id[:]
 }
@@ -127,15 +129,17 @@ func (o *Generator) NewV2(pDomain Domain) Uuid {
 	makeUuid(&id,
 		domain,
 		uint16(o.Timestamp>>32),
-		uint16((o.Timestamp>>48)&0X0fff),
-		uint16(pDomain),
+		uint16(o.Timestamp>>48),
+		uint16(o.Sequence),
 		o.Node)
 
+	id[9] = byte(pDomain)
 	id.setRFC4122Version(2)
+
 	return id[:]
 }
 
-func makeUuid(pId *array, pLow uint32, pMid, pHi, pHiAndV uint16, pNode Node) {
+func makeUuid(pId *array, pLow uint32, pMid, pHiAndV, seq uint16, pNode Node) {
 
 	pId[0] = byte(pLow >> 24)
 	pId[1] = byte(pLow >> 16)
@@ -145,11 +149,11 @@ func makeUuid(pId *array, pLow uint32, pMid, pHi, pHiAndV uint16, pNode Node) {
 	pId[4] = byte(pMid >> 8)
 	pId[5] = byte(pMid)
 
-	pId[6] = byte(pHi >> 8)
-	pId[7] = byte(pHi)
+	pId[6] = byte(pHiAndV >> 8)
+	pId[7] = byte(pHiAndV)
 
-	pId[8] = byte(pHiAndV >> 8)
-	pId[9] = byte(pHiAndV)
+	pId[8] = byte(seq >> 8)
+	pId[9] = byte(seq)
 
 	copy(pId[10:], pNode)
 }

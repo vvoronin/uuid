@@ -22,7 +22,7 @@ func TestGenerator_V1(t *testing.T) {
 	u := generator.NewV1()
 
 	assert.Equal(t, version.One, u.Version(), "Expected correct version")
-	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
+	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 }
 
@@ -30,14 +30,14 @@ func TestGenerator_V2(t *testing.T) {
 	u := generator.NewV2(DomainGroup)
 
 	assert.Equal(t, version.Two, u.Version(), "Expected correct version")
-	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
+	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 	assert.Equal(t, uint8(DomainGroup), u.Bytes()[9], "Expected string representation to be valid")
 
 	u = generator.NewV2(DomainUser)
 
 	assert.Equal(t, version.Two, u.Version(), "Expected correct version")
-	assert.Equal(t, ReservedRFC4122, u.Variant(), "Expected correct variant")
+	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 	assert.Equal(t, uint8(DomainUser), u.Bytes()[9], "Expected string representation to be valid")
 }
@@ -138,6 +138,16 @@ func TestGeneratorInit(t *testing.T) {
 	storageStamp = registerSaver(now.Sub(time.Second), []byte{0xaa, 0xee, 0xaa, 0xbb, 0x44, 0xcc})
 
 	assert.Error(t, generator.err, "Read error should exist")
+
+	now, node = registerTestGenerator(Now(), nil)
+	// Random read error should alert user
+	generator.Random = func(b []byte) (int, error) {
+		return 0, errors.New("EOF")
+	}
+
+	storageStamp = registerSaver(now.Sub(time.Second), []byte{0xaa, 0xee, 0xaa, 0xbb, 0x44, 0xcc})
+
+	assert.Error(t, generator.Error(), "Read error should exist")
 
 	registerDefaultGenerator()
 }

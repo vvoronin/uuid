@@ -27,8 +27,7 @@ func TestUuid_Variant(t *testing.T) {
 		id, _ := Parse(v)
 		uuidId := make(Uuid, length)
 		uuidId.unmarshal(id.Bytes())
-
-		assert.NotEqual(t, 0, uuidId.Variant(), "The variant should be non zero")
+		assert.Equal(t, VariantRFC4122, uuidId.Variant(), "The variant should be non zero")
 	}
 
 	bytes := make(Uuid, length)
@@ -115,14 +114,6 @@ func TestArray_Format(t *testing.T) {
 
 func getVersion(pId Uuid) version.Version {
 	return version.Version(pId[versionIndex] >> 4)
-}
-
-func createArray(pData []byte, pVersion int, pVariant uint8) array {
-	o := array{}
-	copy(o[:], pData)
-	Uuid(o[:]).setVersion(pVersion)
-	Uuid(o[:]).setVariant(pVariant)
-	return o
 }
 
 func createUuid(pData []byte, pVersion int, pVariant uint8) Uuid {
