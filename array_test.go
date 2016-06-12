@@ -2,7 +2,6 @@ package uuid
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/twinj/uuid/version"
 	"testing"
 )
 
@@ -65,7 +64,7 @@ func TestUuid_Version(t *testing.T) {
 	for k, _ := range namespaces {
 		id := make(Uuid, length)
 		id.unmarshal(k.Bytes())
-		assert.Equal(t, version.One, id.Version(), "The version should be 1")
+		assert.Equal(t, One, id.Version(), "The version should be 1")
 	}
 
 	id := make(Uuid, length)
@@ -73,7 +72,7 @@ func TestUuid_Version(t *testing.T) {
 	bytes := make(Uuid, length)
 	copy(bytes, uuidBytes[:])
 
-	assert.Equal(t, version.Unknown, id.Version(), "The version should be 0")
+	assert.Equal(t, Unknown, id.Version(), "The version should be 0")
 
 	for v := 0; v < 16; v++ {
 		for i := 0; i <= 255; i++ {
@@ -81,7 +80,11 @@ func TestUuid_Version(t *testing.T) {
 			copy(id, bytes)
 			id.setVersion(v)
 			output(id)
-			assert.Equal(t, version.Version(v), getVersion(id), "%x does not resolve to %x", getVersion(id), v)
+			if v > 0 && v < 6 {
+				assert.Equal(t, Version(v), id.Version(), "%x does not resolve to %x", id.Version(), v)
+			} else {
+				assert.Equal(t, Version(v), getVersion(id), "%x does not resolve to %x", getVersion(id), v)
+			}
 			output("\n")
 		}
 	}
@@ -106,14 +109,10 @@ func TestUuid_Restricted(t *testing.T) {
 	assert.False(t, ok, "Should not be a Uuid")
 }
 
-func TestArray_Format(t *testing.T) {
-
-}
-
 // *******************************************************
 
-func getVersion(pId Uuid) version.Version {
-	return version.Version(pId[versionIndex] >> 4)
+func getVersion(pId Uuid) Version {
+	return Version(pId[versionIndex] >> 4)
 }
 
 func createUuid(pData []byte, pVersion int, pVariant uint8) Uuid {

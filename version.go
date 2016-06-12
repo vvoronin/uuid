@@ -1,4 +1,4 @@
-package version
+package uuid
 
 // Version represents the type of UUID.
 type Version uint8
@@ -27,5 +27,14 @@ func (o Version) String() string {
 		return "Version 5: Namespace UUID and unique names hashed by SHA-1"
 	default:
 		return "Unknown: Not supported"
+	}
+}
+
+func resolveVersion(pVersion uint8) Version {
+	switch Version(pVersion) {
+	case One, Two, Three, Four, Five:
+		return Version(pVersion)
+	default:
+		return Unknown
 	}
 }

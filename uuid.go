@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
-	"github.com/twinj/uuid/version"
 	"hash"
 	"regexp"
 )
@@ -92,7 +91,7 @@ type UUID interface {
 
 	// Version returns a version number of the algorithm used to generate the
 	// UUID. This may may behave independently across non RFC4122 UUIDs
-	Version() version.Version
+	Version() Version
 }
 
 // New creates a UUID from a slice of bytes.

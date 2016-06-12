@@ -1,9 +1,5 @@
 package uuid
 
-import (
-	"github.com/twinj/uuid/version"
-)
-
 // **************************************************** Fixed UUID
 
 var _ UUID = new(uuid)
@@ -14,7 +10,7 @@ func (uuid) Size() int {
 	return length
 }
 
-func (o uuid) Version() version.Version {
+func (o uuid) Version() Version {
 	return Uuid(o).Version()
 }
 
@@ -49,8 +45,8 @@ func (o NameSpace) Size() int {
 }
 
 // Version returns the implementation version.
-func (o NameSpace) Version() version.Version {
-	return Uuid(o).Version()
+func (o NameSpace) Version() Version {
+	return resolveVersion(o[versionIndex+1] >> 4)
 }
 
 // Variant returns the origin implementation of the UUID
@@ -58,7 +54,7 @@ func (o NameSpace) Variant() uint8 {
 	return Uuid(o).Variant()
 }
 
-// Bytes returns natural order []byte slice as represented by a standard UUID.
+// Bytes returns a natural order []byte slice as represented by a standard UUID.
 func (o NameSpace) Bytes() []byte {
 	b := []byte(o)
 	changeOrder(b)

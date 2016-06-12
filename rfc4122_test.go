@@ -6,9 +6,7 @@ package uuid
  ***************/
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/twinj/uuid/version"
 	"net/url"
 	"testing"
 )
@@ -31,7 +29,7 @@ func init() {
 func TestNewV1(t *testing.T) {
 	u := NewV1()
 
-	assert.Equal(t, version.One, u.Version(), "Expected correct version")
+	assert.Equal(t, One, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 }
@@ -39,7 +37,7 @@ func TestNewV1(t *testing.T) {
 func TestNewV2(t *testing.T) {
 	u := NewV2(DomainGroup)
 
-	assert.Equal(t, version.Two, u.Version(), "Expected correct version")
+	assert.Equal(t, Two, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 }
@@ -47,7 +45,7 @@ func TestNewV2(t *testing.T) {
 func TestNewV3(t *testing.T) {
 	u := NewV3(NameSpaceURL, goLang)
 
-	assert.Equal(t, version.Three, u.Version(), "Expected correct version")
+	assert.Equal(t, Three, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 
@@ -81,7 +79,7 @@ func TestNewV3(t *testing.T) {
 
 func TestNewV4(t *testing.T) {
 	u := NewV4()
-	assert.Equal(t, version.Four, u.Version(), "Expected correct version")
+	assert.Equal(t, Four, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 }
@@ -89,7 +87,7 @@ func TestNewV4(t *testing.T) {
 func TestNewV5(t *testing.T) {
 	u := NewV5(NameSpaceURL, goLang)
 
-	assert.Equal(t, version.Five, u.Version(), "Expected correct version")
+	assert.Equal(t, Five, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 
@@ -120,7 +118,7 @@ func TestNewV5(t *testing.T) {
 
 func TestUUID_NewV1Bulk(t *testing.T) {
 	for i := 0; i < generate; i++ {
-		fmt.Println(NewV1())
+		NewV1()
 	}
 }
 
@@ -214,5 +212,6 @@ func TestPromoteToNameSpace(t *testing.T) {
 	assert.Equal(t, NameSpaceDNS.Bytes(), ns.Bytes(), "Bytes shjould be the same despite storage order")
 	assert.Equal(t, NameSpaceDNS.String(), ns.String(), "Should see the same id despite byte order")
 	assert.Equal(t, []byte(NameSpaceDNS), []byte(ns), "Storage order should be same asnd not changed by the fucntion")
+	assert.Equal(t, One, NameSpaceDNS.Version(), "Should be the correct version reported")
 
 }

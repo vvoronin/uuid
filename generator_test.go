@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/twinj/uuid/version"
 	"os"
 	"testing"
 	"time"
@@ -21,7 +20,7 @@ func TestPosixIds(t *testing.T) {
 func TestGenerator_V1(t *testing.T) {
 	u := generator.NewV1()
 
-	assert.Equal(t, version.One, u.Version(), "Expected correct version")
+	assert.Equal(t, One, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 }
@@ -29,14 +28,14 @@ func TestGenerator_V1(t *testing.T) {
 func TestGenerator_V2(t *testing.T) {
 	u := generator.NewV2(DomainGroup)
 
-	assert.Equal(t, version.Two, u.Version(), "Expected correct version")
+	assert.Equal(t, Two, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 	assert.Equal(t, uint8(DomainGroup), u.Bytes()[9], "Expected string representation to be valid")
 
 	u = generator.NewV2(DomainUser)
 
-	assert.Equal(t, version.Two, u.Version(), "Expected correct version")
+	assert.Equal(t, Two, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 	assert.Equal(t, uint8(DomainUser), u.Bytes()[9], "Expected string representation to be valid")

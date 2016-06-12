@@ -1,9 +1,5 @@
 package uuid
 
-import (
-	"github.com/twinj/uuid/version"
-)
-
 const (
 	length = 16
 
@@ -29,11 +25,8 @@ func (o Uuid) Size() int {
 	return len(o)
 }
 
-func (o Uuid) Version() version.Version {
-	if o.Variant() != VariantRFC4122 {
-		return version.Unknown
-	}
-	return version.Version(o[versionIndex] >> 4)
+func (o Uuid) Version() Version {
+	return resolveVersion(o[versionIndex] >> 4)
 }
 
 func (o Uuid) Variant() uint8 {

@@ -1,4 +1,4 @@
-package version
+package uuid
 
 import (
 	"github.com/stretchr/testify/assert"

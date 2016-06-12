@@ -10,7 +10,6 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/twinj/uuid/version"
 	"testing"
 )
 
@@ -90,7 +89,7 @@ func TestCompare(t *testing.T) {
 func TestNewHex(t *testing.T) {
 	s := "e902893a9d223c7ea7b8d6e313b71d9f"
 	u := NewHex(s)
-	assert.Equal(t, version.Three, u.Version(), "Expected correct version")
+	assert.Equal(t, Three, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 
@@ -131,7 +130,7 @@ func TestNew(t *testing.T) {
 		u := New(k.Bytes())
 
 		assert.NotNil(t, u, "Expected a valid non nil UUID")
-		assert.Equal(t, version.One, u.Version(), "Expected correct version %d, but got %d", version.One, u.Version())
+		assert.Equal(t, One, u.Version(), "Expected correct version %d, but got %d", One, u.Version())
 		assert.Equal(t, VariantRFC4122, u.Variant(), "Expected ReservedNCS variant %x, but got %x", VariantNCS, u.Variant())
 		assert.Equal(t, k.String(), u.String(), "Stringer versions should equal")
 	}
