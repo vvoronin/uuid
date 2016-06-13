@@ -69,15 +69,20 @@ Any supported version of Go.
 
 # Recent Changes
 
+* Added ability for user defined Generator's which can be setup with your own retrieval functions for a Node Id,
+    Timestamp and Random data for a UUID; more details in docs.
+* Now builds in Windows, OsX and Linux, with test coverage checking and code quality checks.
+* Fixed major issue with V3 and V5 UUIDs not hashing correctly and producing incorrect hash results.
+* Added V2 UUIDs
 * Improved builds and 100% test coverage
 * Library overhaul to cleanup exports that are not useful for a user
-* Improved file system Saver interface, breaking changes.
-    To use a savers make sure you pass it in via the uuid.SetupSaver(Saver) method before a UUID is generated, so as to take affect.
+* Improved and fixed file system uuid.Saver interface, breaking changes.
+    To use a uuid.Saver make sure you pass it in via the uuid.RegisterSaver(Saver) function before a UUID is generated,
+    so as to take affect. This is because only one attempt at system initialisation can be attempted.
 * Removed use of OS Thread locking and runtime package requirement
-* Changed String() output to CleanHyphen to match the canonical standard
-* Removed default non volatile store and replaced with Saver interface
+* Changed String() output to Canonical to match the canonical standard
+* Removed default non volatile store and replaced with uuid.Saver interface
 * Added formatting support for user defined formats
-* Variant type bits are now set correctly
 * Variant type can now be retrieved more efficiently
 * New tests for variant setting to confirm correctness
 * New tests added to confirm proper version setting

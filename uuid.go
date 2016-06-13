@@ -155,7 +155,7 @@ func Parse(pUUID string) (UUID, error) {
 //
 // var canonicalX500 = "6ba7b814-9dad-11d1-80b4-00c04fd430c8"
 //
-// var howItStoresInthisPackage = [16]uint8{
+// var howItStoresInThisPackage = [16]uint8{
 // 	0x6b, 0xa7, 0xb8, 0x14,
 // 	0x9d, 0xad,
 // 	0x11, 0xd1,
