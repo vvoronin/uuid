@@ -38,7 +38,7 @@ func TestFileSystemSaver_SaveSchedule(t *testing.T) {
 			time.Sleep(saver.Duration)
 			count++
 		}
-		store := uuid.Store{uuid.Now(), 3, []byte{0xff, 0xaa, 0x11}}
+		store := uuid.Store{Timestamp: uuid.Now(), Sequence: 3, Node: []byte{0xff, 0xaa, 0x11}}
 		saver.Save(store)
 	}
 	d := time.Since(past)

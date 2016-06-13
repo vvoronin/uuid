@@ -50,12 +50,12 @@ func Example() {
 
 func ExampleNewV1() {
 	u1 := uuid.NewV1()
-	fmt.Printf("version %d variant %s: %s\n", u1.Version(), u1.Variant(), u1)
+	fmt.Printf("version %d variant %d: %d\n", u1.Version(), u1.Variant(), u1)
 }
 
 func ExampleNewV2() {
 	u2 := uuid.NewV2(uuid.DomainUser)
-	fmt.Printf("version %d variant %s: %s\n", u2.Version(), u2.Variant(), u2)
+	fmt.Printf("version %d variant %d: %d\n", u2.Version(), u2.Variant(), u2)
 }
 
 func ExampleNewV3() {
