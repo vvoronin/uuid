@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+	"sync"
 )
 
 var (
@@ -40,9 +41,12 @@ type save struct {
 	saved bool
 	store *Store
 	err   error
+	sync.Mutex
 }
 
 func (o *save) Save(pStore Store) {
+	o.Lock()
+	defer o.Unlock()
 	o.saved = true
 }
 
@@ -97,7 +101,9 @@ func TestSaverSave(t *testing.T) {
 	RegisterSaver(saver)
 
 	NewV1()
-	time.Sleep(time.Second)
+
+	saver.Lock()
+	defer saver.Unlock()
 
 	assert.True(t, saver.saved, "Saver should save")
 	registerDefaultGenerator()

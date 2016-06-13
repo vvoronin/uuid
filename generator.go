@@ -84,9 +84,9 @@ type Saver interface {
 }
 
 // RegisterSaver must be run before any calls to V1 or V2 to save Generator
-// state via teh Store struct.
+// state via the Store struct.
 // You must implement the uuid.Saver interface and are completely responsible
-// for the non violable storage of the state.
+// for the non volatile storage of the state.
 func RegisterSaver(pSaver Saver) {
 	generator.Do(func() {
 		defer generator.init()
@@ -242,7 +242,7 @@ func (o *Generator) init() {
 }
 
 func (o *Generator) save() {
-	go func(pState *Generator) {
+	func(pState *Generator) {
 		if pState.Saver != nil {
 			pState.Lock()
 			defer pState.Unlock()
