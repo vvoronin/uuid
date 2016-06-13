@@ -141,7 +141,13 @@ func TestUUID_NewV5Bulk(t *testing.T) {
 }
 
 func Test_EachIsUnique(t *testing.T) {
-	s := 1024
+
+	// Run half way through to avoid running within default resolution only
+	for i := 0; i < defaultSpinResolution / 2; i++ {
+		NewV1()
+	}
+
+	s := defaultSpinResolution * 1.5
 	ids := make([]UUID, s)
 	for i := 0; i < s; i++ {
 		u := NewV1()
