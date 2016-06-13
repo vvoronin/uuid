@@ -41,6 +41,11 @@ func registerDefaultGenerator() {
 		findFirstHardwareAddress)
 }
 
+// Init will initialise the default generator
+func Init() error {
+	generator.Do(generator.init)
+	return generator.Error()
+}
 
 // an iterated value to help ensure unique UUID generations values
 // across the same domain, server restarts and clock issues
@@ -91,9 +96,10 @@ func RegisterSaver(pSaver Saver) {
 	})
 }
 
-// Generator is used to create and monitor the running of V1 and V2 UUIDs.
-// It can be setup to take different implementations for Timestamp, Node and
-// random data retrieval. This is also where the Saver implementation is given.
+// Generator is used to create and monitor the running of V1 and V2, and V4
+// UUIDs. It can be setup to take different implementations for Timestamp, Node
+// and random data retrieval. This is also where the Saver implementation can
+// be given.
 type Generator struct {
 	sync.Mutex
 	sync.Once
@@ -108,11 +114,6 @@ type Generator struct {
 	Id     func() Node
 }
 
-// Init will initialise the default generator
-func Init() error {
-	generator.Do(generator.init)
-	return generator.Error()
-}
 
 // Error will return any error from the uuid.Generator if a UUID returns as Nil
 // or nil
