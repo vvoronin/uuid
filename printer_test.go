@@ -163,8 +163,3 @@ func BenchmarkFormatter(b *testing.B) {
 	b.ReportAllocs()
 }
 
-func TestNewV12(t *testing.T) {
-	for i:= 0; i < 2048; i++ {
-		  fmt.Println(NewV1())
-	}
-}
