@@ -38,9 +38,7 @@ func TestUuid_Variant(t *testing.T) {
 			id := createUuid(bytes, 4, v)
 			b := id[variantIndex] >> 4
 			tVariantConstraint(v, b, id, t)
-			output(id)
 			assert.Equal(t, v, id.Variant(), "%x does not resolve to %x", id.Variant(), v)
-			output("\n")
 		}
 	}
 
@@ -79,13 +77,11 @@ func TestUuid_Version(t *testing.T) {
 			bytes[versionIndex] = byte(i)
 			copy(id, bytes)
 			id.setVersion(v)
-			output(id)
 			if v > 0 && v < 6 {
 				assert.Equal(t, Version(v), id.Version(), "%x does not resolve to %x", id.Version(), v)
 			} else {
 				assert.Equal(t, Version(v), getVersion(id), "%x does not resolve to %x", getVersion(id), v)
 			}
-			output("\n")
 		}
 	}
 }
@@ -109,8 +105,6 @@ func TestUuid_Restricted(t *testing.T) {
 	assert.False(t, ok, "Should not be a Uuid")
 }
 
-// *******************************************************
-
 func getVersion(pId Uuid) Version {
 	return Version(pId[versionIndex] >> 4)
 }
@@ -123,25 +117,3 @@ func createUuid(pData []byte, pVersion int, pVariant uint8) Uuid {
 	return o
 }
 
-// *******************************************************
-
-func BenchmarkUuid_Bytes(b *testing.B) {
-	id := make(Uuid, length)
-	id.unmarshal(NameSpaceDNS.Bytes())
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		id.Bytes()
-	}
-	b.StopTimer()
-	b.ReportAllocs()
-}
-
-func BenchmarkUuid_String(b *testing.B) {
-	id := NewV2(DomainGroup)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = id.String()
-	}
-	b.StopTimer()
-	b.ReportAllocs()
-}

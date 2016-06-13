@@ -65,9 +65,7 @@ func TestNameSpace_Variant(t *testing.T) {
 			b := id[variantIndex] >> 4
 			tVariantConstraint(v, b, id, t)
 			id2 := PromoteToNameSpace(id)
-			output(id)
 			assert.Equal(t, v, id2.Variant(), "%x does not resolve to %x", id2.Variant(), v)
-			output("\n")
 		}
 	}
 }
@@ -90,9 +88,7 @@ func TestUuid_Variant2(t *testing.T) {
 			b := id[variantIndex] >> 4
 			tVariantConstraint(v, b, id, t)
 			id2 := uuid(id)
-			output(id)
 			assert.Equal(t, v, id2.Variant(), "%x does not resolve to %x", id2.Variant(), v)
-			output("\n")
 		}
 	}
 }
@@ -116,13 +112,11 @@ func TestNameSpace_Version(t *testing.T) {
 			id.setVersion(v)
 			id2 := PromoteToNameSpace(id)
 
-			output(id)
 			if v > 0 && v < 6 {
 				assert.Equal(t, Version(v), id2.Version(), "%x does not resolve to %x", id2.Version(), v)
 			} else {
 				assert.Equal(t, Version(v), getNamespaceVersion(Uuid(id2)), "%x does not resolve to %x", getNamespaceVersion(Uuid(id2)), v)
 			}
-			output("\n")
 		}
 	}
 }
@@ -146,13 +140,11 @@ func TestUuid_Version2(t *testing.T) {
 			id.setVersion(v)
 			id2 := uuid(id)
 
-			output(id)
 			if v > 0 && v < 6 {
 				assert.Equal(t, Version(v), id2.Version(), "%x does not resolve to %x", id2.Version(), v)
 			} else {
 				assert.Equal(t, Version(v), getVersion(Uuid(id)), "%x does not resolve to %x", getVersion(Uuid(id)), v)
 			}
-			output("\n")
 		}
 	}
 }

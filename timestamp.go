@@ -1,10 +1,5 @@
 package uuid
 
-/****************
- * Date: 14/02/14
- * Time: 7:46 PM
- ***************/
-
 import (
 	"time"
 )
@@ -16,8 +11,6 @@ const (
 	// resolution of your system's clock
 	defaultSpinResolution = 1024
 )
-
-// **********************************************  Timestamp
 
 // 4.1.4.  Timestamp https://www.ietf.org/rfc/rfc4122.txt
 //
@@ -57,6 +50,7 @@ func Convert(pTime time.Time) Timestamp {
 }
 
 // Converts UUID Timestamp to UTC time.Time
+// Note some higher clock resolutions will lose accuracy if above 100 ns ticks
 func (o Timestamp) Time() time.Time {
 	return time.Unix(0, int64((o-gregorianToUNIXOffset)*100)).UTC()
 }

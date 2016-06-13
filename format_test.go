@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strings"
 	"testing"
-	"fmt"
 )
 
 const (
@@ -51,7 +50,6 @@ func TestSwitchFormat(t *testing.T) {
 		for i := range formats {
 			SwitchFormat(formats[i])
 			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(u.String()), "Format %s must compile pattern %s", formats[i], patterns[i])
-			outputLn(u)
 		}
 	}
 
@@ -87,7 +85,6 @@ func TestSwitchFormatToUpper(t *testing.T) {
 		for i := range formats {
 			SwitchFormatToUpper(formats[i])
 			assert.True(t, regexp.MustCompile(strings.ToUpper(patterns[i])).MatchString(u.String()), "Format %s must compile pattern %s", formats[i], patterns[i])
-			outputLn(u)
 		}
 	}
 
@@ -119,7 +116,6 @@ func TestFormatter(t *testing.T) {
 	for _, u := range ids {
 		for i := range formats {
 			assert.True(t, regexp.MustCompile(patterns[i]).MatchString(Formatter(u, formats[i])), "Format must compile")
-			outputLn(Formatter(u, formats[i]))
 		}
 	}
 
@@ -149,17 +145,5 @@ func didFormatterPanic(pFormat string) bool {
 		Formatter(NameSpaceDNS, Format(pFormat))
 		return
 	}()
-}
-
-// *******************************************************
-
-func BenchmarkFormatter(b *testing.B) {
-	id := NewV2(DomainGroup)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		Formatter(id, "{%X-%X-%X-%x-%X}")
-	}
-	b.StopTimer()
-	b.ReportAllocs()
 }
 

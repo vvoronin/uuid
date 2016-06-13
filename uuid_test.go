@@ -8,7 +8,6 @@ package uuid
 import (
 	"crypto/md5"
 	"crypto/sha1"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -156,71 +155,10 @@ func TestDigest(t *testing.T) {
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")
 	}
-	output(u.Bytes())
 	id = digest(sha1.New(), []byte(NameSpaceDNS), goLang)
 	changeOrder(id)
 	u = Uuid(id)
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")
-	}
-	output(u.Bytes())
-}
-
-// *******************************************************
-
-func tVariantConstraint(v byte, b byte, o UUID, t *testing.T) {
-	output(o)
-	switch v {
-	case VariantNCS:
-		switch b {
-		case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07:
-			outputF(": %X ", b)
-			break
-		default:
-			t.Errorf("%X most high bits do not resolve to 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07", b)
-		}
-	case VariantRFC4122:
-		switch b {
-		case 0x08, 0x09, 0x0A, 0x0B:
-			outputF(": %X ", b)
-			break
-		default:
-			t.Errorf("%X most high bits do not resolve to 0x08, 0x09, 0x0A, 0x0B", b)
-		}
-	case VariantMicrosoft:
-		switch b {
-		case 0x0C, 0x0D:
-			outputF(": %X ", b)
-			break
-		default:
-			t.Errorf("%X most high bits do not resolve to 0x0C, 0x0D", b)
-		}
-	case VariantFuture:
-		switch b {
-		case 0x0E, 0x0F:
-			outputF(": %X ", b)
-			break
-		default:
-			t.Errorf("%X most high bits do not resolve to 0x0E, 0x0F", b)
-		}
-	}
-	output("\n")
-}
-
-func output(a ...interface{}) {
-	if printTestOutput {
-		fmt.Print(a...)
-	}
-}
-
-func outputLn(a ...interface{}) {
-	if printTestOutput {
-		fmt.Println(a...)
-	}
-}
-
-func outputF(format string, a ...interface{}) {
-	if printTestOutput {
-		fmt.Printf(format, a)
 	}
 }

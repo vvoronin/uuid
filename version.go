@@ -1,7 +1,16 @@
 package uuid
 
+import "errors"
+
 // Version represents the type of UUID.
 type Version uint8
+
+const (
+	VariantNCS       uint8 = 0x00
+	VariantRFC4122   uint8 = 0x80 // or and A0 if masked with 1F
+	VariantMicrosoft uint8 = 0xC0
+	VariantFuture    uint8 = 0xE0
+)
 
 const (
 	Unknown Version = iota // Unknown
@@ -10,6 +19,16 @@ const (
 	Three                  // Namespace hash uses MD5
 	Four                   // Crypto random
 	Five                   // Namespace hash uses SHA-1
+)
+
+const (
+	// 3f used by RFC4122 although 1f works for all
+	variantSet = 0x3f
+
+	// rather than using 0xc0 we use 0xe0 to retrieve the variant
+	// The result is the same for all other variants
+	// 0x80 and 0xa0 are used to identify RFC4122 compliance
+	variantGet = 0xe0
 )
 
 // String returns English description of version.
@@ -37,4 +56,30 @@ func resolveVersion(pVersion uint8) Version {
 	default:
 		return Unknown
 	}
+}
+
+func variant(pVariant uint8) uint8 {
+	switch pVariant & variantGet {
+	case VariantRFC4122, 0xA0:
+		return VariantRFC4122
+	case VariantMicrosoft:
+		return VariantMicrosoft
+	case VariantFuture:
+		return VariantFuture
+	}
+	return VariantNCS
+}
+
+func setVariant(pByte *byte, pVariant uint8) {
+	switch pVariant {
+	case VariantRFC4122:
+		*pByte &= variantSet
+	case VariantFuture, VariantMicrosoft:
+		*pByte &= 0x1F
+	case VariantNCS:
+		*pByte &= 0x7F
+	default:
+		panic(errors.New("uuid.setVariant: invalid variant mask"))
+	}
+	*pByte |= pVariant
 }

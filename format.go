@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// These constants represent a pattern used by the package with which to print
-// a UUID.
+// Format represents different styles a UUID can be printed in constants
+// represent a pattern used by the package with which to print a UUID.
 type Format string
 
 const (
@@ -43,7 +43,7 @@ func SwitchFormat(pFormat Format) {
 	printFormat = pFormat
 }
 
-// SwitchFormatToUpper is a convenience function to set the Format to upper case
+// SwitchFormatToUpper is a convenience function to set the Format to uppercase
 // versions of the given constants.
 func SwitchFormatToUpper(pFormat Format) {
 	SwitchFormat(Format(strings.ToUpper(string(pFormat))))

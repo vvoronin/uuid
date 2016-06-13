@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"errors"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 	"time"
 )
@@ -12,10 +11,6 @@ import (
 var (
 	nodeBytes = []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb, 0x44, 0xcc}
 )
-
-func TestPosixIds(t *testing.T) {
-	assert.True(t, os.Getuid() != 0)
-}
 
 func TestGenerator_V1(t *testing.T) {
 	u := generator.NewV1()

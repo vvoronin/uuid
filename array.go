@@ -2,15 +2,6 @@ package uuid
 
 const (
 	length = 16
-
-	// 3f used by RFC4122 although 1f works for all
-	variantSet = 0x3f
-
-	// rather than using 0xc0 we use 0xe0 to retrieve the variant
-	// The result is the same for all other variants
-	// 0x80 and 0xa0 are used to identify RFC4122 compliance
-	variantGet = 0xe0
-
 	variantIndex = 8
 	versionIndex = 6
 )

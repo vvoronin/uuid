@@ -147,7 +147,7 @@ func Test_EachIsUnique(t *testing.T) {
 		NewV1()
 	}
 
-	s := defaultSpinResolution * 1.5
+	s := int(defaultSpinResolution * 1.5)
 	ids := make([]UUID, s)
 	for i := 0; i < s; i++ {
 		u := NewV1()
@@ -221,3 +221,5 @@ func TestPromoteToNameSpace(t *testing.T) {
 	assert.Equal(t, One, NameSpaceDNS.Version(), "Should be the correct version reported")
 
 }
+
+

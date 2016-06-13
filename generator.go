@@ -1,10 +1,5 @@
 package uuid
 
-/****************
- * Date: 14/02/14
- * Time: 7:43 PM
- ***************/
-
 import (
 	"bytes"
 	"encoding/binary"
@@ -13,7 +8,39 @@ import (
 	"net"
 	"os"
 	"sync"
+	"crypto/rand"
 )
+
+var (
+	generator *Generator
+)
+
+func init() {
+	registerDefaultGenerator()
+}
+
+func NewGenerator(
+fRandom func([]byte) (int, error),
+fNext func() Timestamp,
+fId func() Node) (generator *Generator) {
+	generator = new(Generator)
+	generator.Random = fRandom
+	generator.Next = fNext
+	generator.Id = fId
+	return
+}
+
+func registerDefaultGenerator() {
+	generator = NewGenerator(
+		rand.Read,
+		(&spinner{
+			Resolution: 512,
+			Timestamp:  Now(),
+			Count:      0,
+		}).next,
+		findFirstHardwareAddress)
+}
+
 
 // an iterated value to help ensure unique UUID generations values
 // across the same domain, server restarts and clock issues
@@ -71,7 +98,7 @@ type Generator struct {
 	sync.Mutex
 	sync.Once
 
-	err error
+	err    error
 
 	*Store
 	Saver
@@ -87,75 +114,12 @@ func Init() error {
 	return generator.Error()
 }
 
+// Error will return any error from the uuid.Generator if a UUID returns as Nil
+// or nil
 func (o *Generator) Error() (err error) {
 	err = o.err
 	o.err = nil
 	return
-}
-
-// NewV1 generates a new RFC4122 version 1 UUID based on a 60 bit timestamp and
-// node id
-func (o *Generator) NewV1() Uuid {
-	o.read()
-	id := array{}
-
-	makeUuid(&id,
-		uint32(o.Timestamp),
-		uint16(o.Timestamp>>32),
-		uint16(o.Timestamp>>48),
-		uint16(o.Sequence),
-		o.Node)
-
-	(&id).setRFC4122Version(1)
-	return id[:]
-}
-
-// NewV2 generates a new DCE version 2 UUID based on a 60 bit timestamp, node id
-// and POSIX UID or GUID
-func (o *Generator) NewV2(pDomain Domain) Uuid {
-	o.read()
-
-	id := array{}
-
-	var domain uint32
-
-	switch pDomain {
-	case DomainUser:
-		domain = uint32(os.Getuid())
-	case DomainGroup:
-		domain = uint32(os.Getgid())
-	}
-
-	makeUuid(&id,
-		domain,
-		uint16(o.Timestamp>>32),
-		uint16(o.Timestamp>>48),
-		uint16(o.Sequence),
-		o.Node)
-
-	id[9] = byte(pDomain)
-	id.setRFC4122Version(2)
-
-	return id[:]
-}
-
-func makeUuid(pId *array, pLow uint32, pMid, pHiAndV, seq uint16, pNode Node) {
-
-	pId[0] = byte(pLow >> 24)
-	pId[1] = byte(pLow >> 16)
-	pId[2] = byte(pLow >> 8)
-	pId[3] = byte(pLow)
-
-	pId[4] = byte(pMid >> 8)
-	pId[5] = byte(pMid)
-
-	pId[6] = byte(pHiAndV >> 8)
-	pId[7] = byte(pHiAndV)
-
-	pId[8] = byte(seq >> 8)
-	pId[9] = byte(seq)
-
-	copy(pId[10:], pNode)
 }
 
 func (o *Generator) read() {
@@ -195,7 +159,7 @@ func (o *Generator) init() {
 	// and node ID used to generate the last UUID.
 	var (
 		storage Store
-		err     error
+		err error
 	)
 
 	o.Lock()
@@ -286,11 +250,76 @@ func (o *Generator) save() {
 	}(o)
 }
 
+// NewV1 generates a new RFC4122 version 1 UUID based on a 60 bit timestamp and
+// node id
+func (o *Generator) NewV1() Uuid {
+	o.read()
+	id := array{}
+
+	makeUuid(&id,
+		uint32(o.Timestamp),
+		uint16(o.Timestamp >> 32),
+		uint16(o.Timestamp >> 48),
+		uint16(o.Sequence),
+		o.Node)
+
+	(&id).setRFC4122Version(1)
+	return id[:]
+}
+
+// NewV2 generates a new DCE version 2 UUID based on a 60 bit timestamp, node id
+// and POSIX UID or GID
+func (o *Generator) NewV2(pDomain Domain) Uuid {
+	o.read()
+
+	id := array{}
+
+	var domain uint32
+
+	switch pDomain {
+	case DomainUser:
+		domain = uint32(os.Getuid())
+	case DomainGroup:
+		domain = uint32(os.Getgid())
+	}
+
+	makeUuid(&id,
+		domain,
+		uint16(o.Timestamp >> 32),
+		uint16(o.Timestamp >> 48),
+		uint16(o.Sequence),
+		o.Node)
+
+	id[9] = byte(pDomain)
+	id.setRFC4122Version(2)
+
+	return id[:]
+}
+
+func makeUuid(pId *array, pLow uint32, pMid, pHiAndV, seq uint16, pNode Node) {
+
+	pId[0] = byte(pLow >> 24)
+	pId[1] = byte(pLow >> 16)
+	pId[2] = byte(pLow >> 8)
+	pId[3] = byte(pLow)
+
+	pId[4] = byte(pMid >> 8)
+	pId[5] = byte(pMid)
+
+	pId[6] = byte(pHiAndV >> 8)
+	pId[7] = byte(pHiAndV)
+
+	pId[8] = byte(seq >> 8)
+	pId[9] = byte(seq)
+
+	copy(pId[10:], pNode)
+}
+
 func findFirstHardwareAddress() (node Node) {
 	interfaces, err := net.Interfaces()
 	if err == nil {
 		for _, i := range interfaces {
-			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
+			if i.Flags & net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
 				// Don't use random as we have a real address
 				node = Node(i.HardwareAddr)
 				log.Println("uuid.getHardwareAddress:", node)
