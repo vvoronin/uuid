@@ -18,6 +18,6 @@ before_install:
     - go get golang.org/x/tools/cmd/cover
 script:
     - go test -v -short- race -covermode=count -coverprofile=coverage.out
-      $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
+    - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
 notifications:
     email: true
