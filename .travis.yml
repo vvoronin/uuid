@@ -11,11 +11,13 @@ os:
     - osx
 sudo: false
 before_script:
-  - go vet ./...
+    - go vet ./...
 before_install:
+    - go get -t -v ./...
     - go get github.com/mattn/goveralls
     - go get golang.org/x/tools/cmd/cover
 script:
-    - $HOME/gopath/bin/goveralls -service=travis-ci
-notifications:
+    - go test -v -short- race -covermode=count -coverprofile=coverage.out
+      $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
+      notifications:
     email: true
