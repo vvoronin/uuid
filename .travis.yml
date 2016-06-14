@@ -11,6 +11,7 @@ os:
     - osx
 sudo: false
 before_script:
+    - gofmt -s -l -e .
     - go vet ./...
 before_install:
     - go get -t -v ./...
