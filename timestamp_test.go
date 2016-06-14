@@ -53,7 +53,7 @@ func TestConvert(t *testing.T) {
 }
 
 func TestSpinnerNext(t *testing.T) {
-	size := defaultSpinResolution * 20
+	size := defaultSpinResolution * 5
 
 	spin := spinner{}
 	spin.Resolution = defaultSpinResolution
@@ -73,14 +73,24 @@ func TestSpinnerNext(t *testing.T) {
 		}
 	}
 
-	spin = spinner{Count:defaultSpinResolution}
-	spin.Resolution = defaultSpinResolution
+	spin = spinner{Count:defaultSpinResolution, Timestamp: Now()}
+	spin.Resolution = defaultSpinResolution - 1
+
+	times = make([]Timestamp, size)
 
 	for i := 0; i < size; i++ {
-		spin.next()
+		times[i] = spin.next()
 	}
 
-	size = defaultSpinResolution * 10
+	for j := size - 1; j >= 0; j-- {
+		for k := 0; k < size; k++ {
+			if k == j {
+				continue
+			}
+			assert.NotEqual(t, "Timestamps should never be equal", times[j], times[k])
+		}
+	}
+
 	waitSize := 3
 
 	spin = spinner{}
