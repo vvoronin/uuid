@@ -76,19 +76,8 @@ func TestSpinnerNext(t *testing.T) {
 	spin = spinner{Count:defaultSpinResolution}
 	spin.Resolution = defaultSpinResolution
 
-	times = make([]Timestamp, size)
-
 	for i := 0; i < size; i++ {
-		times[i] = spin.next()
-	}
-
-	for j := size - 1; j >= 0; j-- {
-		for k := 0; k < size; k++ {
-			if k == j {
-				continue
-			}
-			assert.NotEqual(t, "Timestamps should never be equal", times[j], times[k])
-		}
+		spin.next()
 	}
 
 	size = defaultSpinResolution * 10
