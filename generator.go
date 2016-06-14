@@ -19,14 +19,18 @@ func init() {
 	registerDefaultGenerator()
 }
 
-func NewGenerator(
-fRandom func([]byte) (int, error),
-fNext func() Timestamp,
-fId func() Node) (generator *Generator) {
-	generator = new(Generator)
-	generator.Random = fRandom
-	generator.Next = fNext
-	generator.Id = fId
+func NewGenerator (
+	fRandom func([]byte) (int, error),
+	fNext func() Timestamp,
+	fId func() Node) (generator *Generator) {
+		generator = new(Generator)
+	if fRandom == nil {
+		generator.Random = rand.Read
+	} else {
+		generator.Random = fRandom
+	}
+		generator.Next = fNext
+		generator.Id = fId
 	return
 }
 
@@ -34,7 +38,7 @@ func registerDefaultGenerator() {
 	generator = NewGenerator(
 		rand.Read,
 		(&spinner{
-			Resolution: 512,
+			Resolution: defaultSpinResolution,
 			Timestamp:  Now(),
 			Count:      0,
 		}).next,
@@ -45,6 +49,11 @@ func registerDefaultGenerator() {
 func Init() error {
 	generator.Do(generator.init)
 	return generator.Error()
+}
+
+func RegisterGenerator(pGenerator *Generator) error {
+	generator = pGenerator
+	return nil
 }
 
 // an iterated value to help ensure unique UUID generations values
@@ -83,10 +92,11 @@ type Saver interface {
 	Save(Store)
 }
 
-// RegisterSaver must be run before any calls to V1 or V2 to save Generator
-// state via the Store struct.
-// You must implement the uuid.Saver interface and are completely responsible
-// for the non volatile storage of the state.
+// RegisterSaver register's a uuid.Saver implementation to the default package
+// uuid.Generator. If you wish to save the generator state, this function must
+// be run before any calls to V1 or V2 UUIDs. uuid.RegisterSaver cannot be run
+// in conjunction with uuid.Init. You may implement the uuid.Saver interface
+// or use the provided uuid.saver's from the uuId/savers package.
 func RegisterSaver(pSaver Saver) {
 	generator.Do(func() {
 		defer generator.init()
@@ -96,10 +106,15 @@ func RegisterSaver(pSaver Saver) {
 	})
 }
 
+type Random func([]byte)(int, error)
+type Next func() Timestamp
+type Id func() Node
+type HandleError func(error) Uuid
+
 // Generator is used to create and monitor the running of V1 and V2, and V4
 // UUIDs. It can be setup to take different implementations for Timestamp, Node
-// and random data retrieval. This is also where the Saver implementation can
-// be given.
+// and CPRNG retrieval. This is also where the Saver implementation can be
+// given.
 type Generator struct {
 
 	// Access to the store needs to be maintained
@@ -123,7 +138,13 @@ type Generator struct {
 	// UUIDs.
 	Saver
 
-	// PanicPolicy provides the user the ability to manage any serious
+	// Id provides the Node to be used during the life of the generator. If
+	// it cannot be determined nil should be returned, the package will
+	// then provide a crypto-random node id. The default gets a MAC address
+	// from any interface that is up using net.FlagUp.
+	Id
+
+	// HandleError provides the user the ability to manage any serious
 	// error that may be caused by accessing the standard crypto/rand
 	// library. Due to the rarity of this occurrence the error is swallowed
 	// by NewV1, NewV2 or NewV4 methods which rely on random numbers, V4 in
@@ -137,24 +158,18 @@ type Generator struct {
 	// where you can recover at some level in your program. Issues with the
 	// RNG in an OS. If this function is not provided the UUID methods will
 	// panic on any error.
-	PanicPolicy func(error) Uuid
+	HandleError
 
-	// Random provides random number generation, the package uses crypto/rand.Read
-	// by default. You can supply your own.
-	Random func([]byte) (int, error)
+	// Random provides a CPRNG which reads into the given []byte, the package
+	// uses crypto/rand.Read by default. You can supply your own CPRNG.
+	Random
 
 	// Next provides the next Timestamp value to be used by the next UUID.
 	// The default uses the uuid.spinner which spins at a resolution of
 	// 100ns ticks and provides a spin resolution redundancy with 1024
 	// cycles. This ensures that the system is not too quick when
 	// generating V1 or V2 UUIDs.
-	Next   func() Timestamp
-
-	// Id provides the Node to be used during the life of the generator. If
-	// it cannot be determined nil should be returned, the package will
-	// then provide a crypto-random node id. The default gets a MAC address
-	// from any interface that is up using net.FlagUp.
-	Id     func() Node
+	Next
 }
 
 // Error will return any error from the uuid.Generator if a UUID returns as Nil
