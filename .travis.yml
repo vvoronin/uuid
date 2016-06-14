@@ -19,5 +19,5 @@ before_install:
 script:
     - go test -v -short- race -covermode=count -coverprofile=coverage.out
       $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
-      notifications:
+notifications:
     email: true
