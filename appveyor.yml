@@ -7,7 +7,7 @@ os: Windows Server 2012 R2
 clone_folder: c:\gopath\src\github.com\twinj\uuid
 
 except:
-    - /dev.*/      # You can use Regex expression to match multiple branch name(s)
+  - /dev.*/      # You can use Regex expression to match multiple branch name(s)
 
 # environment variables
 environment:
