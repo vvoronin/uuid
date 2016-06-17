@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	once *sync.Once
+	once *sync.Once = new(sync.Once)
 	generator *Generator
 )
 
