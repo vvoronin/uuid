@@ -15,8 +15,6 @@ import (
 var (
 	goLang Name = "https://google.com/golang.org?q=golang"
 
-	printTestOutput bool = false
-
 	uuidBytes = []byte{
 		0xaa, 0xcf, 0xee, 0x12,
 		0xd4, 0x00,
@@ -124,7 +122,7 @@ func TestParse(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	for k, _ := range namespaces {
+	for k := range namespaces {
 
 		u := New(k.Bytes())
 

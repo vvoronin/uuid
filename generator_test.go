@@ -60,6 +60,45 @@ func (o *save) Read() (error, Store) {
 	return nil, Store{}
 }
 
+func TestRegisterGenerator(t *testing.T) {
+	g1 := NewGenerator(GeneratorConfig{
+		func() Timestamp {
+			return Timestamp(145876)
+		}, 0,
+		func() Node {
+			return []byte{0x11, 0xaa, 0xbb, 0xaa, 0xbb, 0xcc}
+		},
+		func([]byte) (int, error) {
+			return 58, nil
+		}, nil})
+	once = sync.Once{}
+	RegisterGenerator(g1)
+
+	assert.Equal(t, g1.Next(), generator.Next(), "These values should be the same")
+	assert.Equal(t, g1.Id(), generator.Id(), "These values should be the same")
+
+	n1, err1 := generator.Random(nil)
+	n, err := generator.Random(nil)
+	assert.Equal(t, n1, n, "Values should be the same")
+	assert.Equal(t, err, err1, "Values should be the same")
+	assert.NoError(t, err)
+
+	assert.True(t, didRegisterGeneratorPanic(g1), "Should panic when invalid")
+}
+
+func didRegisterGeneratorPanic(gen *Generator) bool {
+	return func() (didPanic bool) {
+		defer func() {
+			if recover() != nil {
+				didPanic = true
+			}
+		}()
+
+		RegisterGenerator(gen)
+		return
+	}()
+}
+
 func TestRegisterSaver(t *testing.T) {
 	registerTestGenerator(Timestamp(2048), []byte{0xaa})
 
@@ -73,7 +112,7 @@ func TestRegisterSaver(t *testing.T) {
 func TestSaverRead(t *testing.T) {
 	now, node := registerTestGenerator(Now().Sub(time.Second), []byte{0xaa})
 
-	storageStamp := registerSaver(now.Sub(time.Second*2), node)
+	storageStamp := registerSaver(now.Sub(time.Second * 2), node)
 
 	assert.NotNil(t, generator.Saver, "Saver should save")
 	assert.NotNil(t, generator.Store, "Default generator store should not return an empty store")
@@ -107,6 +146,75 @@ func TestSaverSave(t *testing.T) {
 
 	assert.True(t, saver.saved, "Saver should save")
 	registerDefaultGenerator()
+}
+
+func TestNewGenerator(t *testing.T) {
+	gen := NewGenerator(GeneratorConfig{})
+
+	assert.NotNil(t, gen.Next, "There shoud be a default Next function")
+	assert.NotNil(t, gen.Random, "There shoud be a default Random function")
+	assert.NotNil(t, gen.HandleError, "There shoud be a default HandleError function")
+	assert.NotNil(t, gen.Id, "There shoud be a default Id function")
+
+	assert.Equal(t, Now() + 1 ,gen.Next(), "There shoud be the given Next function")
+	assert.Equal(t, findFirstHardwareAddress(), gen.Id(), "There shoud be the gieen Id function")
+
+	gen = NewGenerator(GeneratorConfig{
+		Id: func() Node {
+			return Node{0xaa, 0xff}
+		},
+		Next: func() Timestamp {
+			return Timestamp(2)
+		},
+		HandleError: func(error) bool {
+			return true
+		},
+		Random: func([]byte) (int, error) {
+			return 1, nil
+		},
+		Resolution: 0,
+	})
+
+	assert.NotNil(t, gen.Next, "There shoud be a default Next function")
+	assert.NotNil(t, gen.Random, "There shoud be a default Random function")
+	assert.NotNil(t, gen.HandleError, "There shoud be a default HandleError function")
+	assert.NotNil(t, gen.Id, "There shoud be a default Id function")
+
+	n, err := gen.Random(nil)
+
+	assert.Equal(t, Timestamp(2) ,gen.Next(), "There shoud be the given Next function")
+	assert.Equal(t, 1, n, "There shoud be the given Random function")
+	assert.NoError(t, err, "There shoud be the given Random function")
+	assert.Equal(t, true, gen.HandleError(nil), "There shoud be the given HandleError function")
+	assert.Equal(t, Node{0xaa, 0xff}, gen.Id(), "There shoud be the gieen Id function")
+
+	gen = NewGenerator(GeneratorConfig{
+		Id: func() Node {
+			return []byte{0xaa, 0xff}
+		},
+		Next: nil,
+		HandleError: func(error) bool {
+			return true
+		},
+		Random: func([]byte) (int, error) {
+			return 1, nil
+		},
+		Resolution: 4096,
+	})
+
+	n, err = gen.Random(nil)
+
+	assert.NotNil(t, gen.Next, "There shoud be a default Next function")
+	assert.NotNil(t, gen.Random, "There shoud be a default Random function")
+	assert.NotNil(t, gen.HandleError, "There shoud be a default HandleError function")
+	assert.NotNil(t, gen.Id, "There shoud be a default Id function")
+
+	assert.Equal(t, Now() + 1 ,gen.Next(), "There shoud be the given Next function")
+	assert.Equal(t, 1, n, "There shoud be the given Random function")
+	assert.NoError(t, err, "There shoud be the given Random function")
+	assert.Equal(t, true, gen.HandleError(nil), "There shoud be the given HandleError function")
+	assert.Equal(t, Node{0xaa, 0xff}, gen.Id(), "There shoud be the gieen Id function")
+
 }
 
 func TestGeneratorInit(t *testing.T) {
@@ -162,14 +270,15 @@ func TestGeneratorRead(t *testing.T) {
 		now.Sub(time.Second * 2),
 	}
 
-	generator = NewGenerator(
-		rand.Read,
+	generator = NewGenerator(GeneratorConfig{
 		func() Timestamp {
 			return timestamps[i]
-		},
+		}, 0,
 		func() Node {
 			return nodeBytes
-		})
+		},
+		rand.Read,
+		nil})
 
 	storageStamp := registerSaver(now.Add(time.Second), nodeBytes)
 
@@ -203,7 +312,6 @@ func TestGeneratorRead(t *testing.T) {
 	assert.NotEqual(t, []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb}, generator.Node, "Should not return an empty store")
 
 	registerDefaultGenerator()
-
 }
 
 func TestGeneratorRandom(t *testing.T) {
@@ -233,6 +341,10 @@ func TestGeneratorRandom(t *testing.T) {
 		return 0, errors.New("EOF")
 	}
 
+	generator.HandleError = func(error) bool {
+		return false
+	}
+
 	b = make([]byte, 6)
 	c := []byte{}
 	c = append(c, b...)
@@ -246,12 +358,48 @@ func TestGeneratorRandom(t *testing.T) {
 	assert.Nil(t, id, "There should be no id")
 	assert.Error(t, generator.err, "There should be an error [%s]", err)
 
-	registerDefaultGenerator()
+	generator.HandleError = func(error) bool {
+		return true
+	}
 
+	assert.True(t, didNewV4Panic(), "NewV4should panic when invalid")
+	assert.Error(t, generator.err, "There should be an error [%s]", err)
+
+	generator.HandleError = runHandleError
+
+	assert.True(t, didNewV4Panic(), "NewV4should panic when invalid")
+	assert.Error(t, generator.err, "There should be an error [%s]", err)
+
+	generator.HandleError = func(error) bool {
+		generator.Random = func([]byte) (int, error) {
+			return 1, nil
+		}
+		return true
+	}
+
+	id = NewV4()
+	assert.NotNil(t, id, "Should get an id")
+	assert.NoError(t, generator.err, "There should be no error [%s]", err)
+
+	registerDefaultGenerator()
+}
+
+func didNewV4Panic() bool {
+	return func() (didPanic bool) {
+		defer func() {
+			if recover() != nil {
+				didPanic = true
+			}
+		}()
+
+		NewV4()
+		return
+	}()
 }
 
 func TestGeneratorSave(t *testing.T) {
 	registerTestGenerator(Now(), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+	generator.Do(generator.init)
 	generator.read()
 	generator.save()
 	registerDefaultGenerator()
@@ -268,14 +416,14 @@ func TestGetHardwareAddress(t *testing.T) {
 }
 
 func registerTestGenerator(pNow Timestamp, pId Node) (Timestamp, Node) {
-	generator = NewGenerator(
-		rand.Read,
+	generator = NewGenerator(GeneratorConfig{
 		func() Timestamp {
 			return pNow
-		},
+		}, 0,
 		func() Node {
 			return pId
-		})
+		}, rand.Read,
+		nil})
 	return pNow, pId
 }
 

@@ -51,15 +51,28 @@ func NewV3(pNamespace NameSpace, pNames ...UniqueName) Uuid {
 // NewV4 generates a new RFC4122 version 4 UUID a cryptographically secure
 // random UUID.
 func NewV4() Uuid {
-	o := array{}
-	_, err := generator.Random(o[:])
+	o, err := v4()
 	if err == nil {
-		o.setRFC4122Version(4)
 		return o[:]
 	}
 	generator.err = err
 	log.Printf("uuid.V4: There was an error getting random bytes [%s]\n", err)
+	if ok := generator.HandleError(err); ok {
+		o, err = v4()
+		if err == nil {
+			return o[:]
+		}
+		generator.err = err
+		runHandleError(err)
+	}
 	return nil
+}
+
+func v4() (o array, err error) {
+	generator.err = nil
+	_, err = generator.Random(o[:])
+	o.setRFC4122Version(4)
+	return
 }
 
 // NewV5 generates an RFC4122 version 5 UUID based on the SHA-1 hash of a

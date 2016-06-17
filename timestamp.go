@@ -97,7 +97,7 @@ func (o Timestamp) String() string {
 
 type spinner struct {
 	// the amount of ids based on the Timestamp
-	Count, Resolution uint16
+	Count, Resolution uint
 
 	// the tracked spin stamp
 	Timestamp

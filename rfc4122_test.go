@@ -27,8 +27,8 @@ func init() {
 }
 
 func TestNewV1(t *testing.T) {
+	generator.Do(generator.init)
 	u := NewV1()
-
 	assert.Equal(t, One, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
@@ -82,6 +82,8 @@ func TestNewV4(t *testing.T) {
 	assert.Equal(t, Four, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
+
+
 }
 
 func TestNewV5(t *testing.T) {

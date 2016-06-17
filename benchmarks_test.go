@@ -1,8 +1,8 @@
-package uuid
+package uuid_test
 
 import (
 	"testing"
-	_ "time"
+	. "github.com/twinj/uuid"
 )
 
 var name UniqueName = Name("www.widgets.com")
@@ -119,8 +119,8 @@ func BenchmarkFormatter(b *testing.B) {
 }
 
 func BenchmarkUuid_Bytes(b *testing.B) {
-	id := make(Uuid, length)
-	id.unmarshal(NameSpaceDNS.Bytes())
+	id := make(Uuid, 16)
+	copy(id, NameSpaceDNS.Bytes())
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		id.Bytes()
@@ -172,11 +172,8 @@ func BenchmarkUuid_Version(b *testing.B) {
 }
 
 func BenchmarkNameSpace_Bytes(b *testing.B) {
-	id := make(Uuid, length)
-	id.unmarshal(NameSpaceDNS.Bytes())
-	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		id.Bytes()
+		NameSpaceDNS.Bytes()
 	}
 	b.StopTimer()
 	b.ReportAllocs()

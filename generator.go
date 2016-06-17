@@ -12,6 +12,8 @@ import (
 )
 
 var (
+	mu sync.Mutex
+	once sync.Once
 	generator *Generator
 )
 
@@ -19,41 +21,92 @@ func init() {
 	registerDefaultGenerator()
 }
 
-func NewGenerator (
-	fRandom func([]byte) (int, error),
-	fNext func() Timestamp,
-	fId func() Node) (generator *Generator) {
-		generator = new(Generator)
-	if fRandom == nil {
-		generator.Random = rand.Read
+type Random func([]byte) (int, error)
+type Next func() Timestamp
+type Id func() Node
+type HandleError func(error) bool
+
+// GeneratorConfig allows you to setup a new uuid.Generator using
+// uuid.NewGenerator. You can supply your own implementation for the the CPRNG,
+// for Node Id retrieval, for the timestamp and or the resolution of the default
+// Timestamp spinner. You can also supply your own error handler for when the
+// CPRNG fails, if it fails. If this is nil the default will be to try again,
+// if it fails again it will panic.
+type GeneratorConfig struct {
+	Next
+	Resolution uint
+	Id
+	Random
+	HandleError
+}
+
+// NewGenerator will create a new Generator with the given functions, fNext can
+// be either a uuid.Next function or a different resolution setting.
+// The resolution setting will tweak the performance of V1 and V2 UUIDs. Its
+// value is subjective to each machine and performance. Some machines are so
+// fast that this value will need to be quite high for the spinner to work
+// effectively and update Timestamp Next values.
+func NewGenerator(pConfig GeneratorConfig) (gen *Generator) {
+	gen = new(Generator)
+	if pConfig.Next == nil {
+		if pConfig.Resolution == 0 {
+			pConfig.Resolution = defaultSpinResolution
+		}
+		gen.Next = (&spinner{
+			Resolution:pConfig.Resolution,
+			Count: 0,
+			Timestamp: Now(),
+		}).next
 	} else {
-		generator.Random = fRandom
+		gen.Next = pConfig.Next
 	}
-		generator.Next = fNext
-		generator.Id = fId
+	if pConfig.Id == nil {
+		gen.Id = findFirstHardwareAddress
+	} else {
+		gen.Id = pConfig.Id
+	}
+	if pConfig.Random == nil {
+		gen.Random = rand.Read
+	} else {
+		gen.Random = pConfig.Random
+	}
+	if pConfig.HandleError == nil {
+		gen.HandleError = runHandleError
+	} else {
+		gen.HandleError = pConfig.HandleError
+	}
 	return
 }
 
 func registerDefaultGenerator() {
-	generator = NewGenerator(
-		rand.Read,
-		(&spinner{
-			Resolution: defaultSpinResolution,
-			Timestamp:  Now(),
-			Count:      0,
-		}).next,
-		findFirstHardwareAddress)
+	generator = NewGenerator(GeneratorConfig{})
 }
 
 // Init will initialise the default generator
 func Init() error {
-	generator.Do(generator.init)
-	return generator.Error()
+	return RegisterGenerator(NewGenerator(GeneratorConfig{}))
 }
 
-func RegisterGenerator(pGenerator *Generator) error {
-	generator = pGenerator
-	return nil
+// RegisterGenerator will set the default generator to the given generator
+// Like Init this can only be called once. Any subsequent calls will have no
+// effect.
+func RegisterGenerator(pGenerator *Generator) (err error) {
+	fmt.Println(pGenerator)
+
+	mu.Lock()
+	defer mu.Unlock()
+	notOnce := true
+	once.Do(func() {
+		generator = pGenerator
+		generator.Do(generator.init)
+		err = generator.Error()
+		notOnce = false
+		return
+	})
+	if notOnce {
+		log.Panicf("A uuid.Register method should not be called more than once.")
+	}
+	return
 }
 
 // an iterated value to help ensure unique UUID generations values
@@ -106,17 +159,11 @@ func RegisterSaver(pSaver Saver) {
 	})
 }
 
-type Random func([]byte)(int, error)
-type Next func() Timestamp
-type Id func() Node
-type HandleError func(error) Uuid
-
 // Generator is used to create and monitor the running of V1 and V2, and V4
 // UUIDs. It can be setup to take different implementations for Timestamp, Node
 // and CPRNG retrieval. This is also where the Saver implementation can be
 // given.
 type Generator struct {
-
 	// Access to the store needs to be maintained
 	sync.Mutex
 
@@ -125,18 +172,10 @@ type Generator struct {
 	// uuid.Generator.Init function or when a V1 or V2 id is generated.
 	sync.Once
 
-	err    error
+	err  error
 
 	// Store contains the current values being used by the Generator.
 	*Store
-
-	// Intended to provide a non-volatile store to save the state of the
-	// generator, the default is nil and to therefore generate a timestamp
-	// clock sequence with random data. You can register your own save by
-	// using the uuid.RegisterSaver function or by creating your own
-	// uuid.Generator instance from which to generate your V1, V2 or V4
-	// UUIDs.
-	Saver
 
 	// Id provides the Node to be used during the life of the generator. If
 	// it cannot be determined nil should be returned, the package will
@@ -158,18 +197,26 @@ type Generator struct {
 	// where you can recover at some level in your program. Issues with the
 	// RNG in an OS. If this function is not provided the UUID methods will
 	// panic on any error.
-	HandleError
-
-	// Random provides a CPRNG which reads into the given []byte, the package
-	// uses crypto/rand.Read by default. You can supply your own CPRNG.
-	Random
+	HandleError HandleError
 
 	// Next provides the next Timestamp value to be used by the next UUID.
 	// The default uses the uuid.spinner which spins at a resolution of
 	// 100ns ticks and provides a spin resolution redundancy with 1024
 	// cycles. This ensures that the system is not too quick when
 	// generating V1 or V2 UUIDs.
-	Next
+	Next Next
+
+	// Random provides a CPRNG which reads into the given []byte, the package
+	// uses crypto/rand.Read by default. You can supply your own CPRNG.
+	Random
+
+	// Intended to provide a non-volatile store to save the state of the
+	// generator, the default is nil and to therefore generate a timestamp
+	// clock sequence with random data. You can register your own save by
+	// using the uuid.RegisterSaver function or by creating your own
+	// uuid.Generator instance from which to generate your V1, V2 or V4
+	// UUIDs.
+	Saver
 }
 
 // Error will return any error from the uuid.Generator if a UUID returns as Nil
@@ -181,11 +228,6 @@ func (o *Generator) Error() (err error) {
 }
 
 func (o *Generator) read() {
-
-	// From a system-wide shared stable store (e.g., a file), read the
-	// UUID generator state: the values of the timestamp, clock sequence,
-	// and node ID used to generate the last UUID.
-	o.Do(o.init)
 
 	// Save the state (current timestamp, clock sequence, and node ID)
 	// back to the stable store
@@ -386,3 +428,9 @@ func findFirstHardwareAddress() (node Node) {
 	}
 	return
 }
+
+func runHandleError(pErr error) bool {
+	log.Panicln("uuid.Generator ran into a serious problem with the random generator", pErr)
+	return false
+}
+
