@@ -71,7 +71,7 @@ func TestRegisterGenerator(t *testing.T) {
 		func([]byte) (int, error) {
 			return 58, nil
 		}, nil})
-	once = sync.Once{}
+	once = new(sync.Once)
 	RegisterGenerator(g1)
 
 	assert.Equal(t, g1.Next(), generator.Next(), "These values should be the same")

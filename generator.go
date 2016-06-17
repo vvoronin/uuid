@@ -12,8 +12,7 @@ import (
 )
 
 var (
-	mu sync.Mutex
-	once sync.Once
+	once *sync.Once
 	generator *Generator
 )
 
@@ -93,8 +92,6 @@ func Init() error {
 func RegisterGenerator(pGenerator *Generator) (err error) {
 	fmt.Println(pGenerator)
 
-	mu.Lock()
-	defer mu.Unlock()
 	notOnce := true
 	once.Do(func() {
 		generator = pGenerator
