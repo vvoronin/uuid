@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-var name UniqueName = Name("www.widgets.com")
+var name UniqueName = Name("www.example.com")
 
 func BenchmarkNewV1(b *testing.B) {
 	for i := 0; i < b.N; i++ {

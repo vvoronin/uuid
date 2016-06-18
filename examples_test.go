@@ -27,10 +27,9 @@ func Example() {
 	u4 := uuid.NewV4()
 	fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
 
-	newNameSpace := uuid.PromoteToNameSpace(u1)
-	u3 := uuid.NewV3(newNameSpace, u4)
+	u3 := uuid.NewV3(u1, u4)
 
-	url, _ := url.Parse("www.widgets.com")
+	url, _ := url.Parse("www.example.com")
 
 	u5 := uuid.NewV5(uuid.NameSpaceURL, url)
 
@@ -67,8 +66,7 @@ func ExampleNewV2() {
 
 func ExampleNewV3() {
 	u, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
-	n := uuid.PromoteToNameSpace(u)
-	u3 := uuid.NewV3(n, uuid.Name("test"))
+	u3 := uuid.NewV3(u, uuid.Name("test"))
 	fmt.Printf("version %d variant %x: %s\n", u3.Version(), u3.Variant(), u3)
 }
 

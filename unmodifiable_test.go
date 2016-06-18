@@ -9,13 +9,7 @@ func TestNameSpace_Bytes(t *testing.T) {
 	b := make([]byte, length)
 	copy(b[:], NameSpaceDNS.Bytes())
 
-	NewV3(NameSpaceDNS, Name("www.widgets.com"))
-	assert.Equal(t, b, NameSpaceDNS.Bytes())
-
-	NewV3(NameSpaceDNS, Name("www.widgets.com"))
-	assert.Equal(t, b, NameSpaceDNS.Bytes())
-
-	changeOrder(NameSpaceDNS.Bytes())
+	NewV3(NameSpaceDNS, Name("www.example.com"))
 	assert.Equal(t, b, NameSpaceDNS.Bytes())
 }
 
@@ -38,8 +32,7 @@ func TestUuid_Size2(t *testing.T) {
 
 func TestNameSpace_String(t *testing.T) {
 	id := Uuid(uuidBytes)
-	id2 := PromoteToNameSpace(id)
-	assert.Equal(t, idString, id2.String(), "The Format given should match the output")
+	assert.Equal(t, idString, id.String(), "The Format given should match the output")
 }
 
 func TestUuid_String2(t *testing.T) {
@@ -64,8 +57,7 @@ func TestNameSpace_Variant(t *testing.T) {
 			id := createUuid(bytes, 4, v)
 			b := id[variantIndex] >> 4
 			tVariantConstraint(v, b, id, t)
-			id2 := PromoteToNameSpace(id)
-			assert.Equal(t, v, id2.Variant(), "%x does not resolve to %x", id2.Variant(), v)
+			assert.Equal(t, v, id.Variant(), "%x does not resolve to %x", id.Variant(), v)
 		}
 	}
 }
@@ -110,12 +102,11 @@ func TestNameSpace_Version(t *testing.T) {
 			bytes[versionIndex] = byte(i)
 			copy(id, bytes)
 			id.setVersion(v)
-			id2 := PromoteToNameSpace(id)
 
 			if v > 0 && v < 6 {
-				assert.Equal(t, Version(v), id2.Version(), "%x does not resolve to %x", id2.Version(), v)
+				assert.Equal(t, Version(v), id.Version(), "%x does not resolve to %x", id.Version(), v)
 			} else {
-				assert.Equal(t, Version(v), getNamespaceVersion(Uuid(id2)), "%x does not resolve to %x", getNamespaceVersion(Uuid(id2)), v)
+				assert.Equal(t, Version(v), getVersion(Uuid(id)), "%x does not resolve to %x", getVersion(Uuid(id)), v)
 			}
 		}
 	}
@@ -216,8 +207,4 @@ func TestUuid_UnmarshalBinary(t *testing.T) {
 	//assert.Nil(t, err, "There should be no error but got %s", err)
 	//assert.Equal(t, uuidBytes[:], ll.Bytes(), "The array id should equal the uuid id")
 
-}
-
-func getNamespaceVersion(pId Uuid) Version {
-	return Version(pId[versionIndex+1] >> 4)
 }

@@ -211,13 +211,11 @@ func TestUUID_NewHexBulk(t *testing.T) {
 
 func TestDigest(t *testing.T) {
 	id := digest(md5.New(), []byte(NameSpaceDNS), goLang)
-	changeOrder(id)
 	u := Uuid(id)
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")
 	}
 	id = digest(sha1.New(), []byte(NameSpaceDNS), goLang)
-	changeOrder(id)
 	u = Uuid(id)
 	if u.Bytes() == nil {
 		t.Error("Expected new data in bytes")

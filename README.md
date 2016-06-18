@@ -37,6 +37,7 @@ Any supported version of Go.
 
     Example V1 output:
     5fb1a280-30f0-11e6-9614-005056c00001
+
     5fb1a281-30f0-11e6-9614-005056c00001
     5fb1a282-30f0-11e6-9614-005056c00001
     5fb1a283-30f0-11e6-9614-005056c00001
@@ -116,7 +117,7 @@ for more information.
 	newNameSpace := uuid.PromoteToNameSpace(u1)
 	u3 := uuid.NewV3(newNameSpace, u4)
 
-	u5 := uuid.NewV5(uuid.NameSpaceURL, url.Parse("www.widgets.com"))
+	u5 := uuid.NewV5(uuid.NameSpaceURL, url.Parse("www.example.com"))
 
 	if uuid.Equal(u1, u3) {
 		fmt.Println("Will never happen")

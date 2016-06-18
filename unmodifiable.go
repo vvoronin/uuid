@@ -46,7 +46,7 @@ func (o NameSpace) Size() int {
 
 // Version returns the implementation version.
 func (o NameSpace) Version() Version {
-	return resolveVersion(o[versionIndex+1] >> 4)
+	return Uuid(o).Version()
 }
 
 // Variant returns the origin implementation of the UUID
@@ -56,12 +56,10 @@ func (o NameSpace) Variant() uint8 {
 
 // Bytes returns a natural order []byte slice as represented by a standard UUID.
 func (o NameSpace) Bytes() []byte {
-	b := []byte(o)
-	changeOrder(b)
-	return b
+	return Uuid(o).Bytes()
 }
 
 // String returns a canonical string representation of this NameSpace UUID,
 func (o NameSpace) String() string {
-	return Uuid(o.Bytes()).String()
+	return Uuid(o).String()
 }

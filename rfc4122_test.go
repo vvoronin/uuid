@@ -73,9 +73,11 @@ func TestNewV3(t *testing.T) {
 		assert.NotEqual(t, id, i, "Expected UUIDs generated with the same namespace and different names to be different")
 	}
 
-	u = NewV3(NameSpaceDNS, Name("www.widgets.com"))
+	u = NewV3(NameSpaceDNS, Name("www.example.com"))
+	assert.Equal(t, "5df41881-3aed-3515-88a7-2f4a814cf09e", u.String())
 
-	assert.Equal(t, "e902893a-9d22-3c7e-a7b8-d6e313b71d9f", u.String())
+	u = NewV3(NameSpaceDNS, Name("python.org"))
+	assert.Equal(t, "6fa459ea-ee8a-3ca4-894e-db77e160355e", u.String())
 }
 
 func TestNewV4(t *testing.T) {
@@ -115,6 +117,8 @@ func TestNewV5(t *testing.T) {
 		assert.NotEqual(t, i, id, "Expected UUIDs generated with the same namespace and different names to be different")
 	}
 
+	u = NewV5(NameSpaceDNS, Name("python.org"))
+	assert.Equal(t, "886313e1-3b8a-5372-9b90-0c9aee199e5d", u.String())
 }
 
 var printIt = false
@@ -222,22 +226,16 @@ func Test_NameSpaceUUIDs(t *testing.T) {
 	}
 }
 
-func TestPromoteToNameSpace(t *testing.T) {
-	id := NewV1()
+func TestNewV12(t *testing.T) {
+	id := array{}
 
-	ns := PromoteToNameSpace(id)
+	makeUuid(&id,
+		0x6ba7b810,
+		0x9dad,
+		0x11d1,
+		0x80b4,
+		[]byte{0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8})
 
-	assert.NotNil(t, ns, "Should succeed")
-	assert.Equal(t, id.Bytes(), ns.Bytes(), "Bytes shjould be the same despite storage order")
-	assert.Equal(t, id.String(), ns.String(), "Should see the same id despite byte order")
-	assert.NotEqual(t, []byte(id), []byte(ns), "Storage order should be different")
-
-	ns = PromoteToNameSpace(NameSpaceDNS)
-
-	assert.NotNil(t, ns, "Should succeed")
-	assert.Equal(t, NameSpaceDNS.Bytes(), ns.Bytes(), "Bytes shjould be the same despite storage order")
-	assert.Equal(t, NameSpaceDNS.String(), ns.String(), "Should see the same id despite byte order")
-	assert.Equal(t, []byte(NameSpaceDNS), []byte(ns), "Storage order should be same asnd not changed by the fucntion")
-	assert.Equal(t, One, NameSpaceDNS.Version(), "Should be the correct version reported")
-
+	assert.Equal(t, id[:], NameSpaceDNS.Bytes())
+	fmt.Println(Uuid(id[:]))
 }
