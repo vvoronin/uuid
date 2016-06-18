@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-/****************
- * Date: 15/02/14
- * Time: 12:19 PM
- ***************/
-
 func TestEpoch(t *testing.T) {
 	assert.True(t, gregorianToUNIXOffset == 0x01B21DD213814000)
 	assert.True(t, gregorianToUNIXOffset == 122192928000000000)
@@ -41,14 +36,6 @@ func TestTimestamp_Sub(t *testing.T) {
 func TestTimestamp_Time(t *testing.T) {
 
 	assert.True(t, Now().Time().Location() == time.UTC)
-
-}
-
-func TestConvert(t *testing.T) {
-	now := time.Now()
-	nano := now.UnixNano()
-	convertedNano := Convert(now).Time().UnixNano()
-	assert.True(t, nano/100*100 == convertedNano, "Times do not match %d %d", nano, convertedNano)
 
 }
 

@@ -30,9 +30,6 @@ var (
 	uuidVariants = []byte{
 		VariantNCS, VariantRFC4122, VariantMicrosoft, VariantFuture,
 	}
-	namespaceUuids = []UUID{
-		NameSpaceDNS, NameSpaceURL, NameSpaceOID, NameSpaceX500,
-	}
 
 	invalidHexStrings = [...]string{
 		"foo",
@@ -178,8 +175,8 @@ func TestParse(t *testing.T) {
 		_, err := Parse(v)
 		assert.NoError(t, err, "Expected valid UUID string but got error")
 	}
-	for _, id := range namespaceUuids {
-		_, err := Parse(id.String())
+	for _, v := range namespaces {
+		_, err := Parse(v)
 		assert.NoError(t, err, "Expected valid UUID string but got error")
 	}
 }

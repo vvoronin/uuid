@@ -38,15 +38,7 @@ type Timestamp uint64
 // Unix base time is January 1, 1970.
 // Converts time to 100 nanosecond ticks since epoch. Uses time.Now
 func Now() Timestamp {
-	return Convert(time.Now())
-}
-
-// Converts Unix formatted time to RFC4122 UUID formatted time
-// UUID UTC base time is October 15, 1582.
-// Unix base time is January 1, 1970.
-// Converts time to 100 nanosecond ticks since epoch
-func Convert(pTime time.Time) Timestamp {
-	return Timestamp(pTime.UnixNano()/100 + gregorianToUNIXOffset)
+	return Timestamp(time.Now().UnixNano()/100 + gregorianToUNIXOffset)
 }
 
 // Converts UUID Timestamp to UTC time.Time
@@ -110,7 +102,8 @@ func (o *spinner) next() Timestamp {
 		if o.Timestamp == now {
 			o.Count++
 			if o.Count == o.Resolution {
-				for Now() < o.Timestamp + Timestamp(o.Resolution){}
+				for Now() < o.Timestamp+Timestamp(o.Resolution) {
+				}
 				continue
 			}
 			break

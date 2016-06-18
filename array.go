@@ -1,7 +1,7 @@
 package uuid
 
 const (
-	length = 16
+	length       = 16
 	variantIndex = 8
 	versionIndex = 6
 )
@@ -37,14 +37,6 @@ func (o Uuid) String() string {
 
 // ****************************************************
 
-func (o Uuid) Restricted() UUID {
-	return uuid(o)
-}
-
-func (o Uuid) unmarshal(pData []byte) {
-	copy(o, pData)
-}
-
 func (o Uuid) setVersion(pVersion int) {
 	o[versionIndex] &= 0x0f
 	o[versionIndex] |= uint8(pVersion << 4)
@@ -69,4 +61,30 @@ func (o *array) setRFC4122Version(pVersion uint8) {
 	o[versionIndex] |= uint8(pVersion << 4)
 	o[variantIndex] &= variantSet
 	o[variantIndex] |= VariantRFC4122
+}
+
+// **************************************************** ImmutableUuid UUID
+
+var _ UUID = new(Immutable)
+
+type Immutable string
+
+func (o Immutable) Size() int {
+	return len(o)
+}
+
+func (o Immutable) Version() Version {
+	return resolveVersion(o[versionIndex] >> 4)
+}
+
+func (o Immutable) Variant() uint8 {
+	return variant(o[variantIndex])
+}
+
+func (o Immutable) Bytes() []byte {
+	return Uuid(o).Bytes()
+}
+
+func (o Immutable) String() string {
+	return Uuid(o).String()
 }

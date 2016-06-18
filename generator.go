@@ -191,7 +191,7 @@ func (o *Generator) read() {
 
 	// If the last timestamp is later than
 	// the current timestamp, increment the clock sequence value.
-	if now < o.Timestamp {
+	if now <= o.Timestamp {
 		o.Sequence++
 	}
 

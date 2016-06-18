@@ -22,13 +22,6 @@ func TestUuid_String(t *testing.T) {
 }
 
 func TestUuid_Variant(t *testing.T) {
-	for _, v := range namespaces {
-		id, _ := Parse(v)
-		uuidId := make(Uuid, length)
-		uuidId.unmarshal(id.Bytes())
-		assert.Equal(t, VariantRFC4122, uuidId.Variant(), "The variant should be non zero")
-	}
-
 	bytes := make(Uuid, length)
 	copy(bytes, uuidBytes[:])
 
@@ -59,12 +52,6 @@ func didUuidSetVariantPanic(bytes []byte) bool {
 }
 
 func TestUuid_Version(t *testing.T) {
-	for k, _ := range namespaces {
-		id := make(Uuid, length)
-		id.unmarshal(k.Bytes())
-		assert.Equal(t, One, id.Version(), "The version should be 1")
-	}
-
 	id := make(Uuid, length)
 
 	bytes := make(Uuid, length)
@@ -86,23 +73,60 @@ func TestUuid_Version(t *testing.T) {
 	}
 }
 
-func TestUuid_Restricted(t *testing.T) {
-	id := NewV1()
-	bb := id.Bytes()
+func TestImmutable_Bytes(t *testing.T) {
+	b := make([]byte, length)
+	copy(b[:], NameSpaceDNS.Bytes())
 
-	assert.NotNil(t, id)
+	id := Immutable(b)
 
-	rr := id.Restricted()
+	assert.Equal(t, NameSpaceDNS.Bytes(), id.Bytes())
+}
 
-	assert.Equal(t, bb, rr.Bytes(), "Bytes should be the same")
+func TestImmutable_Size(t *testing.T) {
+	assert.Equal(t, 16, Nil.Size(), "The size of the array should be sixteen")
+}
 
-	v, ok := rr.(NameSpace)
-	assert.Equal(t, v, NameSpace(""), "Should be default value")
-	assert.False(t, ok, "Should not be a namespace")
+func TestImmutable_String(t *testing.T) {
+	id := Immutable(uuidBytes)
+	assert.Equal(t, idString, id.String(), "The Format given should match the output")
+}
 
-	v2, ok := rr.(Uuid)
-	assert.Equal(t, v2, Uuid(nil), "Should be default value")
-	assert.False(t, ok, "Should not be a Uuid")
+func TestImmutable_Variant(t *testing.T) {
+	bytes := make(Uuid, length)
+	copy(bytes, uuidBytes[:])
+
+	for _, v := range uuidVariants {
+		for i := 0; i <= 255; i++ {
+			bytes[variantIndex] = byte(i)
+			id := createUuid(bytes, 4, v)
+			b := id[variantIndex] >> 4
+			tVariantConstraint(v, b, id, t)
+			id2 := Immutable(id)
+			assert.Equal(t, v, id2.Variant(), "%x does not resolve to %x", id2.Variant(), v)
+		}
+	}
+}
+
+func TestImmutable_Version(t *testing.T) {
+
+	id := make(Uuid, length)
+	bytes := make(Uuid, length)
+	copy(bytes, uuidBytes[:])
+
+	for v := 0; v < 16; v++ {
+		for i := 0; i <= 255; i++ {
+			bytes[versionIndex] = byte(i)
+			copy(id, bytes)
+			id.setVersion(v)
+			id2 := Immutable(id)
+
+			if v > 0 && v < 6 {
+				assert.Equal(t, Version(v), id2.Version(), "%x does not resolve to %x", id2.Version(), v)
+			} else {
+				assert.Equal(t, Version(v), getVersion(Uuid(id)), "%x does not resolve to %x", getVersion(Uuid(id)), v)
+			}
+		}
+	}
 }
 
 func getVersion(pId Uuid) Version {
@@ -116,4 +140,3 @@ func createUuid(pData []byte, pVersion int, pVariant uint8) Uuid {
 	o.setVariant(pVariant)
 	return o
 }
-
