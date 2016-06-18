@@ -20,6 +20,7 @@ package uuid
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"regexp"
@@ -55,11 +56,11 @@ type UUID interface {
 	Version() Version
 }
 
-
 // Compare returns an integer comparing two UUIDs lexicographically.
 // The result will be 0 if pId==pId2, -1 if pId < pId2, and +1 if pId > pId2.
 // A nil argument is equivalent to the Nil UUID.
 func Compare(pId, pId2 UUID) int {
+
 	var b1, b2 []byte
 
 	if pId == nil {
@@ -74,7 +75,40 @@ func Compare(pId, pId2 UUID) int {
 		b2 = pId2.Bytes()
 	}
 
-	return bytes.Compare(b1, b2)
+	tl1 := binary.BigEndian.Uint32(b1[:4])
+	tl2 := binary.BigEndian.Uint32(b2[:4])
+
+	if tl1 != tl2 {
+		if tl1 < tl2 {
+			return -1
+		} else {
+			return 1
+		}
+	}
+
+	m1 := binary.BigEndian.Uint16(b1[4:6])
+	m2 := binary.BigEndian.Uint16(b2[4:6])
+
+	if m1 != m2 {
+		if m1 < m2 {
+			return -1
+		} else {
+			return 1
+		}
+	}
+
+	m1 = binary.BigEndian.Uint16(b1[6:8])
+	m2 = binary.BigEndian.Uint16(b2[6:8])
+
+	if m1 != m2 {
+		if m1 < m2 {
+			return -1
+		} else {
+			return 1
+		}
+	}
+
+	return bytes.Compare(b1[8:], b2[8:])
 }
 
 // Compares whether each UUID is the same
@@ -146,4 +180,3 @@ type UniqueName interface {
 	// Will convert the current type to its native string format
 	String() string
 }
-

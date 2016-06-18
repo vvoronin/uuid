@@ -8,6 +8,7 @@ package uuid
 import (
 	"crypto/md5"
 	"crypto/sha1"
+	"encoding/binary"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -85,6 +86,64 @@ func TestCompare(t *testing.T) {
 	assert.True(t, Compare(Nil, NameSpaceDNS) == -1, "Nil should be less than DNS")
 	assert.True(t, Compare(NameSpaceDNS, Nil) == 1, "DNS should be greater than Nil")
 	assert.True(t, Compare(Nil, Nil) == 0, "Nil should equal to Nil")
+
+	b1 := Uuid([]byte{
+		0x01, 0x09, 0x09, 0x00,
+		0xff, 0x02,
+		0xff, 0x03,
+		0x00,
+		0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
+
+	b2 := Uuid([]byte{
+		0x01, 0x09, 0x09, 0x00,
+		0xff, 0x02,
+		0xff, 0x03,
+		0x00,
+		0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
+
+	assert.Equal(t, 0, Compare(b1, b2), "Should equal")
+
+	binary.BigEndian.PutUint32(b1[:4], 16779999)
+	binary.BigEndian.PutUint32(b2[:4], 16780000)
+	assert.Equal(t, -1, Compare(b1, b2), "Should be less")
+
+	binary.BigEndian.PutUint32(b1[:4], 16780000)
+	binary.BigEndian.PutUint32(b2[:4], 16779999)
+	assert.Equal(t, 1, Compare(b1, b2), "Should be greater")
+
+	binary.BigEndian.PutUint32(b2[:4], 16780000)
+	assert.Equal(t, 0, Compare(b1, b2), "Should equal")
+
+	binary.BigEndian.PutUint16(b1[4:6], 25000)
+	binary.BigEndian.PutUint16(b2[4:6], 25001)
+	assert.Equal(t, -1, Compare(b1, b2), "Should be less")
+
+	binary.BigEndian.PutUint16(b1[4:6], 25001)
+	binary.BigEndian.PutUint16(b2[4:6], 25000)
+	assert.Equal(t, 1, Compare(b1, b2), "Should be greater")
+
+	binary.BigEndian.PutUint16(b2[4:6], 25001)
+	assert.Equal(t, 0, Compare(b1, b2), "Should equal")
+
+	binary.BigEndian.PutUint16(b1[6:8], 25000)
+	binary.BigEndian.PutUint16(b2[6:8], 25001)
+	assert.Equal(t, -1, Compare(b1, b2), "Should be less")
+
+	binary.BigEndian.PutUint16(b1[6:8], 25001)
+	binary.BigEndian.PutUint16(b2[6:8], 25000)
+	assert.Equal(t, 1, Compare(b1, b2), "Should be greater")
+
+	binary.BigEndian.PutUint16(b2[6:8], 25001)
+	assert.Equal(t, 0, Compare(b1, b2), "Should equal")
+
+	b2[8] = 1
+	assert.Equal(t, -1, Compare(b1, b2), "Should be less")
+
+	b1[8] = 3
+	assert.Equal(t, 1, Compare(b1, b2), "Should be greater")
+
 }
 
 func TestNewHex(t *testing.T) {
