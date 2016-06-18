@@ -6,6 +6,7 @@ package uuid
  ***************/
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"net/url"
 	"testing"
@@ -82,8 +83,6 @@ func TestNewV4(t *testing.T) {
 	assert.Equal(t, Four, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
-
-
 }
 
 func TestNewV5(t *testing.T) {
@@ -118,44 +117,58 @@ func TestNewV5(t *testing.T) {
 
 }
 
+var printIt = false
+
+func printer(pId Uuid) {
+	if printIt {
+		fmt.Println(pId)
+	}
+}
+
 func TestUUID_NewV1Bulk(t *testing.T) {
 	for i := 0; i < generate; i++ {
-		NewV1()
+		printer(NewV1())
 	}
 }
 
 func TestUUID_NewV3Bulk(t *testing.T) {
 	for i := 0; i < generate; i++ {
-		NewV3(NameSpaceDNS, goLang)
+		printer(NewV3(NameSpaceDNS, goLang, Name(string(i))))
 	}
 }
 
 func TestUUID_NewV4Bulk(t *testing.T) {
 	for i := 0; i < generate; i++ {
-		NewV4()
+		printer(NewV4())
 	}
 }
 
 func TestUUID_NewV5Bulk(t *testing.T) {
 	for i := 0; i < generate; i++ {
-		NewV5(NameSpaceDNS, goLang)
+		printer(NewV5(NameSpaceDNS, goLang, Name(string(i))))
 	}
 }
 
 func Test_EachIsUnique(t *testing.T) {
 
 	// Run half way through to avoid running within default resolution only
-	for i := 0; i < defaultSpinResolution / 2; i++ {
+
+	spin := int(defaultSpinResolution / 2)
+
+	for i := 0; i < spin; i++ {
 		NewV1()
 	}
 
-	s := int(defaultSpinResolution * 1.5)
+	s := int(defaultSpinResolution)
+
 	ids := make([]UUID, s)
 	for i := 0; i < s; i++ {
 		u := NewV1()
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V1 UUID")
+			if b := assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V1 UUID"); !b {
+				break
+			}
 		}
 	}
 	//ids = make([]UUID, s)
@@ -171,8 +184,9 @@ func Test_EachIsUnique(t *testing.T) {
 		u := NewV3(NameSpaceDNS, Name(string(i)), goLang)
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V3 UUID")
-
+			if b := assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V3 UUID"); !b {
+				break
+			}
 		}
 	}
 	ids = make([]UUID, s)
@@ -180,7 +194,9 @@ func Test_EachIsUnique(t *testing.T) {
 		u := NewV4()
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V4 UUID")
+			if b := assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V4 UUID"); !b {
+				break
+			}
 		}
 	}
 	ids = make([]UUID, s)
@@ -188,7 +204,9 @@ func Test_EachIsUnique(t *testing.T) {
 		u := NewV5(NameSpaceDNS, Name(string(i)), goLang)
 		ids[i] = u
 		for j := 0; j < i; j++ {
-			assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V5 UUID")
+			if b := assert.NotEqual(t, u.String(), ids[j].String(), "Should not create the same V5 UUID"); !b {
+				break
+			}
 		}
 	}
 }
@@ -223,5 +241,3 @@ func TestPromoteToNameSpace(t *testing.T) {
 	assert.Equal(t, One, NameSpaceDNS.Version(), "Should be the correct version reported")
 
 }
-
-

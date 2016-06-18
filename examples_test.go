@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/twinj/uuid"
 	"github.com/twinj/uuid/savers"
-	"time"
 	"net/url"
+	"time"
 )
 
 func Example() {
@@ -49,11 +49,18 @@ func Example() {
 }
 
 func ExampleNewV1() {
+
+	// Must run before using V1 or V2
+	uuid.Init()
+
 	u1 := uuid.NewV1()
 	fmt.Printf("version %d variant %d: %d\n", u1.Version(), u1.Variant(), u1)
 }
 
 func ExampleNewV2() {
+	// Must run before using V1 or V2
+	uuid.Init()
+
 	u2 := uuid.NewV2(uuid.DomainUser)
 	fmt.Printf("version %d variant %d: %d\n", u2.Version(), u2.Variant(), u2)
 }

@@ -4,14 +4,18 @@ import (
 	"crypto/rand"
 	"errors"
 	"github.com/stretchr/testify/assert"
+	"sync"
 	"testing"
 	"time"
-	"sync"
 )
 
 var (
 	nodeBytes = []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb, 0x44, 0xcc}
 )
+
+func init() {
+	generator.init()
+}
 
 func TestGenerator_V1(t *testing.T) {
 	u := generator.NewV1()
@@ -37,31 +41,9 @@ func TestGenerator_V2(t *testing.T) {
 	assert.Equal(t, uint8(DomainUser), u.Bytes()[9], "Expected string representation to be valid")
 }
 
-type save struct {
-	saved bool
-	store *Store
-	err   error
-	sync.Mutex
-}
-
-func (o *save) Save(pStore Store) {
-	o.Lock()
-	defer o.Unlock()
-	o.saved = true
-}
-
-func (o *save) Read() (error, Store) {
-	if o.store != nil {
-		return nil, *o.store
-	}
-	if o.err != nil {
-		return o.err, Store{}
-	}
-	return nil, Store{}
-}
-
 func TestRegisterGenerator(t *testing.T) {
-	g1 := NewGenerator(GeneratorConfig{
+	g1 := GeneratorConfig{
+		nil,
 		func() Timestamp {
 			return Timestamp(145876)
 		}, 0,
@@ -70,7 +52,8 @@ func TestRegisterGenerator(t *testing.T) {
 		},
 		func([]byte) (int, error) {
 			return 58, nil
-		}, nil})
+		}, nil}
+
 	once = new(sync.Once)
 	RegisterGenerator(g1)
 
@@ -86,7 +69,7 @@ func TestRegisterGenerator(t *testing.T) {
 	assert.True(t, didRegisterGeneratorPanic(g1), "Should panic when invalid")
 }
 
-func didRegisterGeneratorPanic(gen *Generator) bool {
+func didRegisterGeneratorPanic(gen GeneratorConfig) bool {
 	return func() (didPanic bool) {
 		defer func() {
 			if recover() != nil {
@@ -99,55 +82,6 @@ func didRegisterGeneratorPanic(gen *Generator) bool {
 	}()
 }
 
-func TestRegisterSaver(t *testing.T) {
-	registerTestGenerator(Timestamp(2048), []byte{0xaa})
-
-	saver := &save{store: &Store{}}
-	RegisterSaver(saver)
-
-	assert.NotNil(t, generator.Saver, "Saver should save")
-	registerDefaultGenerator()
-}
-
-func TestSaverRead(t *testing.T) {
-	now, node := registerTestGenerator(Now().Sub(time.Second), []byte{0xaa})
-
-	storageStamp := registerSaver(now.Sub(time.Second * 2), node)
-
-	assert.NotNil(t, generator.Saver, "Saver should save")
-	assert.NotNil(t, generator.Store, "Default generator store should not return an empty store")
-	assert.Equal(t, Sequence(2), generator.Store.Sequence, "Successfull read should have actual given sequence")
-	assert.True(t, generator.Store.Timestamp > storageStamp, "Failed read should generate a time")
-	assert.NotEmpty(t, generator.Store.Node, "There should be a node id")
-
-	// Read returns an error
-	_, node = registerTestGenerator(Now(), []byte{0xaa})
-	saver := &save{err: errors.New("Read broken")}
-	RegisterSaver(saver)
-
-	assert.Nil(t, generator.Saver, "Saver should not exist")
-	assert.NotNil(t, generator.Store, "Default generator store should not return an empty store")
-	assert.NotEqual(t, Sequence(0), generator.Sequence, "Failed read should generate a non zero random sequence")
-	assert.True(t, generator.Timestamp > 0, "Failed read should generate a time")
-	assert.Equal(t, node, generator.Node, "There should be a node id")
-	registerDefaultGenerator()
-}
-
-func TestSaverSave(t *testing.T) {
-	registerTestGenerator(Now().Add(1024), nodeBytes)
-
-	saver := &save{}
-	RegisterSaver(saver)
-
-	NewV1()
-
-	saver.Lock()
-	defer saver.Unlock()
-
-	assert.True(t, saver.saved, "Saver should save")
-	registerDefaultGenerator()
-}
-
 func TestNewGenerator(t *testing.T) {
 	gen := NewGenerator(GeneratorConfig{})
 
@@ -156,7 +90,6 @@ func TestNewGenerator(t *testing.T) {
 	assert.NotNil(t, gen.HandleError, "There shoud be a default HandleError function")
 	assert.NotNil(t, gen.Id, "There shoud be a default Id function")
 
-	assert.Equal(t, Now() + 1 ,gen.Next(), "There shoud be the given Next function")
 	assert.Equal(t, findFirstHardwareAddress(), gen.Id(), "There shoud be the gieen Id function")
 
 	gen = NewGenerator(GeneratorConfig{
@@ -182,7 +115,7 @@ func TestNewGenerator(t *testing.T) {
 
 	n, err := gen.Random(nil)
 
-	assert.Equal(t, Timestamp(2) ,gen.Next(), "There shoud be the given Next function")
+	assert.Equal(t, Timestamp(2), gen.Next(), "There shoud be the given Next function")
 	assert.Equal(t, 1, n, "There shoud be the given Random function")
 	assert.NoError(t, err, "There shoud be the given Random function")
 	assert.Equal(t, true, gen.HandleError(nil), "There shoud be the given HandleError function")
@@ -209,7 +142,7 @@ func TestNewGenerator(t *testing.T) {
 	assert.NotNil(t, gen.HandleError, "There shoud be a default HandleError function")
 	assert.NotNil(t, gen.Id, "There shoud be a default Id function")
 
-	assert.Equal(t, Now() + 1 ,gen.Next(), "There shoud be the given Next function")
+	assert.Equal(t, Now()+1, gen.Next(), "There shoud be the given Next function")
 	assert.Equal(t, 1, n, "There shoud be the given Random function")
 	assert.NoError(t, err, "There shoud be the given Random function")
 	assert.Equal(t, true, gen.HandleError(nil), "There shoud be the given HandleError function")
@@ -271,6 +204,7 @@ func TestGeneratorRead(t *testing.T) {
 	}
 
 	generator = NewGenerator(GeneratorConfig{
+		nil,
 		func() Timestamp {
 			return timestamps[i]
 		}, 0,
@@ -362,12 +296,12 @@ func TestGeneratorRandom(t *testing.T) {
 		return true
 	}
 
-	assert.True(t, didNewV4Panic(), "NewV4should panic when invalid")
+	assert.Nil(t, NewV4(), "NewV4 should be nil")
 	assert.Error(t, generator.err, "There should be an error [%s]", err)
 
 	generator.HandleError = runHandleError
 
-	assert.True(t, didNewV4Panic(), "NewV4should panic when invalid")
+	assert.Panics(t, didNewV4Panic, "NewV4 should panic when invalid")
 	assert.Error(t, generator.err, "There should be an error [%s]", err)
 
 	generator.HandleError = func(error) bool {
@@ -384,17 +318,8 @@ func TestGeneratorRandom(t *testing.T) {
 	registerDefaultGenerator()
 }
 
-func didNewV4Panic() bool {
-	return func() (didPanic bool) {
-		defer func() {
-			if recover() != nil {
-				didPanic = true
-			}
-		}()
-
-		NewV4()
-		return
-	}()
+func didNewV4Panic() {
+	NewV4()
 }
 
 func TestGeneratorSave(t *testing.T) {
@@ -405,18 +330,14 @@ func TestGeneratorSave(t *testing.T) {
 	registerDefaultGenerator()
 }
 
-func TestStore_String(t *testing.T) {
-	store := &Store{Node: []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb}, Sequence: 2, Timestamp: 3}
-	assert.Equal(t, "Timestamp[2167-05-04 23:34:33.709551916 +0000 UTC]-Sequence[2]-Node[ddeeffaabb]", store.String(), "The output store string should match")
-}
-
 func TestGetHardwareAddress(t *testing.T) {
-	addr := findFirstHardwareAddress()
-	assert.NotEmpty(t, addr, "There should be a node id")
+	a := findFirstHardwareAddress()
+	assert.NotEmpty(t, a, "There should be a node id")
 }
 
 func registerTestGenerator(pNow Timestamp, pId Node) (Timestamp, Node) {
 	generator = NewGenerator(GeneratorConfig{
+		nil,
 		func() Timestamp {
 			return pNow
 		}, 0,
@@ -427,10 +348,6 @@ func registerTestGenerator(pNow Timestamp, pId Node) (Timestamp, Node) {
 	return pNow, pId
 }
 
-func registerSaver(pStorageStamp Timestamp, pNode Node) (storageStamp Timestamp) {
-	storageStamp = pStorageStamp
-
-	saver := &save{store: &Store{Node: pNode, Sequence: 2, Timestamp: pStorageStamp}}
-	RegisterSaver(saver)
-	return
+func registerDefaultGenerator() {
+	generator = NewGenerator(GeneratorConfig{})
 }

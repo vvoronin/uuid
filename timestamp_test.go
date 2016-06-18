@@ -53,7 +53,7 @@ func TestConvert(t *testing.T) {
 }
 
 func TestSpinnerNext(t *testing.T) {
-	size := defaultSpinResolution * 5
+	size := defaultSpinResolution * 1
 
 	spin := spinner{}
 	spin.Resolution = defaultSpinResolution
@@ -74,8 +74,8 @@ func TestSpinnerNext(t *testing.T) {
 	}
 
 	spin = spinner{
-		Count:defaultSpinResolution -1,
-		Timestamp: Now(),
+		Count:      defaultSpinResolution - 1,
+		Timestamp:  Now(),
 		Resolution: 1024,
 	}
 
@@ -93,8 +93,8 @@ func TestSpinnerNext(t *testing.T) {
 	}
 
 	spin = spinner{
-		Count:0,
-		Timestamp: Now(),
+		Count:      0,
+		Timestamp:  Now(),
 		Resolution: 1,
 	}
 

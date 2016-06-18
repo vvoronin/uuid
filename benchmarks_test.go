@@ -1,15 +1,11 @@
 package uuid_test
 
 import (
-	"testing"
 	. "github.com/twinj/uuid"
+	"testing"
 )
 
 var name UniqueName = Name("www.widgets.com")
-
-func init() {
-	Init()
-}
 
 func BenchmarkNewV1(b *testing.B) {
 	for i := 0; i < b.N; i++ {
@@ -129,7 +125,7 @@ func BenchmarkUuid_Bytes(b *testing.B) {
 	b.ReportAllocs()
 }
 
-func BenchmarkUuid_String(b *testing.B) {
+func BenchmarkUuid_String_Canonical(b *testing.B) {
 	id := NewV2(DomainGroup)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -139,7 +135,7 @@ func BenchmarkUuid_String(b *testing.B) {
 	b.ReportAllocs()
 }
 
-func BenchmarkUuid_String2(b *testing.B) {
+func BenchmarkUuid_String_NonCanonical(b *testing.B) {
 	SwitchFormat(Urn)
 	id := NewV2(DomainGroup)
 	b.ResetTimer()

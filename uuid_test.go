@@ -61,6 +61,10 @@ var (
 	}
 )
 
+func init() {
+	generator.init()
+}
+
 func TestEqual(t *testing.T) {
 	for k, v := range namespaces {
 		u, _ := Parse(v)

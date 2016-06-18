@@ -3,8 +3,8 @@ package uuid
 import (
 	"crypto/md5"
 	"crypto/sha1"
-	"log"
 	"hash"
+	"log"
 )
 
 const (
@@ -63,7 +63,6 @@ func NewV4() Uuid {
 			return o[:]
 		}
 		generator.err = err
-		runHandleError(err)
 	}
 	return nil
 }
@@ -158,5 +157,3 @@ func digest(pHash hash.Hash, pName []byte, pNames ...UniqueName) []byte {
 	pHash.Write(pName)
 	return pHash.Sum(nil)
 }
-
-
