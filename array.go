@@ -1,5 +1,7 @@
 package uuid
 
+import "fmt"
+
 const (
 	length       = 16
 	variantIndex = 8
@@ -28,6 +30,8 @@ func (o Uuid) Bytes() []byte {
 	return o[:o.Size()]
 }
 
+// String returns the canonical string representation of the UUID or the
+// uuid.Format the package is sent to
 func (o Uuid) String() string {
 	if printFormat == Canonical {
 		return canonicalPrint(o)
@@ -44,6 +48,23 @@ func (o Uuid) setVersion(pVersion int) {
 
 func (o Uuid) setVariant(pVariant uint8) {
 	setVariant(&o[variantIndex], pVariant)
+}
+
+// MarshalBinary implements the encoding.BinaryMarshaler interface
+func (o Uuid) MarshalBinary() ([]byte, error) {
+	return o.Bytes(), nil
+}
+
+// UnmarshalBinary implements the encoding.BinaryUnmarshaler interface.
+// It will return error if the slice isn't 16 bytes long.
+func (o Uuid) UnmarshalBinary(pBytes []byte) (err error) {
+	if len(pBytes) != o.Size() {
+		err = fmt.Errorf("uuid.Uuid.UnmarshalBinary: length of bytes given [%d] must match length of Uuid going to", len(pBytes))
+		return
+	}
+	copy(o, pBytes)
+
+	return
 }
 
 // **************************************************** Create UUIDs
@@ -63,7 +84,7 @@ func (o *array) setRFC4122Version(pVersion uint8) {
 	o[variantIndex] |= VariantRFC4122
 }
 
-// **************************************************** ImmutableUuid UUID
+// **************************************************** Immutable UUID
 
 var _ UUID = new(Immutable)
 

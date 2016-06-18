@@ -47,4 +47,3 @@ func tVariantConstraint(v byte, b byte, o UUID, t *testing.T) {
 		}
 	}
 }
-

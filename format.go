@@ -83,7 +83,7 @@ const (
 	uuidStringBufferSize = length*2 - formatArgCount
 )
 
-var groups = []int{4, 2, 2, 2, 6}
+var groups = [...]int{4, 2, 2, 2, 6}
 
 func formatPrint(pSrc []byte, pFormat string) string {
 	end := len(pFormat)
