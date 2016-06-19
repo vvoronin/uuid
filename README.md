@@ -260,6 +260,6 @@ for more information.
 
 ## Copyright
 
-Copyright (C) 2014 twinj@github.com
+Copyright (C) 2016 twinj@github.com
 See [LICENSE](https://github.com/twinj/uuid/tree/master/LICENSE)
 file for details.
