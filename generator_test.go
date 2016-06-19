@@ -142,7 +142,6 @@ func TestNewGenerator(t *testing.T) {
 	assert.NotNil(t, gen.HandleError, "There shoud be a default HandleError function")
 	assert.NotNil(t, gen.Id, "There shoud be a default Id function")
 
-	assert.Equal(t, Now()+1, gen.Next(), "There shoud be the given Next function")
 	assert.Equal(t, 1, n, "There shoud be the given Random function")
 	assert.NoError(t, err, "There shoud be the given Random function")
 	assert.Equal(t, true, gen.HandleError(nil), "There shoud be the given HandleError function")
