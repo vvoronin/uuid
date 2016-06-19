@@ -38,10 +38,10 @@ func init() {
 
 // SwitchFormat switches the default printing format for ALL UUIDs.
 //
-// The default is the canonical uuid.Format.CleanHyphen which has been
-// optimised for use with this package and is twice as fast as using any other
-// format; supplied or given. The benchmark for non default formats is still
-// very quick and quite usable. The package has moved away from using
+// The default is the canonical uuid.Format.FormatCanonical which has been
+// optimised for use with this package. It is twice as fast compared to other
+// formats; supplied or given. However, the benchmark for non default formats
+// is still very quick and quite usable. The package has moved away from using
 // fmt.Sprintf which was up to 5 times slower in comparison to custom formats
 // and 10 times slower in comparison to the canonical format.
 //
@@ -49,7 +49,7 @@ func init() {
 // *%[xX]*%[xX]*%[xX]*%[xX]*%[xX]*. If the supplied format does not meet this
 // standard the function will panic. Note any extra uses of [%] outside of the
 // [%x|%X] will also cause a panic.
-// Constants have been provided for the most likely formats.
+// Constant uuid.Formats have been provided for the most likely formats.
 func SwitchFormat(pFormat Format) {
 	checkFormat(pFormat)
 	printFormat = pFormat
@@ -64,7 +64,7 @@ func SwitchFormatToUpper(pFormat Format) {
 // Formatter will return a string representation of the given UUID.
 //
 // Use this for one time formatting when setting the default using
-// uuid.SwitchFormat
+// uuid.SwitchFormat would be overkill.
 //
 // A valid format will have 5 groups of [%x|%X] or follow the pattern,
 // *%[xX]*%[xX]*%[xX]*%[xX]*%[xX]*. If the supplied format does not meet this
