@@ -156,7 +156,7 @@ for more information.
 
     import "github.com/twinj/uuid"
 
-    // Does not need to be called first but is recommened
+    // Does not need to be called first but is recommended
     uuid.Init()
 
     id := uuid.NewV3(uuid.NameSpaceURL, uuid.Name("www.example.com"))
@@ -175,7 +175,7 @@ for more information.
 
     import "github.com/twinj/uuid"
 
-    // Does not need to be called first but is recommened
+    // Does not need to be called first but is recommended
     uuid.Init()
 
     // A V4 UUID will panic by default if the systems CPRNG fails - this can
@@ -199,7 +199,7 @@ for more information.
     uuid.RegisterGenerator(GeneratorConfig{
         Id: func() uuid.Node{
             // My Node Id
-            // If this retyurns nil a random one will be generated
+            // If this returns nil a random one will be generated
         },
     })
 
@@ -208,8 +208,7 @@ for more information.
         Next: func()(uuid.Timestamp){
             // My own Timestamp function...
             // Resolution will become reduendant if you set this.
-            // The package will increment the clock sequence if you produce
-            // Timestamps that were equal
+            // The package will increment the clock sequence if you produce equal Timestamps
         },
     })
 
@@ -229,10 +228,10 @@ for more information.
     //      err := uuid.Error()
     //      // handle error
     //  }
-    // Trying again could fix the problem. Erros could be due to a lack of
-    // system entropy or some other serious issue. There issues are rare,
+    // Trying again could fix the problem. Errors could be due to a lack of
+    // system entropy or some other serious issue. These issues are rare,
     // however, having the tools to handle such issues is important.
-    // This appraoch was taken as each user of this package will want to handle
+    // This approach was taken as each user of this package will want to handle
     // this differently.
     uuid.RegisterGenerator(GeneratorConfig{
         HandleError: func(error)bool{
@@ -247,11 +246,12 @@ for more information.
     gen := NewGenerator(GeneratorConfig{})
     
     id := gen.NewV4()
+    
 
 ## Coverage
 
-go test -coverprofile cover.out github.com/twinj/uuid
-go tool cover -html=cover.out -o cover.html
+* go test -coverprofile cover.out github.com/twinj/uuid
+* go tool cover -html=cover.out -o cover.html
 
 ## Links
 
