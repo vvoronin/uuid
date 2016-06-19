@@ -92,12 +92,12 @@ Use the `go` tool:
 
 	$ go get github.com/twinj/uuid
 
-## Typical Usage
+# Typical Usage
 
 See [documentation and examples](http://godoc.org/github.com/twinj/uuid)
 for more information.
 
-# All UUIDs
+## All UUIDs
 
     import "github.com/twinj/uuid"
 
@@ -125,7 +125,7 @@ for more information.
     uuid.SwitchFormat(uuid.FormatCanonicalBracket)
 
 
-# Version 1 and 2 UUIDs
+## Version 1 and 2 UUIDs
 
     import "github.com/twinj/uuid"
 
@@ -152,7 +152,7 @@ for more information.
     // registering a Saver
     uuid.RegisterSaver(saver)
 
-# Version 3 and 5 UUIDs
+## Version 3 and 5 UUIDs
 
     import "github.com/twinj/uuid"
 
@@ -171,7 +171,7 @@ for more information.
     fmt.Println(id)
     fmt.Printf("version %s variant %x: %s\n", u1.Version(), u1.Variant(), id)
 
-# Version 4 UUIDs
+## Version 4 UUIDs
 
     import "github.com/twinj/uuid"
 
@@ -184,7 +184,7 @@ for more information.
     fmt.Println(id)
     fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
 
-# Custom Generators
+## Custom Generators
 
     import "github.com/twinj/uuid"
 
@@ -242,6 +242,11 @@ for more information.
             // If this returns false the NewV4() function will exit with a nil
         },
     })
+    
+    // You can also just manage your own completely.
+    gen := NewGenerator(GeneratorConfig{})
+    
+    id := gen.NewV4()
 
 ## Coverage
 
