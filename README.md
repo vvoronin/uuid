@@ -13,7 +13,7 @@ This package provides RFC 4122 and DCE 1.1 compliant UUIDs.
 It will generate the following:
 
 * Version 1: based on a Timestamp and MAC address as Node id
-* Version 2: based on DCE Security
+* Version 2: based on DCE Security - Experimental
 * Version 3: based on MD5 hash
 * Version 4: based on cryptographically secure random numbers
 * Version 5: based on SHA-1 hash
@@ -65,7 +65,10 @@ setting for your server
     storage. The uuid.Saver interface exists for the user to provide their own
     storage implementations. The package provides a uuid.Saver
     which works on a standard OS environment.
-* The V4 UUID should no
+* The V4 UUID should allow the user to choose how to handle any error that
+can occur in the CPRNG. The default is to panic.
+* The package should be able to handle multiple instances of Generator's so a
+* user can produce UUIDs from multiple sources.
 
 # Recent Changes
 
@@ -74,8 +77,6 @@ retrieval functions for a Node Id, Timestamp and Random data for a UUID; more
 details in docs.
 * Now builds in Windows, OsX and Linux, with test coverage checking and code
 quality checks.
-* Fixed major issue with V3 and V5 UUIDs not hashing correctly and producing
-incorrect hash results.
 * Added V2 UUIDs
 * Improved builds and 100% test coverage
 * Library overhaul to cleanup exports that are not useful for a user
@@ -241,8 +242,6 @@ for more information.
             // If this returns false the NewV4() function will exit with a nil
         },
     })
-
-
 
 ## Coverage
 
