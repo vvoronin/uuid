@@ -1,7 +1,5 @@
 package uuid
 
-import "errors"
-
 // Version represents the type of UUID.
 type Version uint8
 
@@ -68,18 +66,4 @@ func variant(pVariant uint8) uint8 {
 		return VariantFuture
 	}
 	return VariantNCS
-}
-
-func setVariant(pByte *byte, pVariant uint8) {
-	switch pVariant {
-	case VariantRFC4122:
-		*pByte &= variantSet
-	case VariantFuture, VariantMicrosoft:
-		*pByte &= 0x1F
-	case VariantNCS:
-		*pByte &= 0x7F
-	default:
-		panic(errors.New("uuid.setVariant: invalid variant mask"))
-	}
-	*pByte |= pVariant
 }

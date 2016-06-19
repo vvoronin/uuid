@@ -21,13 +21,13 @@ const (
 
 var (
 	formats = []Format{
-		CanonicalCurly,
-		Hex,
-		HexCurly,
-		HexBracket,
-		Canonical,
-		CanonicalBracket,
-		Urn,
+		FormatCanonicalCurly,
+		FormatHex,
+		FormatHexCurly,
+		FormatHexBracket,
+		FormatCanonical,
+		FormatCanonicalBracket,
+		FormatUrn,
 	}
 	patterns = []string{
 		curlyHyphenHexPattern,
@@ -44,7 +44,7 @@ func TestSwitchFormat(t *testing.T) {
 	ids := []UUID{NewV4(), NewV4()}
 
 	// Reset default
-	SwitchFormat(Canonical)
+	SwitchFormat(FormatCanonical)
 
 	for _, u := range ids {
 		for i := range formats {
@@ -59,7 +59,7 @@ func TestSwitchFormat(t *testing.T) {
 	assert.True(t, didSwitchFormatPanic("%x%x%x%x%x%%%%"), "Switch format should panic when format invalid")
 
 	// Reset default
-	SwitchFormat(Canonical)
+	SwitchFormat(FormatCanonical)
 }
 
 func didSwitchFormatPanic(pFormat string) bool {
@@ -79,7 +79,7 @@ func TestSwitchFormatToUpper(t *testing.T) {
 	ids := []UUID{NewV4(), NewV4()}
 
 	// Reset default
-	SwitchFormat(Canonical)
+	SwitchFormat(FormatCanonical)
 
 	for _, u := range ids {
 		for i := range formats {
@@ -94,7 +94,7 @@ func TestSwitchFormatToUpper(t *testing.T) {
 	assert.True(t, didSwitchFormatToUpperPanic("%x%x%x%x%x%%%%"), "Switch format should panic when format invalid")
 
 	// Reset default
-	SwitchFormat(Canonical)
+	SwitchFormat(FormatCanonical)
 }
 
 func didSwitchFormatToUpperPanic(pFormat string) bool {
@@ -120,10 +120,10 @@ func TestFormatter(t *testing.T) {
 	}
 
 	for k, v := range namespaces {
-		s := Formatter(k, Canonical)
+		s := Formatter(k, FormatCanonical)
 		assert.Equal(t, v, s, "Should match")
 
-		s = Formatter(k, Format(strings.ToUpper(string(Canonical))))
+		s = Formatter(k, Format(strings.ToUpper(string(FormatCanonical))))
 		assert.Equal(t, strings.ToUpper(v), s, "Should match")
 	}
 

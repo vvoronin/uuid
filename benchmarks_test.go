@@ -136,7 +136,7 @@ func BenchmarkUuid_String_Canonical(b *testing.B) {
 }
 
 func BenchmarkUuid_String_NonCanonical(b *testing.B) {
-	SwitchFormat(Urn)
+	SwitchFormat(FormatUrn)
 	id := NewV2(DomainGroup)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -144,7 +144,7 @@ func BenchmarkUuid_String_NonCanonical(b *testing.B) {
 	}
 	b.StopTimer()
 	b.ReportAllocs()
-	SwitchFormat(Canonical)
+	SwitchFormat(FormatCanonical)
 }
 
 func BenchmarkUuid_Variant(b *testing.B) {

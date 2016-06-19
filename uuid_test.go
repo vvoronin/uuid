@@ -327,7 +327,7 @@ func TestNewV5(t *testing.T) {
 
 var printIt = false
 
-func printer(pId Uuid) {
+func printer(pId UUID) {
 	if printIt {
 		fmt.Println(pId)
 	}

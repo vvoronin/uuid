@@ -10,19 +10,31 @@ import (
 type Format string
 
 const (
-	Hex        Format = "%x%x%x%x%x"
-	HexCurly   Format = "{%x%x%x%x%x}"
-	HexBracket Format = "(%x%x%x%x%x)"
+	FormatHex        Format = "%x%x%x%x%x"
+	FormatHexCurly   Format = "{%x%x%x%x%x}"
+	FormatHexBracket Format = "(%x%x%x%x%x)"
 
 	// This is the canonical format.
-	Canonical Format = "%x-%x-%x-%x-%x"
+	FormatCanonical Format = "%x-%x-%x-%x-%x"
 
-	CanonicalCurly   Format = "{%x-%x-%x-%x-%x}"
-	CanonicalBracket Format = "(%x-%x-%x-%x-%x)"
-	Urn              Format = "urn:uuid:" + Canonical
+	FormatCanonicalCurly   Format = "{%x-%x-%x-%x-%x}"
+	FormatCanonicalBracket Format = "(%x-%x-%x-%x-%x)"
+	FormatUrn              Format = "urn:uuid:" + FormatCanonical
 )
 
-var printFormat Format = Canonical
+var printFormat Format = FormatCanonical
+
+var defaultFormats map[Format]bool = make(map[Format]bool)
+
+func init() {
+	defaultFormats[FormatHex] = true
+	defaultFormats[FormatHexCurly] = true
+	defaultFormats[FormatHexBracket] = true
+	defaultFormats[FormatCanonical] = true
+	defaultFormats[FormatCanonicalCurly] = true
+	defaultFormats[FormatCanonicalBracket] = true
+	defaultFormats[FormatUrn] = true
+}
 
 // SwitchFormat switches the default printing format for ALL UUIDs.
 //
@@ -39,7 +51,7 @@ var printFormat Format = Canonical
 // [%x|%X] will also cause a panic.
 // Constants have been provided for the most likely formats.
 func SwitchFormat(pFormat Format) {
-	checkFormat(string(pFormat))
+	checkFormat(pFormat)
 	printFormat = pFormat
 }
 
@@ -59,18 +71,21 @@ func SwitchFormatToUpper(pFormat Format) {
 // standard the function will panic. Note any extra uses of [%] outside of the
 // [%x|%X] will also cause a panic.
 func Formatter(pId UUID, pFormat Format) string {
-	checkFormat(string(pFormat))
-	return formatPrint(pId.Bytes(), string(pFormat))
+	checkFormat(pFormat)
+	return formatUuid(pId.Bytes(), pFormat)
 }
 
-func checkFormat(pFormat string) {
-	s := strings.ToLower(pFormat)
+func checkFormat(pFormat Format) {
+	if defaultFormats[pFormat] {
+		return
+	}
+	s := strings.ToLower(string(pFormat))
 	if strings.Count(s, "%x") != 5 {
-		panic(errors.New("uuid.Print: invalid format"))
+		panic(errors.New("uuid.Format: invalid format"))
 	}
 	s = strings.Replace(s, "%x", "", -1)
 	if strings.Count(s, "%") > 0 {
-		panic(errors.New("uuid.Print: invalid format"))
+		panic(errors.New("uuid.Format: invalid format"))
 	}
 }
 
@@ -85,7 +100,14 @@ const (
 
 var groups = [...]int{4, 2, 2, 2, 6}
 
-func formatPrint(pSrc []byte, pFormat string) string {
+func formatUuid(pSrc []byte, pFormat Format) string {
+	if pFormat == FormatCanonical {
+		return string(formatCanonical(pSrc))
+	}
+	return string(format(pSrc, string(pFormat)))
+}
+
+func format(pSrc []byte, pFormat string) []byte {
 	end := len(pFormat)
 	buf := make([]byte, end+uuidStringBufferSize)
 
@@ -118,10 +140,10 @@ func formatPrint(pSrc []byte, pFormat string) string {
 	}
 	copy(buf[p:], pFormat[ls:s])
 	p += s - ls
-	return string(buf)
+	return buf
 }
 
-func canonicalPrint(pSrc []byte) string {
+func formatCanonical(pSrc []byte) []byte {
 	buf := make([]byte, canonicalLength)
 	var b, p, e int
 	for h, v := range groups {
@@ -138,5 +160,5 @@ func canonicalPrint(pSrc []byte) string {
 			p += 1
 		}
 	}
-	return string(buf)
+	return buf
 }

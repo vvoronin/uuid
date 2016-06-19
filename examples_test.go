@@ -42,9 +42,9 @@ func Example() {
 	}
 
 	// Default Format is Canonical
-	fmt.Println(uuid.Formatter(u5, uuid.CanonicalCurly))
+	fmt.Println(uuid.Formatter(u5, uuid.FormatCanonicalCurly))
 
-	uuid.SwitchFormat(uuid.CanonicalBracket)
+	uuid.SwitchFormat(uuid.FormatCanonicalBracket)
 }
 
 func ExampleNewV1() {
@@ -101,11 +101,11 @@ func ExampleRegisterSaver() {
 
 func ExampleFormatter() {
 	u4 := uuid.NewV4()
-	fmt.Println(uuid.Formatter(u4, uuid.CanonicalCurly))
+	fmt.Println(uuid.Formatter(u4, uuid.FormatCanonicalCurly))
 }
 
 func ExampleSwitchFormat() {
-	uuid.SwitchFormat(uuid.CanonicalBracket)
+	uuid.SwitchFormat(uuid.FormatCanonicalBracket)
 	u4 := uuid.NewV4()
 	fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
 }
