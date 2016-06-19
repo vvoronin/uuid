@@ -9,19 +9,17 @@ Go UUID implementation
 
 **This project is currently pre 1.0.0**
 
-
 This package provides RFC 4122 and DCE 1.1 compliant UUIDs.
 It will generate the following:
 
 * Version 1: based on a Timestamp and MAC address as Node id
-* Version 2: coming
+* Version 2: based on DCE Security
 * Version 3: based on MD5 hash
 * Version 4: based on cryptographically secure random numbers
 * Version 5: based on SHA-1 hash
-* Your own implementations
 
-Functions NewV1, NewV2, NewV3, NewV4, NewV5, New, NewHex and Parse() for generating version 1, 2, 3, 4
-and 5 UUIDs
+Functions NewV1, NewV2, NewV3, NewV4, NewV5, New, NewHex and Parse() for
+generating version 1, 2, 3, 4 and 5 Uuid's
 
 # Requirements
 
@@ -29,64 +27,63 @@ Any supported version of Go.
 
 # Design considerations
 
-* Ensure UUIDs are unique across a use case
-    Proper test coverage has determined thant the UUID timestamp spinner works correctly, cross multiple clock resolutions
-    The generator produces timestamps that roll out sequentially and will only modify the sequence on rare circumstances
-    It is highly recommended that you register a Saver if you use V1 or V2 UUIDs as it will ensure a higher probability
-    of uniqueness.
+* V1 UUIDs should be properly sequential. This can cause the Generator to work
+more slowly compared to other implementations. It can however be manually tuned
+to have performance that is on par. This is achieved by setting the Timestamp
+Resolution. Benchmark tests have been provided to help determine the best
+setting for your server
 
-    Example V1 output:
-    5fb1a280-30f0-11e6-9614-005056c00001
+    Proper test coverage has determined thant the UUID timestamp spinner works
+    correctly, across multiple clock resolutions. The generator produces
+    timestamps that roll out sequentially and will only modify the clock
+    sequence on very rare circumstances.
 
-    5fb1a281-30f0-11e6-9614-005056c00001
-    5fb1a282-30f0-11e6-9614-005056c00001
-    5fb1a283-30f0-11e6-9614-005056c00001
-    5fb1a284-30f0-11e6-9614-005056c00001
-    5fb1a285-30f0-11e6-9614-005056c00001
-    5fb1a286-30f0-11e6-9614-005056c00001
-    5fb1a287-30f0-11e6-9614-005056c00001
-    5fb1a288-30f0-11e6-9614-005056c00001
-    5fb1a289-30f0-11e6-9614-005056c00001
-    5fb1a28a-30f0-11e6-9614-005056c00001
-    5fb1a28b-30f0-11e6-9614-005056c00001
-    5fb1a28c-30f0-11e6-9614-005056c00001
-    5fb1a28d-30f0-11e6-9614-005056c00001
-    5fb1a28e-30f0-11e6-9614-005056c00001
-    5fb1a28f-30f0-11e6-9614-005056c00001
-    5fb1a290-30f0-11e6-9614-005056c00001
+    It is highly recommended that you register a uuid.Saver if you use V1 or V2
+    UUIDs as it will ensure a higher probability of uniqueness.
 
-* Generator should work on all app servers.
-    No Os locking threads or file system dependant storage
-    Saver interface exists for the user to provide their own Saver implementations
-    for V1 and V2 UUIDs. The interface could theoretically be applied to your own UUID implementation.
-    Have provided a savers which works on a standard OS environment.
-* Allow user implementations
+        Example V1 output:
+        * 5fb1a280-30f0-11e6-9614-005056c00001
+        * 5fb1a281-30f0-11e6-9614-005056c00001
+        * 5fb1a282-30f0-11e6-9614-005056c00001
+        * 5fb1a283-30f0-11e6-9614-005056c00001
+        * 5fb1a284-30f0-11e6-9614-005056c00001
+        * 5fb1a285-30f0-11e6-9614-005056c00001
+        * 5fb1a286-30f0-11e6-9614-005056c00001
+        * 5fb1a287-30f0-11e6-9614-005056c00001
+        * 5fb1a288-30f0-11e6-9614-005056c00001
+        * 5fb1a289-30f0-11e6-9614-005056c00001
+        * 5fb1a28a-30f0-11e6-9614-005056c00001
+        * 5fb1a28b-30f0-11e6-9614-005056c00001
+        * 5fb1a28c-30f0-11e6-9614-005056c00001
+        * 5fb1a28d-30f0-11e6-9614-005056c00001
+        * 5fb1a28e-30f0-11e6-9614-005056c00001
+        * 5fb1a28f-30f0-11e6-9614-005056c00001
+        * 5fb1a290-30f0-11e6-9614-005056c00001
 
-# Future considerations
-
-* length and format of UUID should not be an issue
-* using new cryptographic technology should not be an issue
-* improve support for sequential UUIDs merged with cryptographic nodes
+* The V1 UUID generator should work on all app servers
+    To achieve this there are no Os locking threads or file system dependant
+    storage. The uuid.Saver interface exists for the user to provide their own
+    storage implementations. The package provides a uuid.Saver
+    which works on a standard OS environment.
+* The V4 UUID should no
 
 # Recent Changes
 
-* Added ability for user defined Generator's which can be setup with your own retrieval functions for a Node Id,
-    Timestamp and Random data for a UUID; more details in docs.
-* Now builds in Windows, OsX and Linux, with test coverage checking and code quality checks.
-* Fixed major issue with V3 and V5 UUIDs not hashing correctly and producing incorrect hash results.
+* Added ability for user defined Generator's which can be setup with your own
+retrieval functions for a Node Id, Timestamp and Random data for a UUID; more
+details in docs.
+* Now builds in Windows, OsX and Linux, with test coverage checking and code
+quality checks.
+* Fixed major issue with V3 and V5 UUIDs not hashing correctly and producing
+incorrect hash results.
 * Added V2 UUIDs
 * Improved builds and 100% test coverage
 * Library overhaul to cleanup exports that are not useful for a user
 * Improved and fixed file system uuid.Saver interface, breaking changes.
-    To use a uuid.Saver make sure you pass it in via the uuid.RegisterSaver(Saver) function before a UUID is generated,
-    so as to take affect. This is because only one attempt at system initialisation can be attempted.
-* Removed use of OS Thread locking and runtime package requirement
-* Changed String() output to Canonical to match the canonical standard
-* Removed default non volatile store and replaced with uuid.Saver interface
-* Added formatting support for user defined formats
-* Variant type can now be retrieved more efficiently
-* New tests for variant setting to confirm correctness
-* New tests added to confirm proper version setting
+    To use a uuid.Saver make sure you pass it in via the
+    uuid.RegisterSaver(Saver) function before a UUID is generated, so as to
+    take affect. This is because only one attempt at system initialisation can
+    be attempted.
 
 ## Installation
 
@@ -94,43 +91,158 @@ Use the `go` tool:
 
 	$ go get github.com/twinj/uuid
 
-## Usage
+## Typical Usage
 
 See [documentation and examples](http://godoc.org/github.com/twinj/uuid)
 for more information.
 
-	saver := new(savers.FileSystemSaver)
-	saver.Report = true
-	saver.Duration = time.Second * 3
+# All UUIDs
 
-	// Run before any v1 or v2 UUIDs to ensure the savers takes
-	uuid.RegisterSaver(saver)
+    import "github.com/twinj/uuid"
 
-	uP, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+    id, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
-	u1 := uuid.NewV1()
-	fmt.Printf("version %d variant %x: %s\n", u1.Version(), u1.Variant(), u1)
+    if uuid.Equal(id, uuid.NameSpaceDNS) {
+        fmt.Println("Alas these are equal")
+    }
 
-	u4 := uuid.NewV4()
-	fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
+    if uuid.Compare(id, uuid.NameSpaceDNS) == 0 {
+        fmt.Println("They are also equal")
+    }
 
-	newNameSpace := uuid.PromoteToNameSpace(u1)
-	u3 := uuid.NewV3(newNameSpace, u4)
+    if uuid.Compare(id, uuid.NameSpaceX500) == -1 {
+        fmt.Println("id < uuid.NameSpaceX500")
+    }
 
-	u5 := uuid.NewV5(uuid.NameSpaceURL, url.Parse("www.example.com"))
+    if uuid.Compare(uuid.NameSpaceX50, id) == 1 {
+        fmt.Println("uuid.NameSpaceX500 > id")
+    }
 
-	if uuid.Equal(u1, u3) {
-		fmt.Println("Will never happen")
-	}
+    // Default Format is FormatCanonical
+    fmt.Println(uuid.Formatter(id, uuid.FormatCanonicalCurly))
 
-	if uuid.Compare(uuid.NameSpaceDNS, uuid.NameSpaceDNS) == 0 {
-		fmt.Println("They are equal")
-	}
+    uuid.SwitchFormat(uuid.FormatCanonicalBracket)
 
-	// Default Format is Canonical
-	fmt.Println(uuid.Formatter(u5, uuid.CanonicalCurly))
 
-	uuid.SwitchFormat(uuid.CanonicalBracket)
+# Version 1 and 2 UUIDs
+
+    import "github.com/twinj/uuid"
+
+    // An uuid.Init or uuid.Register* function must be called before any V1 or
+    // V2 UUIDs, only needs 1 call.
+    uuid.Init()
+
+    id := uuid.NewV1()
+    fmt.Println(id)
+    fmt.Printf("version %s variant %x: %s\n", u1.Version(), u1.Variant(), id)
+
+    id = uuid.NewV2(uuid.DomainUser)
+    fmt.Println(id)
+    fmt.Printf("version %s variant %x: %s\n", u1.Version(), u1.Variant(), id)
+
+    // If you wish to register a saving mechanism to keep track of your UUID
+    // It is recommeneded to add a Saver so as to reduce risk in UUID
+    // collisions
+    saver := new(savers.FileSystemSaver)
+    saver.Report = true
+    saver.Duration = time.Second * 3
+
+    // Must be called before any V1 or V2 UUIDs. Do not call uuid.Init if
+    // registering a Saver
+    uuid.RegisterSaver(saver)
+
+# Version 3 and 5 UUIDs
+
+    import "github.com/twinj/uuid"
+
+    // Does not need to be called first but is recommened
+    uuid.Init()
+
+    id := uuid.NewV3(uuid.NameSpaceURL, uuid.Name("www.example.com"))
+    fmt.Println(id)
+    fmt.Printf("version %s variant %x: %s\n", u1.Version(), u1.Variant(), id)
+
+    id := uuid.NewV5(uuid.NameSpaceURL, uuid.Name("www.example.com"))
+    fmt.Println(id)
+    fmt.Printf("version %s variant %x: %s\n", u1.Version(), u1.Variant(), id)
+
+    id = uuid.NewV5(uuid.NameSpaceURL, id)
+    fmt.Println(id)
+    fmt.Printf("version %s variant %x: %s\n", u1.Version(), u1.Variant(), id)
+
+# Version 4 UUIDs
+
+    import "github.com/twinj/uuid"
+
+    // Does not need to be called first but is recommened
+    uuid.Init()
+
+    // A V4 UUID will panic by default if the systems CPRNG fails - this can
+    // be changed by registering your own generator
+    u4 := uuid.NewV4()
+    fmt.Println(id)
+    fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
+
+# Custom Generators
+
+    import "github.com/twinj/uuid"
+
+    // Improve resolution for V1 and 2 UUIDs
+    // The resolution correlates to how many ids can be created before waiting
+    // for the next unique timestamp. The default is a low 1024, this equates
+    // to Ids that can be created in 100 nanoseconds. It is low to encourage
+    // you to set it.
+    uuid.RegisterGenerator(GeneratorConfig{Resolution: 18465})
+
+    // Provide your own node Id or MAC address
+    uuid.RegisterGenerator(GeneratorConfig{
+        Id: func() uuid.Node{
+            // My Node Id
+            // If this retyurns nil a random one will be generated
+        },
+    })
+
+    // Replace the default Timestamp spinner with your own.
+    uuid.RegisterGenerator(GeneratorConfig{
+        Next: func()(uuid.Timestamp){
+            // My own Timestamp function...
+            // Resolution will become reduendant if you set this.
+            // The package will increment the clock sequence if you produce
+            // Timestamps that were equal
+        },
+    })
+
+    // Replace the default crypto/rand.Read CPRNG with your own.
+    uuid.RegisterGenerator(GeneratorConfig{
+        Random: func([]byte)(int, error){
+            // My CPRNG function...
+        },
+    })
+
+    // Replace the default error handler for V4 UUIDs. This function is called
+    // when there is an error in the CPRNG. The default function causes a panic.
+    // You can change that behaviour and handle the error by checking for nil
+    // on a NewV4() call.
+    //  id := NewV4()
+    //  if id == nil {
+    //      err := uuid.Error()
+    //      // handle error
+    //  }
+    // Trying again could fix the problem. Erros could be due to a lack of
+    // system entropy or some other serious issue. There issues are rare,
+    // however, having the tools to handle such issues is important.
+    // This appraoch was taken as each user of this package will want to handle
+    // this differently.
+    uuid.RegisterGenerator(GeneratorConfig{
+        HandleError: func(error)bool{
+            // My HandleError function...
+            // If this returns true the V4 generator will try again - if it
+            //      fails again the NewV4() function will exit with a nil
+            // If this returns false the NewV4() function will exit with a nil
+        },
+    })
+
+
 
 ## Coverage
 
