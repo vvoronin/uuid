@@ -3,7 +3,7 @@ Go UUID implementation
 
 [![license](http://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/twinj/uuid/master/LICENSE)
 [![GoDoc](http://godoc.org/github.com/twinj/uuid?status.png)](http://godoc.org/github.com/twinj/uuid)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/twinj/uuid?branch=master&svg=true)](https://ci.appveyor.com/project/twinj/uuid)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/twinj/uuid?branch=master&svg=true)](https://ci.appveyor.com/project/myesui/uuid)
 [![Build Status](https://travis-ci.org/twinj/uuid.png?branch=master)](https://travis-ci.org/twinj/uuid)
 [![Coverage Status](https://coveralls.io/repos/github/twinj/uuid/badge.svg?branch=master)](https://coveralls.io/github/twinj/uuid?branch=master)
 
