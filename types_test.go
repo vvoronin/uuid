@@ -2,8 +2,9 @@ package uuid
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUuid_Bytes(t *testing.T) {
@@ -197,6 +198,11 @@ func TestUuid_Scan(t *testing.T) {
 	err = v.Scan(NameSpaceDNS.String())
 	assert.NoError(t, err, "When nil there should be no error")
 	assert.Equal(t, NameSpaceDNS.String(), v.String(), "Values should be the same")
+
+	var v3 Uuid
+	err = v3.Scan([]byte(NameSpaceDNS.String()))
+	assert.NoError(t, err, "When []byte represents string should be no error")
+	assert.Equal(t, NameSpaceDNS.String(), v3.String(), "Values should be the same")
 
 	err = v.Scan(22)
 	assert.Error(t, err, "When wrong type should error")
