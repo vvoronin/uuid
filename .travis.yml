@@ -18,7 +18,7 @@ before_install:
     - go get github.com/mattn/goveralls
     - go get golang.org/x/tools/cmd/cover
 script:
-    - go test ./... -v -short -covermode=count -coverprofile=coverage.out
+    - go test -v -short -covermode=count -coverprofile=coverage.out -coverpkg=./...
     - go test ./... -v -short -race
     - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
 notifications:
