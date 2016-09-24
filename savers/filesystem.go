@@ -67,7 +67,9 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 				log.Println("uuid.FileSystemSaver created", o.Path)
 			}
 		}
-		log.Println("uuid.FileSystemSaver.Read: error will autogenerate", err)
+		if err != nil {
+			log.Println("uuid.FileSystemSaver.Read: error will autogenerate", err)
+		}
 		return
 	}
 

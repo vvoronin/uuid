@@ -115,7 +115,7 @@ func TestFileSystemSaver_Save(t *testing.T) {
 
 func TestFileSystemSaver_SaveAndRead(t *testing.T) {
 
-	saver := setupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-"+uuid.NewV4().String()+".gob"), true)
+	saver := setupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"), true)
 
 	// Read is always called first
 	saver.Read()
