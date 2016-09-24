@@ -59,7 +59,7 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 		}
 		o.Path = path.Join(dir, file)
 
-		err = os.MkdirAll(dir, os.ModeDir|0755)
+		err = os.MkdirAll(dir, os.ModeDir|0666)
 		if err == nil {
 			// If new encode blank store
 			err = o.openAndDo(o.encode, &store)
