@@ -3,7 +3,6 @@ package uuid
 import (
 	"database/sql/driver"
 	"fmt"
-	"strings"
 )
 
 const (
@@ -88,10 +87,10 @@ func (o *Uuid) UnmarshalBinary(pBytes []byte) error {
 // the text
 func (o Uuid) MarshalText() ([]byte, error) {
 	f := FormatCanonical
-	if defaultFormats[printFormat] {
+	if ok, _ := defaultFormats[printFormat]; ok {
 		f = printFormat
 	}
-	return []byte(strings.ToLower(string(format(o.Bytes(), string(f))))), nil
+	return []byte(formatUuid(o.Bytes(), f)), nil
 }
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface. It will
