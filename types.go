@@ -15,13 +15,13 @@ const (
 
 type array [length]byte
 
-func (o *Uuid) unmarshal(data []byte) {
+func (o *array) unmarshal(data []byte) {
 	copy(o[:], data)
 }
 
 // Set the three most significant bits (bits 0, 1 and 2) of the
 // sequenceHiAndVariant equivalent in the array to ReservedRFC4122.
-func (o *Uuid) setRFC4122Version(version uint8) {
+func (o *array) setRFC4122Version(version uint8) {
 	o[versionIndex] &= 0x0f
 	o[versionIndex] |= uint8(version << 4)
 	o[variantIndex] &= variantSet
@@ -33,8 +33,8 @@ func (o *Uuid) setRFC4122Version(version uint8) {
 var _ UUID = &Uuid{}
 
 // Uuid is the default UUID implementation. All uuid functions will return this
-// type. All uuid functions should use UUID as their in parameter.
-type Uuid [length]byte
+// type.
+type Uuid []byte
 
 // Size returns the octet length of the Uuid
 func (o Uuid) Size() int {
@@ -51,8 +51,7 @@ func (o Uuid) Variant() uint8 {
 	return variant(o[variantIndex])
 }
 
-// Bytes return the underlying data representation of the Uuid in network byte
-// order
+// Bytes return the underlying data representation of the Uuid.
 func (o Uuid) Bytes() []byte {
 	return o[:]
 }
@@ -72,16 +71,19 @@ func (o Uuid) MarshalBinary() ([]byte, error) {
 
 // UnmarshalBinary implements the encoding.BinaryUnmarshaler interface
 func (o *Uuid) UnmarshalBinary(bytes []byte) error {
-	if len(bytes) != length {
-		return fmt.Errorf("uuid: invalid length")
+	if len(bytes) != o.Size() {
+		return fmt.Errorf("uuid.Uuid.UnmarshalBinary:  invalid length")
 	}
-	o.unmarshal(bytes)
+	if len(*o) != 0 {
+		panic("uuid.Uuid.UnmarshalBinary: you must use an empty or new Uuid to unmarhal bytes")
+	}
+	*o = append(*o, bytes...)
 	return nil
 }
 
 // MarshalText implements the encoding.TextMarshaler interface. It will marshal
 // text into one of the known formats, if you have changed to a custom Format
-// the text
+// the text be output in canonical format.
 func (o Uuid) MarshalText() ([]byte, error) {
 	f := FormatCanonical
 	if defaultFormats[printFormat] {

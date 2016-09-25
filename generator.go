@@ -301,7 +301,7 @@ func (o *Generator) save() {
 // node id
 func (o *Generator) NewV1() Uuid {
 	o.read()
-	id := Uuid{}
+	id := array{}
 
 	makeUuid(&id,
 		uint32(o.Timestamp),
@@ -311,7 +311,7 @@ func (o *Generator) NewV1() Uuid {
 		o.Node)
 
 	id.setRFC4122Version(1)
-	return id
+	return id[:]
 }
 
 // NewV2 generates a new DCE version 2 UUID based on a 60 bit timestamp, node id
@@ -319,7 +319,7 @@ func (o *Generator) NewV1() Uuid {
 func (o *Generator) NewV2(domain Domain) Uuid {
 	o.read()
 
-	id := Uuid{}
+	id := array{}
 
 	var domainId uint32
 
@@ -339,10 +339,10 @@ func (o *Generator) NewV2(domain Domain) Uuid {
 
 	id[9] = byte(domain)
 	id.setRFC4122Version(2)
-	return id
+	return id[:]
 }
 
-func makeUuid(id *Uuid, low uint32, mid, hiAndV, seq uint16, node Node) {
+func makeUuid(id *array, low uint32, mid, hiAndV, seq uint16, node Node) {
 
 	id[0] = byte(low >> 24)
 	id[1] = byte(low >> 16)

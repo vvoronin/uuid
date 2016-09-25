@@ -96,7 +96,7 @@ func TestCompare(t *testing.T) {
 	assert.True(t, Compare(NameSpaceDNS, Nil) == 1, "DNS should be greater than Nil")
 	assert.True(t, Compare(Nil, Nil) == 0, "Nil should equal to Nil")
 
-	b1 := Uuid([16]byte{
+	b1 := Uuid([]byte{
 		0x01, 0x09, 0x09, 0x00,
 		0xff, 0x02,
 		0xff, 0x03,
@@ -104,7 +104,7 @@ func TestCompare(t *testing.T) {
 		0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
 
-	b2 := Uuid([16]byte{
+	b2 := Uuid([]byte{
 		0x01, 0x09, 0x09, 0x00,
 		0xff, 0x02,
 		0xff, 0x03,
@@ -422,9 +422,8 @@ func Test_EachIsUnique(t *testing.T) {
 
 func Test_NameSpaceUUIDs(t *testing.T) {
 	for k, v := range namespaces {
-
 		arrayId, _ := Parse(v)
-		uuidId := Uuid{}
+		uuidId := array{}
 		uuidId.unmarshal(arrayId.Bytes())
 		assert.Equal(t, v, arrayId.String())
 		assert.Equal(t, v, k.String())
@@ -432,7 +431,7 @@ func Test_NameSpaceUUIDs(t *testing.T) {
 }
 
 func TestNewV12(t *testing.T) {
-	id := Uuid{}
+	id := array{}
 
 	makeUuid(&id,
 		0x6ba7b810,
@@ -442,4 +441,12 @@ func TestNewV12(t *testing.T) {
 		[]byte{0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8})
 
 	assert.Equal(t, NameSpaceDNS.Bytes(), id[:])
+}
+
+func TestIsNil(t *testing.T) {
+	var v Uuid
+	assert.True(t, IsNil(v))
+	assert.False(t, IsNil(NameSpaceDNS))
+
+	fmt.Errorf("Print it %s", Nil)
 }

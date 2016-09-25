@@ -288,7 +288,7 @@ func TestGeneratorRandom(t *testing.T) {
 	assert.Equal(t, c, b, "Slice should be empty")
 
 	id := NewV4()
-	assert.Equal(t, Nil, Immutable(id[:]), "There should be no id")
+	assert.Nil(t, id, "There should be no id")
 	assert.Error(t, generator.err, "There should be an error [%s]", err)
 
 	generator.HandleError = func(error) bool {

@@ -3,3 +3,4 @@
 /savers/generator-*
 /vendor/
 *.out
+cover*.html

@@ -72,18 +72,18 @@ type UUID interface {
 }
 
 // New creates a UUID from a slice of bytes.
-func New(pData []byte) Uuid {
-	o := Uuid{}
-	o.unmarshal(pData)
-	return o
+func New(data []byte) Uuid {
+	o := array{}
+	o.unmarshal(data)
+	return o[:]
 }
 
 // NewHex creates a UUID from a hex string.
 // Will panic if hex string is invalid use Parse otherwise.
 func NewHex(uuid string) Uuid {
-	o := Uuid{}
+	o := array{}
 	o.unmarshal(fromHex(uuid))
-	return o
+	return o[:]
 }
 
 const (
@@ -108,13 +108,14 @@ var (
 //		[6ba7b814-9dad-11d1-80b4-00c04fd430c8]
 //		(6ba7b814-9dad-11d1-80b4-00c04fd430c8)
 //
-func Parse(uuid string) (o Uuid, err error) {
+func Parse(uuid string) (Uuid, error) {
 	id, err := parse(uuid)
 	if err != nil {
-		return
+		return nil, err
 	}
-	o.unmarshal(id)
-	return
+	a := array{}
+	a.unmarshal(id)
+	return id[:], nil
 }
 
 func parse(uuid string) ([]byte, error) {
@@ -149,10 +150,10 @@ func NewV2(pDomain Domain) Uuid {
 // namespace UUID and any type which implements the UniqueName interface
 // for the name. For strings and slices cast to a Name type
 func NewV3(namespace UUID, names ...UniqueName) Uuid {
-	o := Uuid{}
+	o := array{}
 	o.unmarshal(digest(md5.New(), namespace.Bytes(), names...))
 	o.setRFC4122Version(3)
-	return o
+	return o[:]
 }
 
 // NewV4 generates a new RFC4122 version 4 UUID a cryptographically secure
@@ -171,23 +172,24 @@ func NewV4() Uuid {
 		}
 		generator.err = err
 	}
-	return Uuid{}
+	return nil
 }
 
-func v4() (o Uuid, err error) {
+func v4() (Uuid, error) {
 	generator.err = nil
-	_, err = generator.Random(o[:])
-	o.setRFC4122Version(4)
-	return
+	a := array{}
+	_, err := generator.Random(a[:])
+	a.setRFC4122Version(4)
+	return a[:], err
 }
 
 // NewV5 generates an RFC4122 version 5 UUID based on the SHA-1 hash of a
 // namespace UUID and a unique name.
 func NewV5(pNamespace UUID, pNames ...UniqueName) Uuid {
-	o := Uuid{}
+	o := array{}
 	o.unmarshal(digest(sha1.New(), pNamespace.Bytes(), pNames...))
 	o.setRFC4122Version(5)
-	return o
+	return o[:]
 }
 
 func digest(pHash hash.Hash, pName []byte, pNames ...UniqueName) []byte {
