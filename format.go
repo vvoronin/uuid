@@ -76,7 +76,7 @@ func Formatter(pId UUID, pFormat Format) string {
 }
 
 func checkFormat(pFormat Format) {
-	if ok, _ := defaultFormats[pFormat]; ok {
+	if defaultFormats[pFormat] {
 		return
 	}
 	s := strings.ToLower(string(pFormat))

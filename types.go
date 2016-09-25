@@ -87,7 +87,7 @@ func (o *Uuid) UnmarshalBinary(pBytes []byte) error {
 // the text
 func (o Uuid) MarshalText() ([]byte, error) {
 	f := FormatCanonical
-	if ok, _ := defaultFormats[printFormat]; ok {
+	if defaultFormats[printFormat] {
 		f = printFormat
 	}
 	return []byte(formatUuid(o.Bytes(), f)), nil
