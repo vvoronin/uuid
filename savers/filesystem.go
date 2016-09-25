@@ -59,7 +59,7 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 		}
 		o.Path = path.Join(dir, file)
 
-		err = os.MkdirAll(dir, os.ModeDir|0755)
+		err = os.MkdirAll(dir, os.ModeDir|0700)
 		if err == nil {
 			// If new encode blank store
 			err = o.openAndDo(o.encode, &store)
@@ -78,7 +78,7 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 }
 
 func (o *FileSystemSaver) openAndDo(fDo func(*uuid.Store), pStore *uuid.Store) (err error) {
-	o.file, err = os.OpenFile(o.Path, os.O_RDWR|os.O_CREATE, os.ModeExclusive)
+	o.file, err = os.OpenFile(o.Path, os.O_RDWR|os.O_CREATE, os.ModeExclusive|0600)
 	defer o.file.Close()
 	if err == nil {
 		fDo(pStore)
