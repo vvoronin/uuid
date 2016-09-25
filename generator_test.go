@@ -31,14 +31,14 @@ func TestGenerator_V2(t *testing.T) {
 	assert.Equal(t, Two, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
-	assert.Equal(t, uint8(DomainGroup), u.Bytes()[9], "Expected string representation to be valid")
+	assert.Equal(t, byte(DomainGroup), u.Bytes()[9], "Expected string representation to be valid")
 
 	u = generator.NewV2(DomainUser)
 
 	assert.Equal(t, Two, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
-	assert.Equal(t, uint8(DomainUser), u.Bytes()[9], "Expected string representation to be valid")
+	assert.Equal(t, byte(DomainUser), u.Bytes()[9], "Expected string representation to be valid")
 }
 
 func TestRegisterGenerator(t *testing.T) {
@@ -179,13 +179,13 @@ func TestGeneratorInit(t *testing.T) {
 
 	assert.Error(t, generator.err, "Read error should exist")
 
-	now, node = registerTestGenerator(Now(), nil)
+	now, _ = registerTestGenerator(Now(), nil)
 	// Random read error should alert user
 	generator.Random = func(b []byte) (int, error) {
 		return 0, errors.New("EOF")
 	}
 
-	storageStamp = registerSaver(now.Sub(time.Second), []byte{0xaa, 0xee, 0xaa, 0xbb, 0x44, 0xcc})
+	registerSaver(now.Sub(time.Second), []byte{0xaa, 0xee, 0xaa, 0xbb, 0x44, 0xcc})
 
 	assert.Error(t, generator.Error(), "Read error should exist")
 
@@ -237,7 +237,7 @@ func TestGeneratorRead(t *testing.T) {
 
 	// A new time that is older than stored time should cause the sequence to increment
 	registerTestGenerator(Now().Sub(time.Second), nil)
-	storageStamp = registerSaver(now.Add(time.Second), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
+	registerSaver(now.Add(time.Second), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
 
 	generator.read()
 
@@ -288,14 +288,14 @@ func TestGeneratorRandom(t *testing.T) {
 	assert.Equal(t, c, b, "Slice should be empty")
 
 	id := NewV4()
-	assert.Nil(t, id, "There should be no id")
+	assert.Equal(t, Nil, Immutable(id[:]), "There should be no id")
 	assert.Error(t, generator.err, "There should be an error [%s]", err)
 
 	generator.HandleError = func(error) bool {
 		return true
 	}
 
-	assert.Nil(t, NewV4(), "NewV4 should be nil")
+	assert.True(t, IsNil(NewV4()), "NewV4 should be nil")
 	assert.Error(t, generator.err, "There should be an error [%s]", err)
 
 	generator.HandleError = runHandleError

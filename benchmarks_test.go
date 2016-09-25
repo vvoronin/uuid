@@ -115,8 +115,8 @@ func BenchmarkFormatter(b *testing.B) {
 }
 
 func BenchmarkUuid_Bytes(b *testing.B) {
-	id := make(Uuid, 16)
-	copy(id, NameSpaceDNS.Bytes())
+	id := Uuid{}
+	copy(id[:], NameSpaceDNS.Bytes())
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		id.Bytes()

@@ -27,6 +27,8 @@ Any supported version of Go.
 
 # Design considerations
 
+* UUID is an interface which correlates to 
+
 * V1 UUIDs should be properly sequential. This can cause the Generator to work
 more slowly compared to other implementations. It can however be manually tuned
 to have performance that is on par. This is achieved by setting the Timestamp

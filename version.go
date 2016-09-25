@@ -3,13 +3,7 @@ package uuid
 // Version represents the type of UUID.
 type Version uint8
 
-const (
-	VariantNCS       uint8 = 0x00
-	VariantRFC4122   uint8 = 0x80 // or and A0 if masked with 1F
-	VariantMicrosoft uint8 = 0xC0
-	VariantFuture    uint8 = 0xE0
-)
-
+// The following are the supported Versions.
 const (
 	Unknown Version = iota // Unknown
 	One                    // Time based
@@ -17,6 +11,14 @@ const (
 	Three                  // Namespace hash uses MD5
 	Four                   // Crypto random
 	Five                   // Namespace hash uses SHA-1
+)
+
+// The following are the supported Variants.
+const (
+	VariantNCS       uint8 = 0x00
+	VariantRFC4122   uint8 = 0x80 // or and A0 if masked with 1F
+	VariantMicrosoft uint8 = 0xC0
+	VariantFuture    uint8 = 0xE0
 )
 
 const (

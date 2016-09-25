@@ -9,12 +9,13 @@ import (
 // represent a pattern used by the package with which to print a UUID.
 type Format string
 
+// The following are teh default Formats supplied by the uuid package.
 const (
 	FormatHex        Format = "%x%x%x%x%x"
 	FormatHexCurly   Format = "{%x%x%x%x%x}"
 	FormatHexBracket Format = "(%x%x%x%x%x)"
 
-	// This is the canonical format.
+	// FormatCanonical is the canonical format.
 	FormatCanonical Format = "%x-%x-%x-%x-%x"
 
 	FormatCanonicalCurly   Format = "{%x-%x-%x-%x-%x}"
@@ -50,15 +51,15 @@ func init() {
 // standard the function will panic. Note any extra uses of [%] outside of the
 // [%x|%X] will also cause a panic.
 // Constant uuid.Formats have been provided for the most likely formats.
-func SwitchFormat(pFormat Format) {
-	checkFormat(pFormat)
-	printFormat = pFormat
+func SwitchFormat(form Format) {
+	checkFormat(form)
+	printFormat = form
 }
 
 // SwitchFormatToUpper is a convenience function to set the Format to uppercase
 // versions of the given constants.
-func SwitchFormatToUpper(pFormat Format) {
-	SwitchFormat(Format(strings.ToUpper(string(pFormat))))
+func SwitchFormatToUpper(form Format) {
+	SwitchFormat(Format(strings.ToUpper(string(form))))
 }
 
 // Formatter will return a string representation of the given UUID.
@@ -70,16 +71,16 @@ func SwitchFormatToUpper(pFormat Format) {
 // *%[xX]*%[xX]*%[xX]*%[xX]*%[xX]*. If the supplied format does not meet this
 // standard the function will panic. Note any extra uses of [%] outside of the
 // [%x|%X] will also cause a panic.
-func Formatter(pId UUID, pFormat Format) string {
-	checkFormat(pFormat)
-	return formatUuid(pId.Bytes(), pFormat)
+func Formatter(id UUID, form Format) string {
+	checkFormat(form)
+	return formatUuid(id.Bytes(), form)
 }
 
-func checkFormat(pFormat Format) {
-	if defaultFormats[pFormat] {
+func checkFormat(form Format) {
+	if defaultFormats[form] {
 		return
 	}
-	s := strings.ToLower(string(pFormat))
+	s := strings.ToLower(string(form))
 	if strings.Count(s, "%x") != 5 {
 		panic(errors.New("uuid.Format: invalid format"))
 	}
@@ -100,30 +101,30 @@ const (
 
 var groups = [...]int{4, 2, 2, 2, 6}
 
-func formatUuid(pSrc []byte, pFormat Format) string {
-	if pFormat == FormatCanonical {
-		return string(formatCanonical(pSrc))
+func formatUuid(src []byte, form Format) string {
+	if form == FormatCanonical {
+		return string(formatCanonical(src))
 	}
-	return string(format(pSrc, string(pFormat)))
+	return string(format(src, string(form)))
 }
 
-func format(pSrc []byte, pFormat string) []byte {
-	end := len(pFormat)
+func format(src []byte, form string) []byte {
+	end := len(form)
 	buf := make([]byte, end+uuidStringBufferSize)
 
 	var s, ls, b, e, p int
 	var u bool
 	for _, v := range groups {
 		ls = s
-		for ; s < end && pFormat[s] != '%'; s++ {
+		for ; s < end && form[s] != '%'; s++ {
 		}
-		copy(buf[p:], pFormat[ls:s])
+		copy(buf[p:], form[ls:s])
 		p += s - ls
 		s++
-		u = pFormat[s] == 'X'
+		u = form[s] == 'X'
 		s++
 		e = b + v
-		for i, t := range pSrc[b:e] {
+		for i, t := range src[b:e] {
 			j := p + i + i
 			table := hexTable
 			if u {
@@ -136,19 +137,18 @@ func format(pSrc []byte, pFormat string) []byte {
 		p += v + v
 	}
 	ls = s
-	for ; s < end && pFormat[s] != '%'; s++ {
+	for ; s < end && form[s] != '%'; s++ {
 	}
-	copy(buf[p:], pFormat[ls:s])
-	p += s - ls
+	copy(buf[p:], form[ls:s])
 	return buf
 }
 
-func formatCanonical(pSrc []byte) []byte {
+func formatCanonical(src []byte) []byte {
 	buf := make([]byte, canonicalLength)
 	var b, p, e int
 	for h, v := range groups {
 		e = b + v
-		for i, t := range pSrc[b:e] {
+		for i, t := range src[b:e] {
 			j := p + i + i
 			buf[j] = hexTable[t>>4]
 			buf[j+1] = hexTable[t&0x0f]

@@ -17,7 +17,7 @@ var (
 
 // Random provides a CPRNG which reads into the given []byte, the package
 // uses crypto/rand.Read by default. You can supply your own CPRNG. The
-// function is used by V4 UUIDs and for setting up V1 and V2 UUIDs via the
+// function is used by V4 UUIDs and for setting up V1 and V2 UUIDs in the
 // Generator Init or Register* functions.
 type Random func([]byte) (int, error)
 
@@ -38,8 +38,9 @@ type Id func() Node
 // HandleError provides the user the ability to manage any serious
 // error that may be caused by accessing the standard crypto/rand
 // library. Due to the rarity of this occurrence the error is swallowed
-// by NewV4 functions, which rely on random numbers, the package will then
-// panic. You can change this behaviour by passing in your own HandleError
+// by NewV4 functions, which rely heavily on random numbers, the package will then
+// panic if an error occurs.
+// You can change this behaviour by passing in your own HandleError
 // function. With this function you can attempt to fix your CPRNG and then
 // return true to try again. If another error occurs the function will return
 // nil and you can then handle the error by calling uuid.Error or calling Error
@@ -49,7 +50,7 @@ type HandleError func(error) bool
 // Generator is used to create and monitor the running of V1 and V2, and V4
 // UUIDs. It can be setup to take different implementations for Timestamp, Node
 // and CPRNG retrieval. This is also where the Saver implementation can be
-// given and your error policy for V4 Uuids can be setup.
+// given and your error policy for V4 UUIDs can be setup.
 type Generator struct {
 	// Access to the store needs to be maintained
 	sync.Mutex
@@ -68,10 +69,10 @@ type Generator struct {
 	Id
 
 	// HandleError as per the type HandleError func(error) bool
-	HandleError HandleError
+	HandleError
 
 	// Next as per the type Next func() Timestamp
-	Next Next
+	Next
 
 	// Random as per the type Random func([]byte) (int, error)
 	Random
@@ -100,42 +101,42 @@ type GeneratorConfig struct {
 }
 
 // NewGenerator will create a new uuid.Generator with the given functions.
-func NewGenerator(pConfig GeneratorConfig) (gen *Generator) {
-	gen = newGenerator(pConfig)
+func NewGenerator(config GeneratorConfig) (gen *Generator) {
+	gen = newGenerator(config)
 	generator.Do(generator.init)
 	return
 }
 
-func newGenerator(pConfig GeneratorConfig) (gen *Generator) {
+func newGenerator(config GeneratorConfig) (gen *Generator) {
 	gen = new(Generator)
-	if pConfig.Next == nil {
-		if pConfig.Resolution == 0 {
-			pConfig.Resolution = defaultSpinResolution
+	if config.Next == nil {
+		if config.Resolution == 0 {
+			config.Resolution = defaultSpinResolution
 		}
 		gen.Next = (&spinner{
-			Resolution: pConfig.Resolution,
+			Resolution: config.Resolution,
 			Count:      0,
 			Timestamp:  Now(),
 		}).next
 	} else {
-		gen.Next = pConfig.Next
+		gen.Next = config.Next
 	}
-	if pConfig.Id == nil {
+	if config.Id == nil {
 		gen.Id = findFirstHardwareAddress
 	} else {
-		gen.Id = pConfig.Id
+		gen.Id = config.Id
 	}
-	if pConfig.Random == nil {
+	if config.Random == nil {
 		gen.Random = rand.Read
 	} else {
-		gen.Random = pConfig.Random
+		gen.Random = config.Random
 	}
-	if pConfig.HandleError == nil {
+	if config.HandleError == nil {
 		gen.HandleError = runHandleError
 	} else {
-		gen.HandleError = pConfig.HandleError
+		gen.HandleError = config.HandleError
 	}
-	gen.Saver = pConfig.Saver
+	gen.Saver = config.Saver
 	gen.Store = new(Store)
 	return
 }
@@ -148,8 +149,8 @@ func Init() error {
 // RegisterGenerator will set the default generator to the given generator
 // Like uuid.Init this can only be called once. Any subsequent calls will have no
 // effect. If you call this you do not need to call uuid.Init
-func RegisterGenerator(pConfig GeneratorConfig) (err error) {
-	gen := newGenerator(pConfig)
+func RegisterGenerator(config GeneratorConfig) (err error) {
+	gen := newGenerator(config)
 
 	notOnce := true
 	once.Do(func() {
@@ -212,7 +213,7 @@ func (o *Generator) init() {
 	defer o.Unlock()
 
 	if o.Saver != nil {
-		err, storage = o.Read()
+		storage, err = o.Read()
 		if err != nil {
 			o.Saver = nil
 		}
@@ -226,12 +227,12 @@ func (o *Generator) init() {
 	node := o.Id()
 
 	if node == nil {
-		log.Println("uuid.Generator.init: address error: will generate random node id instead")
+		log.Println("uuid: address error generating random node id")
 
 		node = make([]byte, 6)
 		n, err := o.Random(node)
 		if err != nil {
-			log.Printf("uuid.Generator.init: could not read random bytes into node - read [%d] %s", n, err)
+			log.Printf("uuid: could not read random bytes into node - read [%d] %s", n, err)
 			o.err = err
 			return
 		}
@@ -267,10 +268,10 @@ func (o *Generator) init() {
 		n, err := o.Random(b)
 		if err == nil {
 			storage.Sequence = Sequence(binary.BigEndian.Uint16(b))
-			log.Printf("uuid.Generator.init initialised random sequence: [%d]", storage.Sequence)
+			log.Printf("uuid: initialised random sequence [%d]", storage.Sequence)
 
 		} else {
-			log.Printf("uuid.Generator.init: could not read random bytes into sequence - read [%d] %s", n, err)
+			log.Printf("uuid: could not read random bytes into sequence - read [%d] %s", n, err)
 			o.err = err
 			return
 		}
@@ -287,11 +288,11 @@ func (o *Generator) init() {
 }
 
 func (o *Generator) save() {
-	func(pState *Generator) {
-		if pState.Saver != nil {
-			pState.Lock()
-			defer pState.Unlock()
-			pState.Save(*pState.Store)
+	func(state *Generator) {
+		if state.Saver != nil {
+			state.Lock()
+			defer state.Unlock()
+			state.Save(*state.Store)
 		}
 	}(o)
 }
@@ -300,7 +301,7 @@ func (o *Generator) save() {
 // node id
 func (o *Generator) NewV1() Uuid {
 	o.read()
-	id := array{}
+	id := Uuid{}
 
 	makeUuid(&id,
 		uint32(o.Timestamp),
@@ -310,54 +311,54 @@ func (o *Generator) NewV1() Uuid {
 		o.Node)
 
 	id.setRFC4122Version(1)
-	return id[:]
+	return id
 }
 
 // NewV2 generates a new DCE version 2 UUID based on a 60 bit timestamp, node id
 // and POSIX UID or GID
-func (o *Generator) NewV2(pDomain Domain) Uuid {
+func (o *Generator) NewV2(domain Domain) Uuid {
 	o.read()
 
-	id := array{}
+	id := Uuid{}
 
-	var domain uint32
+	var domainId uint32
 
-	switch pDomain {
+	switch domain {
 	case DomainUser:
-		domain = uint32(os.Getuid())
+		domainId = uint32(os.Getuid())
 	case DomainGroup:
-		domain = uint32(os.Getgid())
+		domainId = uint32(os.Getgid())
 	}
 
 	makeUuid(&id,
-		domain,
+		domainId,
 		uint16(o.Timestamp>>32),
 		uint16(o.Timestamp>>48),
 		uint16(o.Sequence),
 		o.Node)
 
-	id[9] = byte(pDomain)
+	id[9] = byte(domain)
 	id.setRFC4122Version(2)
-	return id[:]
+	return id
 }
 
-func makeUuid(pId *array, pLow uint32, pMid, pHiAndV, seq uint16, pNode Node) {
+func makeUuid(id *Uuid, low uint32, mid, hiAndV, seq uint16, node Node) {
 
-	pId[0] = byte(pLow >> 24)
-	pId[1] = byte(pLow >> 16)
-	pId[2] = byte(pLow >> 8)
-	pId[3] = byte(pLow)
+	id[0] = byte(low >> 24)
+	id[1] = byte(low >> 16)
+	id[2] = byte(low >> 8)
+	id[3] = byte(low)
 
-	pId[4] = byte(pMid >> 8)
-	pId[5] = byte(pMid)
+	id[4] = byte(mid >> 8)
+	id[5] = byte(mid)
 
-	pId[6] = byte(pHiAndV >> 8)
-	pId[7] = byte(pHiAndV)
+	id[6] = byte(hiAndV >> 8)
+	id[7] = byte(hiAndV)
 
-	pId[8] = byte(seq >> 8)
-	pId[9] = byte(seq)
+	id[8] = byte(seq >> 8)
+	id[9] = byte(seq)
 
-	copy(pId[10:], pNode)
+	copy(id[10:], node)
 }
 
 func findFirstHardwareAddress() (node Node) {
@@ -367,7 +368,7 @@ func findFirstHardwareAddress() (node Node) {
 			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
 				// Don't use random as we have a real address
 				node = Node(i.HardwareAddr)
-				log.Println("uuid.findFirstHardwareAddress:", node)
+				log.Printf("uuid: found %s", net.IP(node))
 				break
 			}
 		}
@@ -375,7 +376,7 @@ func findFirstHardwareAddress() (node Node) {
 	return
 }
 
-func runHandleError(pErr error) bool {
-	log.Panicln("uuid.Generator ran into a serious problem with the random generator", pErr)
+func runHandleError(err error) bool {
+	log.Panicln("uuid: there seems to be a serious problem with the system's random number generator", err)
 	return false
 }

@@ -1,10 +1,5 @@
 package savers
 
-/****************
- * Date: 30/05/16
- * Time: 6:46 PM
- ***************/
-
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/twinj/uuid"
@@ -59,36 +54,36 @@ func TestFileSystemSaver_Read(t *testing.T) {
 	for i := range paths {
 
 		saver := setupFileSystemStateSaver(paths[i], true)
-		err, _ := saver.Read()
+		_, err := saver.Read()
 
 		assert.NoError(t, err, "Path failure %d %s", i, paths[i])
 	}
 
 	// Empty path
 	saver := setupFileSystemStateSaver("", true)
-	err, _ := saver.Read()
+	_, err := saver.Read()
 
 	assert.Error(t, err, "Expect path failure")
 
 	// No permissions
 	if runtime.GOOS == "windows" {
 		saver := setupFileSystemStateSaver("C:/windows/generator-delete.gob", true)
-		err, _ := saver.Read()
+		_, err := saver.Read()
 		assert.Error(t, err, "Expect path failure")
 
 		saver = setupFileSystemStateSaver(path.Join("C:/windows", uuid.NewV1().String()[:8], "generator-delete.gob"), true)
-		err, _ = saver.Read()
+		_, err = saver.Read()
 		assert.Error(t, err, "Expect path failure")
 	}
 
 	// No permissions
 	if runtime.GOOS == "linux" {
 		saver := setupFileSystemStateSaver("/root/generator-delete.gob", true)
-		err, _ := saver.Read()
+		_, err := saver.Read()
 		assert.Error(t, err, "Expect path failure")
 
 		saver = setupFileSystemStateSaver(path.Join("/root", uuid.NewV1().String()[:8], "generator-delete.gob"), true)
-		err, _ = saver.Read()
+		_, err = saver.Read()
 		assert.Error(t, err, "Expect path failure")
 	}
 
@@ -123,7 +118,7 @@ func TestFileSystemSaver_SaveAndRead(t *testing.T) {
 	store := uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
 	saver.Save(store)
 
-	_, saved := saver.Read()
+	saved, _ := saver.Read()
 
 	assert.Equal(t, store.Timestamp, saved.Timestamp)
 	assert.Equal(t, store.Sequence, saved.Sequence)

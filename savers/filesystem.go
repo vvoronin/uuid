@@ -1,9 +1,5 @@
+// Package savers provides implementations for the uuid.Saver interface.
 package savers
-
-/****************
- * Date: 30/05/16
- * Time: 5:48 PM
- ***************/
 
 import (
 	"encoding/gob"
@@ -16,7 +12,7 @@ import (
 
 var _ uuid.Saver = &FileSystemSaver{}
 
-// This implements the Saver interface for UUIDs
+// FileSystemSaver implements the uuid.Saver interface.
 type FileSystemSaver struct {
 	// A file to save the state to
 	// Used gob format on uuid.State entity
@@ -35,20 +31,22 @@ type FileSystemSaver struct {
 	uuid.Timestamp
 }
 
-func (o *FileSystemSaver) Save(pStore uuid.Store) {
+// Save saves the given store to the filesystem.
+func (o *FileSystemSaver) Save(store uuid.Store) {
 
-	if pStore.Timestamp >= o.Timestamp {
-		err := o.openAndDo(o.encode, &pStore)
+	if store.Timestamp >= o.Timestamp {
+		err := o.openAndDo(o.encode, &store)
 		if err == nil {
 			if o.Report {
-				log.Printf("UUID Saved State Storage: %s", pStore)
+				log.Println("uuid: file system saver saved", store)
 			}
 		}
-		o.Timestamp = pStore.Add(o.Duration)
+		o.Timestamp = store.Add(o.Duration)
 	}
 }
 
-func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
+// Read reads and loads the Store from the filesystem.
+func (o *FileSystemSaver) Read() (store uuid.Store, err error) {
 	store = uuid.Store{}
 	gob.Register(&uuid.Store{})
 
@@ -64,11 +62,11 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 			// If new encode blank store
 			err = o.openAndDo(o.encode, &store)
 			if err == nil {
-				log.Println("uuid.FileSystemSaver created", o.Path)
+				log.Println("uuid: created file system saver", o.Path)
 			}
 		}
 		if err != nil {
-			log.Println("uuid.FileSystemSaver.Read: error will autogenerate", err)
+			log.Println("uuid: file system saver saver read error will autogenerate", err)
 		}
 		return
 	}
@@ -77,13 +75,13 @@ func (o *FileSystemSaver) Read() (err error, store uuid.Store) {
 	return
 }
 
-func (o *FileSystemSaver) openAndDo(fDo func(*uuid.Store), pStore *uuid.Store) (err error) {
+func (o *FileSystemSaver) openAndDo(fDo func(*uuid.Store), store *uuid.Store) (err error) {
 	o.file, err = os.OpenFile(o.Path, os.O_RDWR|os.O_CREATE, os.ModeExclusive|0600)
 	defer o.file.Close()
 	if err == nil {
-		fDo(pStore)
+		fDo(store)
 	} else {
-		log.Println("uuid.FileSystemSaver.openAndDo error:", err)
+		log.Println("uuid: error opening file", err)
 	}
 	return
 }
@@ -95,10 +93,10 @@ func (o *FileSystemSaver) encode(pStore *uuid.Store) {
 	enc.Encode(&pStore)
 }
 
-func (o *FileSystemSaver) decode(pStore *uuid.Store) {
+func (o *FileSystemSaver) decode(store *uuid.Store) {
 	// ensure reader state is ready for use
 	o.file.Seek(0, 0)
 	dec := gob.NewDecoder(o.file)
 	// swallow error for encode as its only for cyclic pointers
-	dec.Decode(&pStore)
+	dec.Decode(&store)
 }

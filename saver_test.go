@@ -21,14 +21,14 @@ func (o *save) Save(pStore Store) {
 	o.saved = true
 }
 
-func (o *save) Read() (error, Store) {
+func (o *save) Read() (Store, error) {
 	if o.store != nil {
-		return nil, *o.store
+		return *o.store, nil
 	}
 	if o.err != nil {
-		return o.err, Store{}
+		return Store{}, o.err
 	}
-	return nil, Store{}
+	return Store{}, nil
 }
 
 func TestRegisterSaver(t *testing.T) {

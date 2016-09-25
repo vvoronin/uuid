@@ -2,25 +2,23 @@ package uuid
 
 import "fmt"
 
-import ()
-
-// an iterated value to help ensure unique UUID generations values
-// across the same domain, server restarts and clock issues
+// Sequence represents an iterated value to help ensure unique UUID generations
+// values across the same domain, server restarts and clock issues.
 type Sequence uint16
 
-// the last node id setup used by the generator
+// Node represents the last node id setup used by the generator.
 type Node []byte
 
 // Store is used for storage of UUID generation history to ensure continuous
 // running of the UUID generator between restarts and to monitor synchronicity
-// while generating new V1 or V2 UUIDs
+// while generating new V1 or V2 UUIDs.
 type Store struct {
 	Timestamp
 	Sequence
 	Node
 }
 
-// String returns a string representation of the Store
+// String returns a string representation of the Store.
 func (o Store) String() string {
 	return fmt.Sprintf("Timestamp[%s]-Sequence[%d]-Node[%x]", o.Timestamp, o.Sequence, o.Node)
 }
@@ -34,7 +32,7 @@ func (o Store) String() string {
 type Saver interface {
 	// Read is run once, use this to setup your UUID state machine
 	// Read should also return the UUID state from the non volatile store
-	Read() (error, Store)
+	Read() (Store, error)
 
 	// Save saves the state to the non volatile store and is called only if
 	Save(Store)
@@ -45,11 +43,11 @@ type Saver interface {
 // be run before any calls to V1 or V2 UUIDs. uuid.RegisterSaver cannot be run
 // in conjunction with uuid.Init. You may implement the uuid.Saver interface
 // or use the provided uuid.Saver's from the uuid/savers package.
-func RegisterSaver(pSaver Saver) {
+func RegisterSaver(saver Saver) {
 	generator.Do(func() {
 		defer generator.init()
 		generator.Lock()
 		defer generator.Unlock()
-		generator.Saver = pSaver
+		generator.Saver = saver
 	})
 }

@@ -1,4 +1,4 @@
-// This package provides RFC4122 and DCE 1.1 UUIDs.
+// Package uuid provides RFC4122 and DCE 1.1 UUIDs.
 //
 // Use NewV1, NewV2, NewV3, NewV4, NewV5, for generating new UUIDs.
 //
@@ -30,24 +30,27 @@ import (
 	"regexp"
 )
 
-const (
-	Nil Immutable = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+// Nil represents a Uuid that is empty.
+const Nil Immutable = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
-	// The following standard UUIDs are for use with V3 or V5 UUIDs.
+// The following standard UUIDs are for use with V3 or V5 UUIDs.
+const (
 	NameSpaceDNS  Immutable = "k\xa7\xb8\x10\x9d\xad\x11р\xb4\x00\xc0O\xd40\xc8"
 	NameSpaceURL  Immutable = "k\xa7\xb8\x11\x9d\xad\x11р\xb4\x00\xc0O\xd40\xc8"
 	NameSpaceOID  Immutable = "k\xa7\xb8\x12\x9d\xad\x11р\xb4\x00\xc0O\xd40\xc8"
 	NameSpaceX500 Immutable = "k\xa7\xb8\x14\x9d\xad\x11р\xb4\x00\xc0O\xd40\xc8"
 )
 
+// Domain is used by V2 UUIDs as an identifier in the UUID
 type Domain uint8
 
+// The following Domains are for use with V2 UUIDs.
 const (
 	DomainUser Domain = iota + 1
 	DomainGroup
 )
 
-// UUID is the common interface implemented by all UUIDs
+// UUID is the common interface implemented by all UUIDs.
 type UUID interface {
 
 	// Bytes retrieves the bytes from the underlying UUID
@@ -70,15 +73,17 @@ type UUID interface {
 
 // New creates a UUID from a slice of bytes.
 func New(pData []byte) Uuid {
-	o := array{}
+	o := Uuid{}
 	o.unmarshal(pData)
-	return o[:]
+	return o
 }
 
-// NewHex creates a UUID from a hex string
+// NewHex creates a UUID from a hex string.
 // Will panic if hex string is invalid use Parse otherwise.
-func NewHex(pUuid string) Uuid {
-	return Uuid(fromHex(pUuid))
+func NewHex(uuid string) Uuid {
+	o := Uuid{}
+	o.unmarshal(fromHex(uuid))
+	return o
 }
 
 const (
@@ -103,21 +108,25 @@ var (
 //		[6ba7b814-9dad-11d1-80b4-00c04fd430c8]
 //		(6ba7b814-9dad-11d1-80b4-00c04fd430c8)
 //
-func Parse(pUuid string) (Uuid, error) {
-	id, err := parse(pUuid)
-	return Uuid(id), err
+func Parse(uuid string) (o Uuid, err error) {
+	id, err := parse(uuid)
+	if err != nil {
+		return
+	}
+	o.unmarshal(id)
+	return
 }
 
-func parse(pUuid string) ([]byte, error) {
-	md := parseUUIDRegex.FindStringSubmatch(pUuid)
+func parse(uuid string) ([]byte, error) {
+	md := parseUUIDRegex.FindStringSubmatch(uuid)
 	if md == nil {
-		return nil, errors.New("uuid.Parse: invalid string format this is probably not a UUID")
+		return nil, errors.New("uuid: invalid string format this is probably not a UUID")
 	}
 	return fromHex(md[2] + md[3] + md[4] + md[5] + md[6]), nil
 }
 
-func fromHex(pUuid string) []byte {
-	bytes, err := hex.DecodeString(pUuid)
+func fromHex(uuid string) []byte {
+	bytes, err := hex.DecodeString(uuid)
 	if err != nil {
 		panic(err)
 	}
@@ -139,11 +148,11 @@ func NewV2(pDomain Domain) Uuid {
 // NewV3 generates a new RFC4122 version 3 UUID based on the MD5 hash on a
 // namespace UUID and any type which implements the UniqueName interface
 // for the name. For strings and slices cast to a Name type
-func NewV3(pNamespace UUID, pNames ...UniqueName) Uuid {
-	o := array{}
-	copy(o[:], digest(md5.New(), pNamespace.Bytes(), pNames...))
+func NewV3(namespace UUID, names ...UniqueName) Uuid {
+	o := Uuid{}
+	o.unmarshal(digest(md5.New(), namespace.Bytes(), names...))
 	o.setRFC4122Version(3)
-	return o[:]
+	return o
 }
 
 // NewV4 generates a new RFC4122 version 4 UUID a cryptographically secure
@@ -151,21 +160,21 @@ func NewV3(pNamespace UUID, pNames ...UniqueName) Uuid {
 func NewV4() Uuid {
 	o, err := v4()
 	if err == nil {
-		return o[:]
+		return o
 	}
 	generator.err = err
 	log.Printf("uuid.V4: There was an error getting random bytes [%s]\n", err)
 	if ok := generator.HandleError(err); ok {
 		o, err = v4()
 		if err == nil {
-			return o[:]
+			return o
 		}
 		generator.err = err
 	}
-	return nil
+	return Uuid{}
 }
 
-func v4() (o array, err error) {
+func v4() (o Uuid, err error) {
 	generator.err = nil
 	_, err = generator.Random(o[:])
 	o.setRFC4122Version(4)
@@ -175,10 +184,10 @@ func v4() (o array, err error) {
 // NewV5 generates an RFC4122 version 5 UUID based on the SHA-1 hash of a
 // namespace UUID and a unique name.
 func NewV5(pNamespace UUID, pNames ...UniqueName) Uuid {
-	o := array{}
-	copy(o[:], digest(sha1.New(), pNamespace.Bytes(), pNames...))
+	o := Uuid{}
+	o.unmarshal(digest(sha1.New(), pNamespace.Bytes(), pNames...))
 	o.setRFC4122Version(5)
-	return o[:]
+	return o
 }
 
 func digest(pHash hash.Hash, pName []byte, pNames ...UniqueName) []byte {
@@ -214,9 +223,8 @@ func Compare(pId, pId2 UUID) int {
 	if tl1 != tl2 {
 		if tl1 < tl2 {
 			return -1
-		} else {
-			return 1
 		}
+		return 1
 	}
 
 	m1 := binary.BigEndian.Uint16(b1[4:6])
@@ -225,9 +233,8 @@ func Compare(pId, pId2 UUID) int {
 	if m1 != m2 {
 		if m1 < m2 {
 			return -1
-		} else {
-			return 1
 		}
+		return 1
 	}
 
 	m1 = binary.BigEndian.Uint16(b1[6:8])
@@ -236,17 +243,27 @@ func Compare(pId, pId2 UUID) int {
 	if m1 != m2 {
 		if m1 < m2 {
 			return -1
-		} else {
-			return 1
 		}
+		return 1
 	}
 
 	return bytes.Compare(b1[8:], b2[8:])
 }
 
-// Compares whether each UUID is the same
+// Equal compares whether each UUID is the same
 func Equal(p1, p2 UUID) bool {
 	return bytes.Equal(p1.Bytes(), p2.Bytes())
+}
+
+// IsNil returns true if UUID is all zeros?
+func IsNil(uuid UUID) bool {
+	bytes := uuid.Bytes()
+	for i := 0; i < len(bytes); i++ {
+		if bytes[i] != 0 {
+			return false
+		}
+	}
+	return true
 }
 
 // Name is a string which implements UniqueName and satisfies the Stringer
@@ -260,7 +277,7 @@ func (o Name) String() string {
 }
 
 // UniqueName is a Stinger interface made for easy passing of any Stringer type
-// into a Hashable UUID.
+// into a hashable UUID.
 type UniqueName interface {
 	// Many go types implement this method for use with printing
 	// Will convert the current type to its native string format
