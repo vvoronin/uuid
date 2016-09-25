@@ -60,15 +60,12 @@ setting for your server
         5fb1a28f-30f0-11e6-9614-005056c00001
         5fb1a290-30f0-11e6-9614-005056c00001
 
-* The V1 UUID generator should work on all app servers
-    To achieve this there are no Os locking threads or file system dependant
-    storage. The uuid.Saver interface exists for the user to provide their own
-    storage implementations. The package provides a uuid.Saver
-    which works on a standard OS environment.
-* The V4 UUID should allow the user to choose how to handle any error that
-can occur in the CPRNG. The default is to panic.
-* The package should be able to handle multiple instances of Generator's so a
-* user can produce UUIDs from multiple sources.
+* The V1 UUID generator should be file system and server agnostic
+    To achieve this there are:
+        ** No Os locking threads or file system dependant storage 
+        ** Provided the uuid.Saver interface so a package can implement its own solution if required
+* The V4 UUID should allow a package to handle any error that can occur in the CPRNG. The default is to panic.
+* The package should be able to handle multiple instances of Generators so a package can produce UUIDs from multiple sources.
 
 # Recent Changes
 
@@ -124,6 +121,40 @@ for more information.
 
     uuid.SwitchFormat(uuid.FormatCanonicalBracket)
 
+## Formatting UUIDs
+
+    The default format is uuid.FormatCanonical xxxxxxxx-xxxx-xxxx-xxxx-xxxxxx
+    
+    Any call to uuid.String() will produce this output.
+    
+    The format is twice as fast as the others at producing a string from the bytes.
+    
+    To change to another format permanently use:
+   
+    uuid.SwitchFormat(uuid.Format*) 
+    uuid.SwitchFormatToUpper(uuid.Format*) 
+    
+    Once this has been called in an init function all UUID.String() calls will use the new format.
+    
+    Available formats:
+    
+    FormatHex              = xxxxxxxxxxxxxxxxxxxxxxxxxx
+    FormatHexCurly         = {xxxxxxxxxxxxxxxxxxxxxxxxxx}
+    FormatHexBracket       = (xxxxxxxxxxxxxxxxxxxxxxxxxx)
+    
+    // This is the default format.
+    FormatCanonical Format = xxxxxxxx-xxxx-xxxx-xxxx-xxxxxx
+    
+    FormatCanonicalCurly   = {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxx}
+    FormatCanonicalBracket = (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxx)
+    FormatUrn              = urn:uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxx
+    
+    The uuid.Formatter function also exists and is only ever meant to be used for one time prints where a different format from the default or switched format is required. You can supply your own format as long as it fits the pattern.
+    which cointains %x for the five groups in an UUID. Eg: FormatCanonical = %x-%x-%x-%x-%x
+    
+    You can also stwict to a custom format
+    
+    Note: AT this time cutsom formats are not supported for TextMarshalling. If a custom format is deteced it will use the canonical format. Use a call to String() and save as a string instead. 
 
 ## Version 1 and 2 UUIDs
 
@@ -253,6 +284,9 @@ for more information.
 * go test -coverprofile cover.out github.com/twinj/uuid
 * go tool cover -html=cover.out -o cover.html
 
+## Contribution 
+
+* please fork from the *develop* branch. To ensure you get the correct packages and subpackages install in a gopath which matches *go/srcgithub.com/twinj/uuid*
 ## Links
 
 * [RFC 4122](http://www.ietf.org/rfc/rfc4122.txt)
