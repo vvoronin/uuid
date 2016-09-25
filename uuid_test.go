@@ -447,6 +447,4 @@ func TestIsNil(t *testing.T) {
 	var v Uuid
 	assert.True(t, IsNil(v))
 	assert.False(t, IsNil(NameSpaceDNS))
-
-	fmt.Errorf("Print it %s", Nil)
 }
