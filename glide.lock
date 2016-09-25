@@ -1,12 +1,16 @@
-hash: f911e013eca32434aa211cdcf343b438bb417cbf31571d3d72c2c1f5cb960414
-updated: 2016-06-05T02:30:40.1280097+10:00
+hash: 6f2ea615c5906862630c182b127c0ffd7cad62dceb85a2484b2cc12ea832b50f
+updated: 2016-09-25T12:10:15.5713949+10:00
 imports:
 - name: github.com/stretchr/testify
-  version: 8d64eb7173c7753d6419fd4a9caf057398611364
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
-- name: github.com/twinj/uuid
-  version: 54014829338a362f3071461e05e890f51443520f
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
-  - github.com\twinj\uuid
-devImports: []
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
