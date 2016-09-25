@@ -141,12 +141,19 @@ func TestUuid_MarshalBinary(t *testing.T) {
 
 func TestUuid_UnmarshalBinary(t *testing.T) {
 
+	assert.True(t, didUnmarshalPanic(), "Should panic")
+
 	u := Uuid{}
 	err := u.UnmarshalBinary([]byte{1, 2, 3, 4, 5})
+
 	assert.Error(t, err, "Expect length error")
 
+	err = u.UnmarshalBinary(uuidBytes[:])
+
 	u = Uuid{}
-	err = u.UnmarshalBinary(uuidBytes)
+
+	err = u.UnmarshalBinary(uuidBytes[:])
+
 	assert.Nil(t, err, "There should be no error but got %s", err)
 
 	for k, v := range namespaces {
@@ -157,6 +164,19 @@ func TestUuid_UnmarshalBinary(t *testing.T) {
 		assert.Equal(t, id.Bytes(), u.Bytes(), "The array id should equal the uuid id")
 		assert.Equal(t, k.Bytes(), u.Bytes(), "The array id should equal the uuid id")
 	}
+}
+
+func didUnmarshalPanic() bool {
+	return func() (didPanic bool) {
+		defer func() {
+			if recover() != nil {
+				didPanic = true
+			}
+		}()
+		u := make(Uuid, length)
+		u.UnmarshalBinary(uuidBytes[:])
+		return
+	}()
 }
 
 func TestUuid_Scan(t *testing.T) {
