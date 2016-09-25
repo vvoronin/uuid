@@ -368,7 +368,7 @@ func findFirstHardwareAddress() (node Node) {
 			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
 				// Don't use random as we have a real address
 				node = Node(i.HardwareAddr)
-				log.Printf("uuid: found %s", net.IP(node))
+				log.Printf("uuid: found [%s]", i.HardwareAddr)
 				break
 			}
 		}
