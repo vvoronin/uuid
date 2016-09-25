@@ -1,7 +1,6 @@
 language: go
 
-# Sudo is required for file system save
-sudo: required
+sudo: false
 
 go:
     - 1.7
