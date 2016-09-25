@@ -6,7 +6,7 @@ Go UUID implementation
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/twinj/uuid?branch=master&svg=true)](https://ci.appveyor.com/project/myesui/uuid)
 [![Build Status](https://travis-ci.org/twinj/uuid.png?branch=master)](https://travis-ci.org/twinj/uuid)
 [![Coverage Status](https://coveralls.io/repos/github/twinj/uuid/badge.svg?branch=master)](https://coveralls.io/github/twinj/uuid?branch=master)
-
+[![Go Report Card](https://goreportcard.com/badge/github.com/twinj/uuid)](https://goreportcard.com/report/github.com/twinj/uuid)
 **This project is currently pre 1.0.0**
 
 This package provides RFC 4122 and DCE 1.1 compliant UUIDs.
