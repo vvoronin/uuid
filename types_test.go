@@ -214,13 +214,13 @@ func TestUuid_Value(t *testing.T) {
 	assert.Nil(t, v)
 
 	id, err := v.Value()
-	assert.Nil(t, id, "There hsould be no driver valuie")
+	assert.Nil(t, id, "There should be no driver valuie")
 	assert.NoError(t, err, "There should be no error")
 
 	ns := Uuid(NameSpaceDNS)
 
 	id, err = ns.Value()
-	assert.NotNil(t, id, "Ther hsould be a vliad driver value")
+	assert.NotNil(t, id, "There should be a valid driver value")
 	assert.NoError(t, err, "There should be no error")
 }
 

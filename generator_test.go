@@ -156,7 +156,7 @@ func TestGeneratorInit(t *testing.T) {
 
 	assert.NotNil(t, generator.Store, "Generator should not return an empty store")
 	assert.True(t, generator.Timestamp < storageStamp, "Increment sequence when old timestamp newer than new")
-	assert.Equal(t, Sequence(3), generator.Sequence, "Successfull read should have incremented sequence")
+	assert.Equal(t, Sequence(3), generator.Sequence, "Successful read should have incremented sequence")
 
 	// Nodes not the same should generate a random sequence
 	now, node = registerTestGenerator(Now(), nodeBytes)
@@ -224,7 +224,7 @@ func TestGeneratorRead(t *testing.T) {
 	assert.NotEmpty(t, generator.Node, "Should not return an empty store")
 
 	assert.True(t, generator.Timestamp < storageStamp, "Increment sequence when old timestamp newer than new")
-	assert.Equal(t, Sequence(4), generator.Sequence, "Successfull read should have incremented sequence")
+	assert.Equal(t, Sequence(4), generator.Sequence, "Successful read should have incremented sequence")
 
 	// A new time that is older than stored time should cause the sequence to increment
 	now, node := registerTestGenerator(Now().Sub(time.Second), nodeBytes)
