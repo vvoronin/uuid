@@ -2,6 +2,8 @@ language: go
 
 sudo: false
 
+go_import_path: github.com/myesui/uuid
+
 go:
     - 1.7
     - 1.6
