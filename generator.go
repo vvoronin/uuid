@@ -161,7 +161,7 @@ func RegisterGenerator(config GeneratorConfig) (err error) {
 		return
 	})
 	if notOnce {
-		log.Panicf("A uuid.Register* method cannot be called more than once.")
+		log.Panicf("uuid: uuid.Register* methods cannot be called more than once.")
 	}
 	return
 }

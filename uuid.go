@@ -164,7 +164,7 @@ func NewV4() Uuid {
 		return o
 	}
 	generator.err = err
-	log.Printf("uuid.V4: There was an error getting random bytes [%s]\n", err)
+	log.Printf("uuid: there was an error getting random bytes [%s]\n", err)
 	if ok := generator.HandleError(err); ok {
 		o, err = v4()
 		if err == nil {
