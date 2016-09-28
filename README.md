@@ -1,12 +1,12 @@
 Go UUID implementation
 ========================
 
-[![license](http://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/twinj/uuid/master/LICENSE)
-[![GoDoc](http://godoc.org/github.com/twinj/uuid?status.png)](http://godoc.org/github.com/twinj/uuid)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/twinj/uuid?branch=master&svg=true)](https://ci.appveyor.com/project/myesui/uuid)
-[![Build Status](https://travis-ci.org/twinj/uuid.png?branch=master)](https://travis-ci.org/twinj/uuid)
-[![Coverage Status](https://coveralls.io/repos/github/twinj/uuid/badge.svg?branch=master)](https://coveralls.io/github/twinj/uuid?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/twinj/uuid)](https://goreportcard.com/report/github.com/twinj/uuid)
+[![license](http://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/myesui/uuid/master/LICENSE)
+[![GoDoc](http://godoc.org/github.com/myesui/uuid?status.png)](http://godoc.org/github.com/myesui/uuid)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/myesui/uuid?branch=master&svg=true)](https://ci.appveyor.com/project/myesui/uuid)
+[![Build Status](https://travis-ci.org/myesui/uuid.png?branch=master)](https://travis-ci.org/myesui/uuid)
+[![Coverage Status](https://coveralls.io/repos/github/myesui/uuid/badge.svg?branch=master)](https://coveralls.io/github/myesui/uuid?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/myesui/uuid)](https://goreportcard.com/report/github.com/myesui/uuid)
 **This project is currently pre 1.0.0**
 
 This package provides RFC 4122 and DCE 1.1 compliant UUIDs.
@@ -89,16 +89,19 @@ quality checks.
 
 Use the `go` tool:
 
-	$ go get github.com/twinj/uuid
+	$ go get gopkg.in/myesui/uuid.v1
+	
+
+See [gopkg.in](http://labix.org/gopkg.in)
 
 # Typical Usage
 
-See [documentation and examples](http://godoc.org/github.com/twinj/uuid)
+See [documentation and examples](http://godoc.org/github.com/myesui/uuid)
 for more information.
 
 ## All UUIDs
 
-    import "github.com/twinj/uuid"
+    import "gopkg.in/myesui/uuid.v1"
 
     id, _ := uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
@@ -160,7 +163,7 @@ for more information.
 
 ## Version 1 and 2 UUIDs
 
-    import "github.com/twinj/uuid"
+    import "gopkg.in/myesui/uuid.v1"
 
     // An uuid.Init or uuid.Register* function must be called before any V1 or
     // V2 UUIDs, only needs 1 call.
@@ -187,7 +190,7 @@ for more information.
 
 ## Version 3 and 5 UUIDs
 
-    import "github.com/twinj/uuid"
+    import "gopkg.in/myesui/uuid.v1"
 
     // Does not need to be called first but is recommended
     uuid.Init()
@@ -206,7 +209,7 @@ for more information.
 
 ## Version 4 UUIDs
 
-    import "github.com/twinj/uuid"
+    import "gopkg.in/myesui/uuid.v1"
 
     // Does not need to be called first but is recommended
     uuid.Init()
@@ -219,7 +222,7 @@ for more information.
 
 ## Custom Generators
 
-    import "github.com/twinj/uuid"
+    import "gopkg.in/myesui/uuid.v1"
 
     // Improve resolution for V1 and 2 UUIDs
     // The resolution correlates to how many ids can be created before waiting
@@ -283,12 +286,15 @@ for more information.
 
 ## Coverage
 
-* go test -coverprofile cover.out github.com/twinj/uuid
+* go test -coverprofile cover.out github.com/myesui/uuid
 * go tool cover -html=cover.out -o cover.html
 
 ## Contribution 
 
-* please fork from the *develop* branch. To ensure you get the correct packages and subpackages install in a gopath which matches *go/srcgithub.com/twinj/uuid*
+* please fork from the *develop* branch. 
+
+To ensure you get the correct packages and subpackages install in a gopath which matches *go/srcgithub.com/myesui/uuid*
+
 ## Links
 
 * [RFC 4122](http://www.ietf.org/rfc/rfc4122.txt)
@@ -296,6 +302,6 @@ for more information.
 
 ## Copyright
 
-Copyright (C) 2016 twinj@github.com
-See [LICENSE](https://github.com/twinj/uuid/tree/master/LICENSE)
+Copyright (C) 2016 myesui@github.com
+See [LICENSE](https://github.com/myesui/uuid/tree/master/LICENSE)
 file for details.
