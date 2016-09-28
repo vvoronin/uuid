@@ -2,7 +2,7 @@ package savers
 
 import (
 	"github.com/myesui/uuid"
-	"github.com/stretchr/testify/assert"
+	"gopkg.in/stretchr/testify.v1/assert"
 	"os"
 	"path"
 	"runtime"
@@ -20,7 +20,7 @@ func setupFileSystemStateSaver(pPath string, pReport bool) *FileSystemSaver {
 
 // Tests that the schedule is run on the timeDuration
 func TestFileSystemSaver_SaveSchedule(t *testing.T) {
-	saver := setupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"), true)
+	saver := setupFileSystemStateSaver(path.Join("uuid.generator-"+uuid.NewV1().String()[:8]+".gob"), true)
 
 	// Read is always called first
 	saver.Read()
@@ -43,11 +43,11 @@ func TestFileSystemSaver_SaveSchedule(t *testing.T) {
 
 func TestFileSystemSaver_Read(t *testing.T) {
 	paths := []string{
-		path.Join(os.TempDir(), "test", "github.com.twinj.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"),
-		path.Join(os.TempDir(), "github.com.twinj.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"),
-		path.Join("github.com.twinj.uuid.generator-" + uuid.NewV1().String()[:8] + ".gob"),
-		path.Join("/github.com.twinj.uuid.generator-" + uuid.NewV1().String()[:8] + ".gob"),
-		path.Join("/github.com.twinj.uuid.generator-" + uuid.NewV1().String()[:8]),
+		path.Join(os.TempDir(), "test", "myesui.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"),
+		path.Join(os.TempDir(), "myesui.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"),
+		path.Join("myesui.uuid.generator-" + uuid.NewV1().String()[:8] + ".gob"),
+		path.Join("/myesui.uuid.generator-" + uuid.NewV1().String()[:8] + ".gob"),
+		path.Join("/myesui.uuid.generator-" + uuid.NewV1().String()[:8]),
 		path.Join("/generator-" + uuid.NewV1().String()[:8]),
 	}
 
@@ -91,7 +91,7 @@ func TestFileSystemSaver_Read(t *testing.T) {
 
 func TestFileSystemSaver_Save(t *testing.T) {
 
-	saver := setupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"), true)
+	saver := setupFileSystemStateSaver(path.Join("myesui.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"), true)
 
 	// Read is always called first
 	saver.Read()

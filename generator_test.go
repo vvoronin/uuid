@@ -3,7 +3,7 @@ package uuid
 import (
 	"crypto/rand"
 	"errors"
-	"github.com/stretchr/testify/assert"
+	"gopkg.in/stretchr/testify.v1/assert"
 	"sync"
 	"testing"
 	"time"

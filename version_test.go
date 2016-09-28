@@ -1,7 +1,7 @@
 package uuid
 
 import (
-	"github.com/stretchr/testify/assert"
+	"gopkg.in/stretchr/testify.v1/assert"
 	"testing"
 )
 

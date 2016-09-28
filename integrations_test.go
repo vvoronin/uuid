@@ -1,8 +1,8 @@
 package uuid_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	. "github.com/twinj/uuid"
+	"gopkg.in/stretchr/testify.v1/assert"
 	"testing"
 )
 
