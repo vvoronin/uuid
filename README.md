@@ -293,7 +293,7 @@ for more information.
 
 * please fork from the *develop* branch. 
 
-To ensure you get the correct packages and subpackages install in a gopath which matches *go/srcgithub.com/myesui/uuid*
+To ensure you get the correct packages and subpackages install in a gopath which matches *go/src/github.com/myesui/uuid*
 
 ## Links
 
