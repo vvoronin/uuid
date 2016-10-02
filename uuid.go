@@ -5,35 +5,30 @@
 // Use New([]byte), NewHex(string), and Parse(string) for
 // creating UUIDs from existing data.
 //
-// If you have a []byte you can simply cast it to the Uuid type.
-//
 // The original version was from Krzysztof Kowalik <chris@nu7hat.ch>
 // Unfortunately, that version was non compliant with RFC4122.
 //
 // The package has since been redesigned.
 //
-// The example code in the specification was also used as reference
-// for design.
+// The example code in the specification was also used as reference for design.
 //
-// Copyright (C) 2016 twinj@github.com  2016 MIT licence
+// Copyright (C) 2016 myesui@github.com  2016 MIT licence
 package uuid
 
 import (
 	"bytes"
-	"crypto/md5"
-	"crypto/sha1"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"hash"
-	"log"
 	"regexp"
 )
 
 // Nil represents a Uuid that is empty.
 const Nil Immutable = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
-// The following standard UUIDs are for use with V3 or V5 UUIDs.
+// The following Immutable UUIDs are for use with V3 or V5 UUIDs.
+
 const (
 	NameSpaceDNS  Immutable = "k\xa7\xb8\x10\x9d\xad\x11р\xb4\x00\xc0O\xd40\xc8"
 	NameSpaceURL  Immutable = "k\xa7\xb8\x11\x9d\xad\x11р\xb4\x00\xc0O\xd40\xc8"
@@ -41,17 +36,22 @@ const (
 	NameSpaceX500 Immutable = "k\xa7\xb8\x14\x9d\xad\x11р\xb4\x00\xc0O\xd40\xc8"
 )
 
-// Domain is used by V2 UUIDs as an identifier in the UUID
-type Domain uint8
+// SystemId denotes the type of id to retrieve from the operating system.
+// That id is then used to create an identifier UUID.
+type SystemId uint8
 
-// The following Domains are for use with V2 UUIDs.
+// The following SystemId's are for use with V2 UUIDs.
 const (
-	DomainUser Domain = iota + 1
-	DomainGroup
+	SystemIdUser SystemId = iota + 1
+	SystemIdEffectiveUser
+	SystemIdGroup
+	SystemIdEffectiveGroup
+	SystemIdCallerProcess
+	SystemIdCallerProcessParent
 )
 
-// UUID is the common interface implemented by all UUIDs.
-type UUID interface {
+// Implementation is the common interface implemented by all UUIDs.
+type Implementation interface {
 
 	// Bytes retrieves the bytes from the underlying UUID
 	Bytes() []byte
@@ -72,18 +72,18 @@ type UUID interface {
 }
 
 // New creates a UUID from a slice of bytes.
-func New(data []byte) Uuid {
-	o := array{}
+func New(data []byte) UUID {
+	o := UUID{}
 	o.unmarshal(data)
-	return o[:]
+	return o
 }
 
 // NewHex creates a UUID from a hex string.
 // Will panic if hex string is invalid use Parse otherwise.
-func NewHex(uuid string) Uuid {
-	o := array{}
+func NewHex(uuid string) UUID {
+	o := UUID{}
 	o.unmarshal(fromHex(uuid))
-	return o[:]
+	return o
 }
 
 const (
@@ -108,14 +108,14 @@ var (
 //		[6ba7b814-9dad-11d1-80b4-00c04fd430c8]
 //		(6ba7b814-9dad-11d1-80b4-00c04fd430c8)
 //
-func Parse(uuid string) (Uuid, error) {
+func Parse(uuid string) (*UUID, error) {
 	id, err := parse(uuid)
 	if err != nil {
 		return nil, err
 	}
-	a := array{}
+	a := UUID{}
 	a.unmarshal(id)
-	return id[:], nil
+	return &a, nil
 }
 
 func parse(uuid string) ([]byte, error) {
@@ -136,89 +136,69 @@ func fromHex(uuid string) []byte {
 
 // NewV1 generates a new RFC4122 version 1 UUID based on a 60 bit timestamp and
 // node ID.
-func NewV1() Uuid {
+func NewV1() UUID {
 	return generator.NewV1()
+}
+
+// BulkV1 will return a slice of V1 UUIDs. Be careful with the set amount.
+func BulkV1(amount int) []UUID {
+	return generator.BulkV1(amount)
 }
 
 // NewV2 generates a new DCE Security version UUID based on a 60 bit timestamp,
 // node id and POSIX UID.
-func NewV2(pDomain Domain) Uuid {
+func NewV2(pDomain SystemId) UUID {
 	return generator.NewV2(pDomain)
 }
 
-// NewV3 generates a new RFC4122 version 3 UUID based on the MD5 hash on a
-// namespace UUID and any type which implements the UniqueName interface
-// for the name. For strings and slices cast to a Name type
-func NewV3(namespace UUID, names ...UniqueName) Uuid {
-	o := array{}
-	o.unmarshal(digest(md5.New(), namespace.Bytes(), names...))
-	o.setRFC4122Version(3)
-	return o[:]
+// NewV3 generates a new RFC4122 version 3 UUID based on the MD5 hash of a
+// namespace UUID namespace Implementation UUID and one or more unique names.
+func NewV3(namespace Implementation, names ...interface{}) UUID {
+	return generator.NewV3(namespace, names...)
 }
 
 // NewV4 generates a new RFC4122 version 4 UUID a cryptographically secure
 // random UUID.
-func NewV4() Uuid {
-	o, err := v4()
-	if err == nil {
-		return o
-	}
-	generator.err = err
-	log.Printf("uuid: there was an error getting random bytes [%s]\n", err)
-	if ok := generator.HandleError(err); ok {
-		o, err = v4()
-		if err == nil {
-			return o
-		}
-		generator.err = err
-	}
-	return nil
+func NewV4() *UUID {
+	return generator.NewV4()
 }
 
-func v4() (Uuid, error) {
-	generator.err = nil
-	a := array{}
-	_, err := generator.Random(a[:])
-	a.setRFC4122Version(4)
-	return a[:], err
+// BulkV4 will return a slice of V4 UUIDs. Be careful with the set amount.
+// Note: V4 UUIDs require sufficient entropy from the generator.
+func BulkV4(amount int) []UUID {
+	return generator.BulkV4(amount)
 }
 
 // NewV5 generates an RFC4122 version 5 UUID based on the SHA-1 hash of a
-// namespace UUID and a unique name.
-func NewV5(pNamespace UUID, pNames ...UniqueName) Uuid {
-	o := array{}
-	o.unmarshal(digest(sha1.New(), pNamespace.Bytes(), pNames...))
-	o.setRFC4122Version(5)
-	return o[:]
+// namespace Implementation UUID and one or more unique names.
+func NewV5(namespace Implementation, names ...interface{}) UUID {
+	return generator.NewV5(namespace, names...)
 }
 
-func digest(pHash hash.Hash, pName []byte, pNames ...UniqueName) []byte {
-	for _, v := range pNames {
-		pName = append(pName, v.String()...)
-	}
-	pHash.Write(pName)
-	return pHash.Sum(nil)
+// NewHash generate a UUID based on the given hash implementation. The hash will
+// be of the given names. The version will be set to 0 for Unknown and the
+// variant will be set to VariantFuture.
+func NewHash(hash hash.Hash, names ...interface{}) UUID {
+	return generator.NewHash(hash, names...)
 }
 
-// Compare returns an integer comparing two UUIDs lexicographically.
+// Compare returns an integer comparing two Implementation UUIDs
+// lexicographically.
 // The result will be 0 if pId==pId2, -1 if pId < pId2, and +1 if pId > pId2.
-// A nil argument is equivalent to the Nil UUID.
-func Compare(pId, pId2 UUID) int {
+// A nil argument is equivalent to the Nil Immutable UUID.
+func Compare(pId, pId2 Implementation) int {
 
-	var b1, b2 []byte
+	var b1, b2 = []byte(Nil), []byte(Nil)
 
-	if pId == nil {
-		b1 = []byte(Nil)
-	} else {
+	if pId != nil {
 		b1 = pId.Bytes()
 	}
 
-	if pId2 == nil {
-		b2 = []byte(Nil)
-	} else {
+	if pId2 != nil {
 		b2 = pId2.Bytes()
 	}
 
+	// Compare the time low bytes
 	tl1 := binary.BigEndian.Uint32(b1[:4])
 	tl2 := binary.BigEndian.Uint32(b2[:4])
 
@@ -229,6 +209,7 @@ func Compare(pId, pId2 UUID) int {
 		return 1
 	}
 
+	// Compare the time hi and ver bytes
 	m1 := binary.BigEndian.Uint16(b1[4:6])
 	m2 := binary.BigEndian.Uint16(b2[4:6])
 
@@ -239,6 +220,7 @@ func Compare(pId, pId2 UUID) int {
 		return 1
 	}
 
+	// Compare the sequence and version
 	m1 = binary.BigEndian.Uint16(b1[6:8])
 	m2 = binary.BigEndian.Uint16(b2[6:8])
 
@@ -249,39 +231,24 @@ func Compare(pId, pId2 UUID) int {
 		return 1
 	}
 
+	// Compare the node id
 	return bytes.Compare(b1[8:], b2[8:])
 }
 
-// Equal compares whether each UUID is the same
-func Equal(p1, p2 UUID) bool {
+// Equal compares whether each Implementation UUID is the same
+func Equal(p1, p2 Implementation) bool {
 	return bytes.Equal(p1.Bytes(), p2.Bytes())
 }
 
-// IsNil returns true if UUID is all zeros?
-func IsNil(uuid UUID) bool {
-	bytes := uuid.Bytes()
-	for i := 0; i < len(bytes); i++ {
-		if bytes[i] != 0 {
+// IsNil returns true if Implementation UUID is all zeros?
+func IsNil(uuid Implementation) bool {
+	if uuid == nil {
+		return true
+	}
+	for _, v := range uuid.Bytes() {
+		if v != 0 {
 			return false
 		}
 	}
 	return true
-}
-
-// Name is a string which implements UniqueName and satisfies the Stringer
-// interface. V3 and V5 UUIDs use this for hashing values together to produce
-// UUIDs based on a NameSpace.
-type Name string
-
-// String returns the uuid.Name as a string.
-func (o Name) String() string {
-	return string(o)
-}
-
-// UniqueName is a Stinger interface made for easy passing of any Stringer type
-// into a hashable UUID.
-type UniqueName interface {
-	// Many go types implement this method for use with printing
-	// Will convert the current type to its native string format
-	String() string
 }

@@ -15,7 +15,7 @@ func TestVersion_String(t *testing.T) {
 
 // Used to determine that a byte result from getting the variant is with the
 // correct constraints and bounded values.
-func tVariantConstraint(v byte, b byte, o UUID, t *testing.T) {
+func tVariantConstraint(v byte, b byte, t *testing.T) {
 	switch v {
 	case VariantNCS:
 		switch b {

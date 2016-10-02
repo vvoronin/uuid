@@ -77,7 +77,7 @@ func TestFileSystemSaver_Read(t *testing.T) {
 	}
 
 	// No permissions
-	if runtime.GOOS == "linux" {
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
 		saver := setupFileSystemStateSaver("/root/generator-delete.gob", true)
 		_, err := saver.Read()
 		assert.Error(t, err, "Expect path failure")

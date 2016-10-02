@@ -13,15 +13,13 @@ const (
 
 // **************************************************** Create UUIDs
 
-type array [length]byte
-
-func (o *array) unmarshal(data []byte) {
+func (o *UUID) unmarshal(data []byte) {
 	copy(o[:], data)
 }
 
 // Set the three most significant bits (bits 0, 1 and 2) of the
 // sequenceHiAndVariant equivalent in the array to ReservedRFC4122.
-func (o *array) setRFC4122Version(version uint8) {
+func (o *UUID) setRFC4122Version(version uint8) {
 	o[versionIndex] &= 0x0f
 	o[versionIndex] |= uint8(version << 4)
 	o[variantIndex] &= variantSet
@@ -30,61 +28,58 @@ func (o *array) setRFC4122Version(version uint8) {
 
 // **************************************************** Default implementation
 
-var _ UUID = &Uuid{}
+var _ Implementation = &UUID{}
 
 // Uuid is the default UUID implementation. All uuid functions will return this
 // type.
-type Uuid []byte
+type UUID [length]byte
 
 // Size returns the octet length of the Uuid
-func (o Uuid) Size() int {
+func (o UUID) Size() int {
 	return length
 }
 
 // Version returns the uuid.Version of the Uuid
-func (o Uuid) Version() Version {
+func (o UUID) Version() Version {
 	return resolveVersion(o[versionIndex] >> 4)
 }
 
 // Variant returns the implementation variant of the Uuid
-func (o Uuid) Variant() uint8 {
+func (o UUID) Variant() uint8 {
 	return variant(o[variantIndex])
 }
 
 // Bytes return the underlying data representation of the Uuid.
-func (o Uuid) Bytes() []byte {
+func (o UUID) Bytes() []byte {
 	return o[:]
 }
 
 // String returns the canonical string representation of the UUID or the
 // uuid.Format the package is set to via uuid.SwitchFormat
-func (o Uuid) String() string {
+func (o UUID) String() string {
 	return formatUuid(o[:], printFormat)
 }
 
 // **************************************************** Implementations
 
 // MarshalBinary implements the encoding.BinaryMarshaler interface
-func (o Uuid) MarshalBinary() ([]byte, error) {
+func (o UUID) MarshalBinary() ([]byte, error) {
 	return o.Bytes(), nil
 }
 
 // UnmarshalBinary implements the encoding.BinaryUnmarshaler interface
-func (o *Uuid) UnmarshalBinary(bytes []byte) error {
+func (o *UUID) UnmarshalBinary(bytes []byte) error {
 	if len(bytes) != o.Size() {
-		return fmt.Errorf("uuid.Uuid.UnmarshalBinary:  invalid length")
+		return fmt.Errorf("uuid: invalid length")
 	}
-	if len(*o) != 0 {
-		panic("uuid.Uuid.UnmarshalBinary: you must use an empty or new Uuid to unmarhal bytes")
-	}
-	*o = append(*o, bytes...)
+	o.unmarshal(bytes)
 	return nil
 }
 
 // MarshalText implements the encoding.TextMarshaler interface. It will marshal
 // text into one of the known formats, if you have changed to a custom Format
 // the text be output in canonical format.
-func (o Uuid) MarshalText() ([]byte, error) {
+func (o UUID) MarshalText() ([]byte, error) {
 	f := FormatCanonical
 	if defaultFormats[printFormat] {
 		f = printFormat
@@ -94,7 +89,7 @@ func (o Uuid) MarshalText() ([]byte, error) {
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface. It will
 // support any text that MarshalText can produce.
-func (o *Uuid) UnmarshalText(uuid []byte) error {
+func (o *UUID) UnmarshalText(uuid []byte) error {
 	id, err := parse(string(uuid))
 	if err == nil {
 		o.UnmarshalBinary(id)
@@ -103,8 +98,8 @@ func (o *Uuid) UnmarshalText(uuid []byte) error {
 }
 
 // Value implements the driver.Valuer interface
-func (o Uuid) Value() (value driver.Value, err error) {
-	if len(o) == 0 {
+func (o UUID) Value() (value driver.Value, err error) {
+	if IsNil(o) {
 		value, err = nil, nil
 		return
 	}
@@ -113,7 +108,7 @@ func (o Uuid) Value() (value driver.Value, err error) {
 }
 
 // Scan implements the sql.Scanner interface
-func (o *Uuid) Scan(src interface{}) error {
+func (o *UUID) Scan(src interface{}) error {
 	if src == nil {
 		return nil
 	}
@@ -133,13 +128,13 @@ func (o *Uuid) Scan(src interface{}) error {
 		}
 
 	default:
-		return fmt.Errorf("uuid: cannot scan type %T into Uuid", src)
+		return fmt.Errorf("uuid: cannot scan type [%T] into UUID", src)
 	}
 }
 
 // **************************************************** Immutable UUID
 
-var _ UUID = new(Immutable)
+var _ Implementation = new(Immutable)
 
 // Immutable is an easy to use UUID which can be used as a key or for constants
 type Immutable string
@@ -169,4 +164,11 @@ func (o Immutable) Bytes() []byte {
 // uuid.Format the package is set to via uuid.SwitchFormat
 func (o Immutable) String() string {
 	return formatUuid([]byte(o), printFormat)
+}
+
+// UUID converts this implementation to the default type uuid.UUID
+func (o Immutable) UUID() UUID {
+	id := UUID{}
+	id.unmarshal(o.Bytes())
+	return id
 }

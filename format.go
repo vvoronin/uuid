@@ -9,13 +9,13 @@ import (
 // represent a pattern used by the package with which to print a UUID.
 type Format string
 
-// The following are teh default Formats supplied by the uuid package.
+// The following are the default Formats supplied by the uuid package.
 const (
 	FormatHex        Format = "%x%x%x%x%x"
 	FormatHexCurly   Format = "{%x%x%x%x%x}"
 	FormatHexBracket Format = "(%x%x%x%x%x)"
 
-	// FormatCanonical is the canonical format.
+	// Canonical is the canonical format.
 	FormatCanonical Format = "%x-%x-%x-%x-%x"
 
 	FormatCanonicalCurly   Format = "{%x-%x-%x-%x-%x}"
@@ -23,7 +23,7 @@ const (
 	FormatUrn              Format = "urn:uuid:" + FormatCanonical
 )
 
-var printFormat Format = FormatCanonical
+var printFormat = FormatCanonical
 
 var defaultFormats map[Format]bool = make(map[Format]bool)
 
@@ -71,7 +71,7 @@ func SwitchFormatToUpper(form Format) {
 // *%[xX]*%[xX]*%[xX]*%[xX]*%[xX]*. If the supplied format does not meet this
 // standard the function will panic. Note any extra uses of [%] outside of the
 // [%x|%X] will also cause a panic.
-func Formatter(id UUID, form Format) string {
+func Formatter(id Implementation, form Format) string {
 	checkFormat(form)
 	return formatUuid(id.Bytes(), form)
 }

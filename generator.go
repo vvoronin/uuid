@@ -2,8 +2,12 @@ package uuid
 
 import (
 	"bytes"
+	"crypto/md5"
 	"crypto/rand"
+	"crypto/sha1"
 	"encoding/binary"
+	"fmt"
+	"hash"
 	"log"
 	"net"
 	"os"
@@ -29,22 +33,24 @@ type Random func([]byte) (int, error)
 // enhance performance.
 type Next func() Timestamp
 
-// Id provides the Node to be used during the life of a uuid.Generator. If
-// it cannot be determined nil should be returned, the package will
-// then provide a crypto-random node id. The default generator gets a MAC
-// address from the first interface that is up checking net.FlagUp.
-type Id func() Node
+// NodeIdentifier provides the Node to be used during the life of a
+// uuid.Generator. If it cannot be determined nil should be returned, the
+// package will then provide a crypto-random node identifier. The default
+// generator gets a MAC address from the first interface that is up checking
+// net.FlagUp.
+type Identifier func() Node
 
-// HandleError provides the user the ability to manage any serious
-// error that may be caused by accessing the standard crypto/rand
-// library. Due to the rarity of this occurrence the error is swallowed
-// by NewV4 functions, which rely heavily on random numbers, the package will then
-// panic if an error occurs.
+// HandleError provides the ability to manage any serious error that may be
+// caused by accessing the standard crypto/rand library. Due to the rarity of
+// this occurrence the error is swallowed by NewV4 functions, which rely
+// heavily on random numbers, the package will panic if an error occurs.
 // You can change this behaviour by passing in your own HandleError
-// function. With this function you can attempt to fix your CPRNG and then
-// return true to try again. If another error occurs the function will return
-// nil and you can then handle the error by calling uuid.Error or calling Error
-// from your standalone Generator.
+// function to a custom Generator.This function can attempt to fix the CPRNG
+// and then return true to try generating a V4 uuid again. If another error
+// occurs the function will return nil and you can then handle the error by
+// calling uuid.Error or calling Error from your standalone Generator.
+// Waiting for system entropy may be all that is required. If something more
+// serious has occurred, handle appropriately.
 type HandleError func(error) bool
 
 // Generator is used to create and monitor the running of V1 and V2, and V4
@@ -65,8 +71,8 @@ type Generator struct {
 	// Store contains the current values being used by the Generator.
 	*Store
 
-	// Id as per the type Id func() Node
-	Id
+	// Identifier as per the type Identifier func() Node
+	Identifier
 
 	// HandleError as per the type HandleError func(error) bool
 	HandleError
@@ -77,25 +83,25 @@ type Generator struct {
 	// Random as per the type Random func([]byte) (int, error)
 	Random
 
-	// Intended to provide a non-volatile store to save the state of the
-	// generator, the default is nil and to therefore generate a timestamp
-	// clock sequence with random data. You can register your own save by
-	// using the uuid.RegisterSaver function or by creating your own
-	// uuid.Generator instance from which to generate your V1, V2 or V4
+	// Saver provides a non-volatile store to save the state of the
+	// generator, the default is nil which will cause the timestamp
+	// clock sequence to populate with random data. You can register your
+	// own saver by using the uuid.RegisterSaver function or by creating
+	// your own uuid.Generator instance.
 	// UUIDs.
 	Saver
 }
 
 // GeneratorConfig allows you to setup a new uuid.Generator using
 // uuid.NewGenerator or RegisterGenerator. You can supply your own
-// implementations for CPRNG, Node Id and Timestamp retrieval. You can also
+// implementations for CPRNG, Identifier and Timestamp retrieval. You can also
 // adjust the resolution of the default Timestamp spinner and supply your own
-// error handler CPRNG failures.
+// error handler for CPRNG failures.
 type GeneratorConfig struct {
 	Saver
 	Next
 	Resolution uint
-	Id
+	Identifier
 	Random
 	HandleError
 }
@@ -121,10 +127,10 @@ func newGenerator(config GeneratorConfig) (gen *Generator) {
 	} else {
 		gen.Next = config.Next
 	}
-	if config.Id == nil {
-		gen.Id = findFirstHardwareAddress
+	if config.Identifier == nil {
+		gen.Identifier = findFirstHardwareAddress
 	} else {
-		gen.Id = config.Id
+		gen.Identifier = config.Identifier
 	}
 	if config.Random == nil {
 		gen.Random = rand.Read
@@ -146,9 +152,9 @@ func Init() error {
 	return RegisterGenerator(GeneratorConfig{})
 }
 
-// RegisterGenerator will set the default generator to the given generator
+// RegisterGenerator will set the default generator with the given configuration
 // Like uuid.Init this can only be called once. Any subsequent calls will have no
-// effect. If you call this you do not need to call uuid.Init
+// effect. If you call this you do not need to call uuid.Init.
 func RegisterGenerator(config GeneratorConfig) (err error) {
 	gen := newGenerator(config)
 
@@ -161,13 +167,12 @@ func RegisterGenerator(config GeneratorConfig) (err error) {
 		return
 	})
 	if notOnce {
-		log.Panicf("uuid: uuid.Register* methods cannot be called more than once.")
+		log.Panicf("uuid: Register* methods cannot be called more than once.")
 	}
 	return
 }
 
-// Error will return any error from the uuid.Generator if a UUID returns as Nil
-// or nil
+// Error will return any error from the uuid.Generator.
 func (o *Generator) Error() (err error) {
 	err = o.err
 	o.err = nil
@@ -224,10 +229,10 @@ func (o *Generator) init() {
 	now := o.Next()
 
 	//  Get the current node id
-	node := o.Id()
+	node := o.Identifier()
 
 	if node == nil {
-		log.Println("uuid: address error generating random node id")
+		log.Printf("uuid: address error generating random node id")
 
 		node = make([]byte, 6)
 		n, err := o.Random(node)
@@ -298,10 +303,10 @@ func (o *Generator) save() {
 }
 
 // NewV1 generates a new RFC4122 version 1 UUID based on a 60 bit timestamp and
-// node id
-func (o *Generator) NewV1() Uuid {
+// node id.
+func (o *Generator) NewV1() UUID {
 	o.read()
-	id := array{}
+	id := UUID{}
 
 	makeUuid(&id,
 		uint32(o.Timestamp),
@@ -311,38 +316,148 @@ func (o *Generator) NewV1() Uuid {
 		o.Node)
 
 	id.setRFC4122Version(1)
-	return id[:]
+	return id
+}
+
+// BulkV1 will return a slice of V1 UUIDs. Be careful with the set amount.
+func (o *Generator) BulkV1(amount int) []UUID {
+	ids := make([]UUID, amount)
+	for i := range ids {
+		ids[i] = o.NewV1()
+	}
+	return ids
 }
 
 // NewV2 generates a new DCE version 2 UUID based on a 60 bit timestamp, node id
-// and POSIX UID or GID
-func (o *Generator) NewV2(domain Domain) Uuid {
+// and the id of the given Id type.
+func (o *Generator) NewV2(idType SystemId) UUID {
 	o.read()
 
-	id := array{}
+	id := UUID{}
 
-	var domainId uint32
+	var osId uint32
 
-	switch domain {
-	case DomainUser:
-		domainId = uint32(os.Getuid())
-	case DomainGroup:
-		domainId = uint32(os.Getgid())
+	switch idType {
+	case SystemIdUser:
+		osId = uint32(os.Getuid())
+	case SystemIdGroup:
+		osId = uint32(os.Getgid())
+	case SystemIdEffectiveUser:
+		osId = uint32(os.Geteuid())
+	case SystemIdEffectiveGroup:
+		osId = uint32(os.Getegid())
+	case SystemIdCallerProcess:
+		osId = uint32(os.Getpid())
+	case SystemIdCallerProcessParent:
+		osId = uint32(os.Getppid())
 	}
 
 	makeUuid(&id,
-		domainId,
+		osId,
 		uint16(o.Timestamp>>32),
 		uint16(o.Timestamp>>48),
 		uint16(o.Sequence),
 		o.Node)
 
-	id[9] = byte(domain)
+	id[9] = byte(idType)
 	id.setRFC4122Version(2)
-	return id[:]
+	return id
 }
 
-func makeUuid(id *array, low uint32, mid, hiAndV, seq uint16, node Node) {
+// NewV3 generates a new RFC4122 version 3 UUID based on the MD5 hash of a
+// namespace UUID namespace Implementation UUID and one or more unique names.
+func (o *Generator) NewV3(namespace Implementation, names ...interface{}) UUID {
+	id := UUID{}
+	id.unmarshal(digest(md5.New(), namespace.Bytes(), names...))
+	id.setRFC4122Version(3)
+	return id
+}
+
+func digest(hash hash.Hash, name []byte, names ...interface{}) []byte {
+	for _, v := range names {
+		switch t := v.(type) {
+		case string:
+			name = append(name, t...)
+			continue
+		case []byte:
+			name = append(name, t...)
+			continue
+		case *string:
+			name = append(name, (*t)...)
+			continue
+		}
+		if s, ok := v.(fmt.Stringer); ok {
+			name = append(name, s.String()...)
+			continue
+		}
+		log.Panicf("uuid: does not support type [%T] as a name for hashed UUIDs.", v)
+	}
+	hash.Write(name)
+	return hash.Sum(nil)
+}
+
+// NewV4 generates a new RFC4122 version 4 UUID a cryptographically secure
+// random UUID.
+func (o *Generator) NewV4() *UUID {
+	id, err := v4()
+	if err == nil {
+		return id
+	}
+	log.Printf("uuid: there was an error getting random bytes [%s]", err)
+	if ok := generator.HandleError(err); ok {
+		id, err = v4()
+		if err == nil {
+			return id
+		}
+	}
+	return nil
+}
+
+// BulkV4 will return a slice of V4 UUIDs. Be careful with the set amount.
+// Note: V4 UUIDs require sufficient entropy from the generator.
+func (o *Generator) BulkV4(a int) []UUID {
+	ids := make([]UUID, a)
+	for i := range ids {
+		ids[i] = *o.NewV4()
+	}
+	return ids
+}
+
+func v4() (*UUID, error) {
+	generator.err = nil
+	id := UUID{}
+	_, err := generator.Random(id[:])
+	if err == nil {
+		id.setRFC4122Version(4)
+		return &id, err
+	}
+	generator.err = err
+	return nil, err
+}
+
+// NewV5 generates an RFC4122 version 5 UUID based on the SHA-1 hash of a
+// namespace Implementation UUID and one or more unique names.
+func (o *Generator) NewV5(namespace Implementation, names ...interface{}) UUID {
+	id := UUID{}
+	id.unmarshal(digest(sha1.New(), namespace.Bytes(), names...))
+	id.setRFC4122Version(5)
+	return id
+}
+
+// NewHash generate a UUID based on the given hash implementation. The hash will
+// be of the given names. The version will be set to 0 for Unknown and the
+// variant will be set to VariantFuture.
+func (o *Generator) NewHash(hash hash.Hash, names ...interface{}) UUID {
+	id := UUID{}
+	id.unmarshal(digest(hash, []byte{}, names...))
+	id[versionIndex] &= 0x0f
+	id[versionIndex] |= uint8(0 << 4)
+	id[variantIndex] &= variantSet
+	id[variantIndex] |= VariantFuture
+	return id
+}
+
+func makeUuid(id *UUID, low uint32, mid, hiAndV, seq uint16, node Node) {
 
 	id[0] = byte(low >> 24)
 	id[1] = byte(low >> 16)
@@ -368,7 +483,7 @@ func findFirstHardwareAddress() (node Node) {
 			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
 				// Don't use random as we have a real address
 				node = Node(i.HardwareAddr)
-				log.Printf("uuid: found [%s]", i.HardwareAddr)
+				log.Printf("uuid: found hardware address [%s]", i.HardwareAddr)
 				break
 			}
 		}

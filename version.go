@@ -1,7 +1,7 @@
 package uuid
 
 // Version represents the type of UUID.
-type Version uint8
+type Version int
 
 // The following are the supported Versions.
 const (

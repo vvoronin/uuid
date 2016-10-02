@@ -13,12 +13,10 @@ var (
 	nodeBytes = []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb, 0x44, 0xcc}
 )
 
-func init() {
-	generator.init()
-}
+var testGenerator = NewGenerator(GeneratorConfig{})
 
 func TestGenerator_V1(t *testing.T) {
-	u := generator.NewV1()
+	u := testGenerator.NewV1()
 
 	assert.Equal(t, One, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
@@ -26,23 +24,22 @@ func TestGenerator_V1(t *testing.T) {
 }
 
 func TestGenerator_V2(t *testing.T) {
-	u := generator.NewV2(DomainGroup)
 
-	assert.Equal(t, Two, u.Version(), "Expected correct version")
-	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
-	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
-	assert.Equal(t, byte(DomainGroup), u.Bytes()[9], "Expected string representation to be valid")
+	for _, v := range []SystemId{
+		SystemIdUser, SystemIdGroup, SystemIdEffectiveUser, SystemIdEffectiveGroup,
+		SystemIdCallerProcess, SystemIdCallerProcessParent,
+	} {
+		id := testGenerator.NewV2(v)
 
-	u = generator.NewV2(DomainUser)
-
-	assert.Equal(t, Two, u.Version(), "Expected correct version")
-	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
-	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
-	assert.Equal(t, byte(DomainUser), u.Bytes()[9], "Expected string representation to be valid")
+		assert.Equal(t, Two, id.Version(), "Expected correct version")
+		assert.Equal(t, VariantRFC4122, id.Variant(), "Expected correct variant")
+		assert.True(t, parseUUIDRegex.MatchString(id.String()), "Expected string representation to be valid")
+		assert.Equal(t, byte(v), id.Bytes()[9], "Expected string representation to be valid")
+	}
 }
 
 func TestRegisterGenerator(t *testing.T) {
-	g1 := GeneratorConfig{
+	config := GeneratorConfig{
 		nil,
 		func() Timestamp {
 			return Timestamp(145876)
@@ -55,10 +52,10 @@ func TestRegisterGenerator(t *testing.T) {
 		}, nil}
 
 	once = new(sync.Once)
-	RegisterGenerator(g1)
+	RegisterGenerator(config)
 
-	assert.Equal(t, g1.Next(), generator.Next(), "These values should be the same")
-	assert.Equal(t, g1.Id(), generator.Id(), "These values should be the same")
+	assert.Equal(t, config.Next(), generator.Next(), "These values should be the same")
+	assert.Equal(t, config.Identifier(), generator.Identifier(), "These values should be the same")
 
 	n1, err1 := generator.Random(nil)
 	n, err := generator.Random(nil)
@@ -66,7 +63,7 @@ func TestRegisterGenerator(t *testing.T) {
 	assert.Equal(t, err, err1, "Values should be the same")
 	assert.NoError(t, err)
 
-	assert.True(t, didRegisterGeneratorPanic(g1), "Should panic when invalid")
+	assert.True(t, didRegisterGeneratorPanic(config), "Should panic when invalid")
 }
 
 func didRegisterGeneratorPanic(gen GeneratorConfig) bool {
@@ -88,12 +85,12 @@ func TestNewGenerator(t *testing.T) {
 	assert.NotNil(t, gen.Next, "There shoud be a default Next function")
 	assert.NotNil(t, gen.Random, "There shoud be a default Random function")
 	assert.NotNil(t, gen.HandleError, "There shoud be a default HandleError function")
-	assert.NotNil(t, gen.Id, "There shoud be a default Id function")
+	assert.NotNil(t, gen.Identifier, "There shoud be a default Id function")
 
-	assert.Equal(t, findFirstHardwareAddress(), gen.Id(), "There shoud be the gieen Id function")
+	assert.Equal(t, findFirstHardwareAddress(), gen.Identifier(), "There shoud be the gieen Id function")
 
 	gen = NewGenerator(GeneratorConfig{
-		Id: func() Node {
+		Identifier: func() Node {
 			return Node{0xaa, 0xff}
 		},
 		Next: func() Timestamp {
@@ -111,7 +108,7 @@ func TestNewGenerator(t *testing.T) {
 	assert.NotNil(t, gen.Next, "There shoud be a default Next function")
 	assert.NotNil(t, gen.Random, "There shoud be a default Random function")
 	assert.NotNil(t, gen.HandleError, "There shoud be a default HandleError function")
-	assert.NotNil(t, gen.Id, "There shoud be a default Id function")
+	assert.NotNil(t, gen.Identifier, "There shoud be a default Id function")
 
 	n, err := gen.Random(nil)
 
@@ -119,10 +116,10 @@ func TestNewGenerator(t *testing.T) {
 	assert.Equal(t, 1, n, "There shoud be the given Random function")
 	assert.NoError(t, err, "There shoud be the given Random function")
 	assert.Equal(t, true, gen.HandleError(nil), "There shoud be the given HandleError function")
-	assert.Equal(t, Node{0xaa, 0xff}, gen.Id(), "There shoud be the gieen Id function")
+	assert.Equal(t, Node{0xaa, 0xff}, gen.Identifier(), "There shoud be the gieen Id function")
 
 	gen = NewGenerator(GeneratorConfig{
-		Id: func() Node {
+		Identifier: func() Node {
 			return []byte{0xaa, 0xff}
 		},
 		Next: nil,
@@ -140,12 +137,12 @@ func TestNewGenerator(t *testing.T) {
 	assert.NotNil(t, gen.Next, "There shoud be a default Next function")
 	assert.NotNil(t, gen.Random, "There shoud be a default Random function")
 	assert.NotNil(t, gen.HandleError, "There shoud be a default HandleError function")
-	assert.NotNil(t, gen.Id, "There shoud be a default Id function")
+	assert.NotNil(t, gen.Identifier, "There shoud be a default Id function")
 
 	assert.Equal(t, 1, n, "There shoud be the given Random function")
 	assert.NoError(t, err, "There shoud be the given Random function")
 	assert.Equal(t, true, gen.HandleError(nil), "There shoud be the given HandleError function")
-	assert.Equal(t, Node{0xaa, 0xff}, gen.Id(), "There shoud be the gieen Id function")
+	assert.Equal(t, Node{0xaa, 0xff}, gen.Identifier(), "There shoud be the gieen Id function")
 
 }
 
@@ -295,7 +292,7 @@ func TestGeneratorRandom(t *testing.T) {
 		return true
 	}
 
-	assert.True(t, IsNil(NewV4()), "NewV4 should be nil")
+	assert.Nil(t, NewV4(), "NewV4 should be nil")
 	assert.Error(t, generator.err, "There should be an error [%s]", err)
 
 	generator.HandleError = runHandleError
