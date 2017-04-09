@@ -167,12 +167,12 @@ func RegisterGenerator(config GeneratorConfig) (err error) {
 		return
 	})
 	if notOnce {
-		log.Panicf("uuid: Register* methods cannot be called more than once.")
+		log.Panicln("uuid: Register* methods cannot be called more than once.")
 	}
 	return
 }
 
-// Error will return any error from the uuid.Generator.
+// Error will return any error from the uuid.Generator. // TODO consider better option for init error and v4
 func (o *Generator) Error() (err error) {
 	err = o.err
 	o.err = nil
@@ -232,7 +232,7 @@ func (o *Generator) init() {
 	node := o.Identifier()
 
 	if node == nil {
-		log.Printf("uuid: address error generating random node id")
+		log.Println("uuid: address error generating random node id")
 
 		node = make([]byte, 6)
 		n, err := o.Random(node)
@@ -319,12 +319,17 @@ func (o *Generator) NewV1() UUID {
 	return id
 }
 
-// BulkV1 will return a slice of V1 UUIDs. Be careful with the set amount.
-func (o *Generator) BulkV1(amount int) []UUID {
-	ids := make([]UUID, amount)
+// ReadV1 will read a slice of UUIDs. Be careful with the set amount.
+func (o *Generator) ReadV1(ids []UUID) {
 	for i := range ids {
 		ids[i] = o.NewV1()
 	}
+}
+
+// BulkV1 will return a slice of V1 UUIDs. Be careful with the set amount.
+func (o *Generator) BulkV1(amount int) []UUID {
+	ids := make([]UUID, amount)
+	o.ReadV1(ids)
 	return ids
 }
 
@@ -404,6 +409,7 @@ func (o *Generator) NewV4() *UUID {
 		return id
 	}
 	log.Printf("uuid: there was an error getting random bytes [%s]", err)
+
 	if ok := generator.HandleError(err); ok {
 		id, err = v4()
 		if err == nil {
@@ -413,26 +419,46 @@ func (o *Generator) NewV4() *UUID {
 	return nil
 }
 
+// NewV4Safe generates a new RFC4122 version 4 UUID a cryptographically secure
+// random UUID. If there is an error in the CRNG this will return immediately.
+func (o *Generator) NewV4Safe() (*UUID, error) {
+	return v4()
+}
+
+// ReadV4 will read into a slice of UUIDs. Be careful with the set amount.
+// Note: V4 UUIDs require sufficient entropy from the generator.
+// If n == len(ids) err will be nil.
+func (o *Generator) ReadV4(ids []UUID) (n int, err error) {
+	var id *UUID
+	for i := range ids {
+		id, err = v4()
+		if err != nil {
+			return
+		}
+		ids[i] = *id
+		n++
+		continue
+	}
+	return
+}
+
 // BulkV4 will return a slice of V4 UUIDs. Be careful with the set amount.
 // Note: V4 UUIDs require sufficient entropy from the generator.
-func (o *Generator) BulkV4(a int) []UUID {
-	ids := make([]UUID, a)
-	for i := range ids {
-		ids[i] = *o.NewV4()
-	}
-	return ids
+// If n == len(ids) err will be nil.
+func (o *Generator) BulkV4(amount int) ([]UUID, int, error) {
+	ids := make([]UUID, amount)
+	n, err := o.ReadV4(ids)
+	return ids, n, err
 }
 
 func v4() (*UUID, error) {
-	generator.err = nil
 	id := UUID{}
 	_, err := generator.Random(id[:])
-	if err == nil {
-		id.setRFC4122Version(4)
-		return &id, err
+	if err != nil {
+		return nil, err
 	}
-	generator.err = err
-	return nil, err
+	id.setRFC4122Version(4)
+	return &id, nil
 }
 
 // NewV5 generates an RFC4122 version 5 UUID based on the SHA-1 hash of a

@@ -1,10 +1,5 @@
 package uuid
 
-/****************
- * Date: 3/02/14
- * Time: 10:59 PM
- ***************/
-
 import (
 	"crypto/md5"
 	"crypto/sha1"
@@ -366,7 +361,11 @@ func Test_EachIsUnique(t *testing.T) {
 	}
 
 	// Test V4
-	eachIsUnique(t, BulkV4(spin))
+	ids, n, err := BulkV4(spin)
+	assert.Equal(t, spin, n)
+	assert.NoError(t, err)
+
+	eachIsUnique(t, ids)
 
 	// Test V3
 	eachHashableIsUnique(t, spin, func(i int) UUID { return NewV3(NameSpaceDNS, string(i)) })

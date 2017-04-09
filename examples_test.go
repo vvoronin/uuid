@@ -2,8 +2,8 @@ package uuid_test
 
 import (
 	"fmt"
-	"github.com/myesui/uuid"
-	"github.com/myesui/uuid/savers"
+	"github.com/twinj/uuid"
+	"github.com/twinj/uuid/savers"
 	"net/url"
 	"time"
 )

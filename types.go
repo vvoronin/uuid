@@ -3,6 +3,7 @@ package uuid
 import (
 	"database/sql/driver"
 	"fmt"
+	"errors"
 )
 
 const (
@@ -70,7 +71,7 @@ func (o UUID) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary implements the encoding.BinaryUnmarshaler interface
 func (o *UUID) UnmarshalBinary(bytes []byte) error {
 	if len(bytes) != o.Size() {
-		return fmt.Errorf("uuid: invalid length")
+		return errors.New("uuid: invalid length")
 	}
 	o.unmarshal(bytes)
 	return nil
