@@ -5,9 +5,10 @@ sudo: false
 go_import_path: github.com/myesui/uuid
 
 go:
-    - 1.8
     - 1.7
     - 1.6
+    - 1.5
+    - 1.4
 
 os:
     - linux
