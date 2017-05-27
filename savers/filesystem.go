@@ -54,29 +54,33 @@ func (o *FileSystemSaver) Save(store uuid.Store) {
 // Read reads and loads the Store from the filesystem.
 func (o *FileSystemSaver) Read() (store uuid.Store, err error) {
 	store = uuid.Store{}
+	_, err = os.Stat(o.Path);
+	if err != nil {
+		if os.IsNotExist(err) {
+			dir, file := path.Split(o.Path)
+			if dir == "" || dir == "/" {
+				dir = os.TempDir()
+			}
+			o.Path = path.Join(dir, file)
 
-	if _, err = os.Stat(o.Path); os.IsNotExist(err) {
-		dir, file := path.Split(o.Path)
-		if dir == "" || dir == "/" {
-			dir = os.TempDir()
-		}
-		o.Path = path.Join(dir, file)
-
-		err = os.MkdirAll(dir, os.ModeDir|0700)
-		if err == nil {
-			// If new encode blank store
-			err = o.openAndDo(o.encode, &store)
+			err = os.MkdirAll(dir, os.ModeDir|0700)
 			if err == nil {
-				o.Println("created file system saver", o.Path)
+				// If new encode blank store
+				goto open
 			}
 		}
-		if err != nil {
-			o.Println("file system saver saver read error will autogenerate", err)
-		}
+		goto failed
+	}
+
+	open:
+	err = o.openAndDo(o.decode, &store)
+	if err == nil {
+		o.Println("file system saver created", o.Path)
 		return
 	}
 
-	o.openAndDo(o.decode, &store)
+	failed:
+	o.Println("file system saver read error - will autogenerate", err)
 	return
 }
 
@@ -85,9 +89,9 @@ func (o *FileSystemSaver) openAndDo(fDo func(*uuid.Store), store *uuid.Store) (e
 	defer o.file.Close()
 	if err == nil {
 		fDo(store)
-	} else {
-		o.Println("error opening file", err)
+		return
 	}
+	o.Println("error opening file", err)
 	return
 }
 

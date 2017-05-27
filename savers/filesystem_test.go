@@ -16,12 +16,13 @@ const (
 	saveDuration = 3
 )
 
-func setupFileSystemStateSaver(pPath string, pReport bool) *FileSystemSaver {
+func setupFileSystemStateSaver(path string, report bool) *FileSystemSaver {
 	return &FileSystemSaver{
-		Path: pPath,
-		Report: pReport,
+		Path: path,
+		Report: report,
 		Duration: saveDuration * time.Second,
 		Logger: log.New(ioutil.Discard, "", 0),
+		//Logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 }
 
@@ -78,7 +79,8 @@ func TestFileSystemSaver_Read(t *testing.T) {
 		_, err := saver.Read()
 		assert.Error(t, err, "Expect path failure")
 
-		saver = setupFileSystemStateSaver(path.Join("C:/windows/system32", uuid.NewV1().String()[:8], "generator-delete.gob"), true)
+		saver = setupFileSystemStateSaver(path.Join("C:/windows/system32", uuid.NewV1().String()[:8],
+			"generator-delete.gob"), true)
 		_, err = saver.Read()
 		assert.Error(t, err, "Expect path failure")
 	}
@@ -89,7 +91,8 @@ func TestFileSystemSaver_Read(t *testing.T) {
 		_, err := saver.Read()
 		assert.Error(t, err, "Expect path failure")
 
-		saver = setupFileSystemStateSaver(path.Join("/root", uuid.NewV1().String()[:8], "generator-delete.gob"), true)
+		saver = setupFileSystemStateSaver(path.Join("/root", uuid.NewV1().String()[:8],
+			"generator-delete.gob"), true)
 		_, err = saver.Read()
 		assert.Error(t, err, "Expect path failure")
 	}
@@ -117,15 +120,17 @@ func TestFileSystemSaver_Save(t *testing.T) {
 
 func TestFileSystemSaver_SaveAndRead(t *testing.T) {
 
-	saver := setupFileSystemStateSaver(path.Join("github.com.myesui.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"), true)
+	saver := setupFileSystemStateSaver(path.Join("myesui.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"), true)
 
 	// Read is always called first
-	saver.Read()
+	_, err := saver.Read()
+	assert.NoError(t, err)
 
 	store := uuid.Store{Timestamp: 1, Sequence: 2, Node: []byte{0xff, 0xaa, 0x33, 0x44, 0x55, 0x66}}
 	saver.Save(store)
 
-	saved, _ := saver.Read()
+	saved, err := saver.Read()
+	assert.NoError(t, err)
 
 	assert.Equal(t, store.Timestamp, saved.Timestamp)
 	assert.Equal(t, store.Sequence, saved.Sequence)
