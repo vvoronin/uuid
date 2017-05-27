@@ -24,7 +24,7 @@ import (
 	"regexp"
 )
 
-// Nil represents a Uuid that is empty.
+// Nil represents an empty UUID.
 const Nil Immutable = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
 // The following Immutable UUIDs are for use with V3 or V5 UUIDs.
@@ -164,27 +164,21 @@ func NewV3(namespace Implementation, names ...interface{}) UUID {
 
 // NewV4 generates a new RFC4122 version 4 UUID a cryptographically secure
 // random UUID.
-func NewV4() *UUID {
+func NewV4() UUID {
 	return generator.NewV4()
-}
-
-// NewV4Safe generates a new RFC4122 version 4 UUID a cryptographically secure
-// random UUID.
-func NewV4Safe() (*UUID, error) {
-	return generator.NewV4Safe()
 }
 
 // ReadV4 will read into a slice of UUIDs. Be careful with the set amount.
 // Note: V4 UUIDs require sufficient entropy from the generator.
 // If n == len(ids) err will be nil.
-func ReadV4(ids []UUID) (int, error) {
-	return generator.ReadV4(ids)
+func ReadV4(ids []UUID) {
+	generator.ReadV4(ids)
 }
 
 // BulkV4 will return a slice of V4 UUIDs. Be careful with the set amount.
 // Note: V4 UUIDs require sufficient entropy from the generator.
 // If n == len(ids) err will be nil.
-func BulkV4(amount int) ([]UUID, int, error) {
+func BulkV4(amount int) []UUID {
 	return generator.BulkV4(amount)
 }
 

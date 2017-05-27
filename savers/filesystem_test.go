@@ -1,13 +1,15 @@
 package savers
 
 import (
-	"github.com/twinj/uuid"
 	"gopkg.in/stretchr/testify.v1/assert"
 	"os"
 	"path"
 	"runtime"
 	"testing"
 	"time"
+	"github.com/myesui/uuid"
+	"log"
+	"io/ioutil"
 )
 
 const (
@@ -15,7 +17,12 @@ const (
 )
 
 func setupFileSystemStateSaver(pPath string, pReport bool) *FileSystemSaver {
-	return &FileSystemSaver{Path: pPath, Report: pReport, Duration: saveDuration * time.Second}
+	return &FileSystemSaver{
+		Path: pPath,
+		Report: pReport,
+		Duration: saveDuration * time.Second,
+		Logger: log.New(ioutil.Discard, "", 0),
+	}
 }
 
 // Tests that the schedule is run on the timeDuration
@@ -110,7 +117,7 @@ func TestFileSystemSaver_Save(t *testing.T) {
 
 func TestFileSystemSaver_SaveAndRead(t *testing.T) {
 
-	saver := setupFileSystemStateSaver(path.Join("github.com.twinj.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"), true)
+	saver := setupFileSystemStateSaver(path.Join("github.com.myesui.uuid.generator-"+uuid.NewV1().String()[:8]+".gob"), true)
 
 	// Read is always called first
 	saver.Read()

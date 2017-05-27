@@ -2,10 +2,10 @@ package uuid_test
 
 import (
 	"fmt"
-	"github.com/twinj/uuid"
-	"github.com/twinj/uuid/savers"
 	"net/url"
 	"time"
+	"github.com/myesui/uuid"
+	"github.com/myesui/uuid/savers"
 )
 
 func Example() {
@@ -49,18 +49,11 @@ func Example() {
 }
 
 func ExampleNewV1() {
-
-	// Must run once before using V1 or V2
-	uuid.Init()
-
 	id1 := uuid.NewV1()
 	fmt.Printf("version %d variant %d: %s\n", id1.Version(), id1.Variant(), id1)
 }
 
 func ExampleNewV2() {
-	// Must run once before using V1 or V2
-	uuid.Init()
-
 	id2 := uuid.NewV2(uuid.SystemIdUser)
 	fmt.Printf("version %d variant %d: %s\n", id2.Version(), id2.Variant(), id2)
 }

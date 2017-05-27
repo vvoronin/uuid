@@ -3,7 +3,7 @@ package savers
 
 import (
 	"encoding/gob"
-	"github.com/twinj/uuid"
+	"github.com/myesui/uuid"
 	"log"
 	"os"
 	"path"
@@ -29,6 +29,8 @@ type FileSystemSaver struct {
 
 	// The next time to save
 	uuid.Timestamp
+
+	*log.Logger
 }
 
 // Save saves the given store to the filesystem.
@@ -38,7 +40,7 @@ func (o *FileSystemSaver) Save(store uuid.Store) {
 		err := o.openAndDo(o.encode, &store)
 		if err == nil {
 			if o.Report {
-				log.Println("uuid: file system saver saved", store)
+				o.Println("file system saver saved", store)
 			}
 		}
 		o.Timestamp = store.Add(o.Duration)
@@ -62,11 +64,11 @@ func (o *FileSystemSaver) Read() (store uuid.Store, err error) {
 			// If new encode blank store
 			err = o.openAndDo(o.encode, &store)
 			if err == nil {
-				log.Println("uuid: created file system saver", o.Path)
+				o.Println("created file system saver", o.Path)
 			}
 		}
 		if err != nil {
-			log.Println("uuid: file system saver saver read error will autogenerate", err)
+			o.Println("file system saver saver read error will autogenerate", err)
 		}
 		return
 	}
@@ -81,7 +83,7 @@ func (o *FileSystemSaver) openAndDo(fDo func(*uuid.Store), store *uuid.Store) (e
 	if err == nil {
 		fDo(store)
 	} else {
-		log.Println("uuid: error opening file", err)
+		o.Println("error opening file", err)
 	}
 	return
 }

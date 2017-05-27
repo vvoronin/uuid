@@ -1,8 +1,10 @@
 package uuid_test
 
 import (
-	. "github.com/twinj/uuid"
+	. "github.com/myesui/uuid"
 	"testing"
+	"log"
+	"io/ioutil"
 )
 
 func BenchmarkNewV1Resolution_1024(b *testing.B) {
@@ -52,7 +54,7 @@ func BenchmarkNewV1Resolution_36864(b *testing.B) {
 var gen *Generator
 
 func run(b *testing.B, resolution uint) {
-	gen = NewGenerator(GeneratorConfig{Resolution: resolution})
+	gen, _ = NewGenerator(&GeneratorConfig{Resolution: resolution, Logger: log.New(ioutil.Discard, "", 0)})
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		gen.NewV1() // Sets up initial store on first run

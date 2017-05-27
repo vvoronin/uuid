@@ -9,19 +9,34 @@ import (
 	"fmt"
 	"hash"
 	"log"
+	mrand "math/rand"
 	"net"
 	"os"
 	"sync"
+	"time"
 )
 
 var (
-	once      *sync.Once = new(sync.Once)
-	generator *Generator = newGenerator(GeneratorConfig{})
+	once       = new(sync.Once)
+	generator  = newGenerator(nil)
 )
 
-// Random provides a CPRNG which reads into the given []byte, the package
-// uses crypto/rand.Read by default. You can supply your own CPRNG. The
-// function is used by V4 UUIDs and for setting up V1 and V2 UUIDs in the
+func init() {
+	seed := time.Now().UTC().UnixNano()
+	b := [8]byte{}
+	_, err := rand.Read(b[:])
+	if err == nil {
+		seed += int64(binary.BigEndian.Uint64(b[:]))
+	}
+	mrand.Seed(seed)
+
+}
+
+// Random provides a random number generator which reads into the given []byte, the package
+// uses crypto/rand.Read by default. You can supply your own implementation or downgrade it
+// to the match/rand package.
+//
+// The function is used by V4 UUIDs and for setting up V1 and V2 UUIDs in the
 // Generator Init or Register* functions.
 type Random func([]byte) (int, error)
 
@@ -33,30 +48,35 @@ type Random func([]byte) (int, error)
 // enhance performance.
 type Next func() Timestamp
 
-// NodeIdentifier provides the Node to be used during the life of a
+// Identifier provides the Node to be used during the life of a
 // uuid.Generator. If it cannot be determined nil should be returned, the
-// package will then provide a crypto-random node identifier. The default
-// generator gets a MAC address from the first interface that is up checking
+// package will then provide a node identifier provided by the Random function.
+// The default generator gets a MAC address from the first interface that is 'up' checking
 // net.FlagUp.
 type Identifier func() Node
 
-// HandleError provides the ability to manage any serious error that may be
-// caused by accessing the standard crypto/rand library. Due to the rarity of
-// this occurrence the error is swallowed by NewV4 functions, which rely
-// heavily on random numbers, the package will panic if an error occurs.
-// You can change this behaviour by passing in your own HandleError
-// function to a custom Generator.This function can attempt to fix the CPRNG
-// and then return true to try generating a V4 uuid again. If another error
-// occurs the function will return nil and you can then handle the error by
-// calling uuid.Error or calling Error from your standalone Generator.
-// Waiting for system entropy may be all that is required. If something more
-// serious has occurred, handle appropriately.
-type HandleError func(error) bool
+// HandleRandomError provides the ability to manage a serious error that may be
+// caused by accessing the standard crypto/rand library or the supplied uuid/Random
+// function. Due to the rarity of this occurrence the error is swallowed by the
+// uuid/NewV4 function which relies heavily on random numbers, the package will
+// panic if an error occurs.
+//
+// You can change this behaviour by passing in your own uuid/HandleError
+// function to a custom Generator. This function can attempt to fix the random
+// number generator. If your uuid/HandleError returns true the generator will
+// attempt to generate another V4 uuid. If another error occurs the function
+// will return a fallback v4 uuid generated from the less random math/rand standard library.
+//
+// Waiting for system entropy may be all that is required in the initial error.
+// If something more serious has occurred, handle appropriately using this function.
+type HandleRandomError func([]byte, int, error) error
 
 // Generator is used to create and monitor the running of V1 and V2, and V4
-// UUIDs. It can be setup to take different implementations for Timestamp, Node
-// and CPRNG retrieval. This is also where the Saver implementation can be
-// given and your error policy for V4 UUIDs can be setup.
+// UUIDs. It can be setup to take custom implementations for Timestamp, Node
+// and Random number retrieval by providing those functions as required.
+// You can also supply a uuid/Saver implementation for saving the state of the generator
+// and you can also provide an error policy for V4 UUIDs and possible errors in the random
+// number generator.
 type Generator struct {
 	// Access to the store needs to be maintained
 	sync.Mutex
@@ -66,16 +86,14 @@ type Generator struct {
 	// uuid.Generator.Init function or when a V1 or V2 id is generated.
 	sync.Once
 
-	err error
-
 	// Store contains the current values being used by the Generator.
 	*Store
 
 	// Identifier as per the type Identifier func() Node
 	Identifier
 
-	// HandleError as per the type HandleError func(error) bool
-	HandleError
+	// HandleRandomError as per the type HandleError func(error) bool
+	HandleRandomError
 
 	// Next as per the type Next func() Timestamp
 	Next
@@ -90,30 +108,44 @@ type Generator struct {
 	// your own uuid.Generator instance.
 	// UUIDs.
 	Saver
+
+	*log.Logger
 }
 
-// GeneratorConfig allows you to setup a new uuid.Generator using
-// uuid.NewGenerator or RegisterGenerator. You can supply your own
-// implementations for CPRNG, Identifier and Timestamp retrieval. You can also
+// GeneratorConfig allows you to setup a new uuid.Generator using uuid.NewGenerator or RegisterGenerator. You can supply your own
+// implementations for the random number generator Random, Identifier and Timestamp retrieval. You can also
 // adjust the resolution of the default Timestamp spinner and supply your own
-// error handler for CPRNG failures.
+// error handler for crypto/rand failures.
 type GeneratorConfig struct {
 	Saver
 	Next
 	Resolution uint
 	Identifier
 	Random
-	HandleError
+	HandleRandomError
+	*log.Logger
 }
 
 // NewGenerator will create a new uuid.Generator with the given functions.
-func NewGenerator(config GeneratorConfig) (gen *Generator) {
-	gen = newGenerator(config)
-	generator.Do(generator.init)
-	return
+func NewGenerator(config *GeneratorConfig) (*Generator, error) {
+	return onceDo(newGenerator(config))
 }
 
-func newGenerator(config GeneratorConfig) (gen *Generator) {
+func onceDo(gen *Generator) (*Generator, error) {
+	var err error
+	gen.Do(func() {
+		err = gen.init()
+		if err != nil {
+			gen = nil
+		}
+	})
+	return gen, err
+}
+
+func newGenerator(config *GeneratorConfig) (gen *Generator) {
+	if config == nil {
+		config = new(GeneratorConfig)
+	}
 	gen = new(Generator)
 	if config.Next == nil {
 		if config.Resolution == 0 {
@@ -137,45 +169,34 @@ func newGenerator(config GeneratorConfig) (gen *Generator) {
 	} else {
 		gen.Random = config.Random
 	}
-	if config.HandleError == nil {
-		gen.HandleError = runHandleError
+	if config.HandleRandomError == nil {
+		gen.HandleRandomError = gen.runHandleError
 	} else {
-		gen.HandleError = config.HandleError
+		gen.HandleRandomError = config.HandleRandomError
+	}
+	if config.Logger == nil {
+		gen.Logger = log.New(os.Stderr, "uuid: ", log.LstdFlags)
+	} else {
+		gen.Logger = config.Logger
 	}
 	gen.Saver = config.Saver
 	gen.Store = new(Store)
 	return
 }
 
-// Init will initialise the default generator with default settings
-func Init() error {
-	return RegisterGenerator(GeneratorConfig{})
-}
-
-// RegisterGenerator will set the default generator with the given configuration
+// RegisterGenerator will set the package generator with the given configuration
 // Like uuid.Init this can only be called once. Any subsequent calls will have no
 // effect. If you call this you do not need to call uuid.Init.
-func RegisterGenerator(config GeneratorConfig) (err error) {
-	gen := newGenerator(config)
-
+func RegisterGenerator(config *GeneratorConfig) (err error) {
 	notOnce := true
 	once.Do(func() {
-		generator = gen
-		generator.Do(generator.init)
-		err = generator.Error()
+		generator, err = NewGenerator(config)
 		notOnce = false
 		return
 	})
 	if notOnce {
-		log.Panicln("uuid: Register* methods cannot be called more than once.")
+		panic("uuid: Register* methods cannot be called more than once.")
 	}
-	return
-}
-
-// Error will return any error from the uuid.Generator. // TODO consider better option for init error and v4
-func (o *Generator) Error() (err error) {
-	err = o.err
-	o.err = nil
 	return
 }
 
@@ -205,7 +226,7 @@ func (o *Generator) read() {
 	o.Timestamp = now
 }
 
-func (o *Generator) init() {
+func (o *Generator) init() error {
 	// From a system-wide shared stable store (e.g., a file), read the
 	// UUID generator state: the values of the timestamp, clock sequence,
 	// and node ID used to generate the last UUID.
@@ -232,14 +253,13 @@ func (o *Generator) init() {
 	node := o.Identifier()
 
 	if node == nil {
-		log.Println("uuid: address error generating random node id")
+		o.Println("address error generating random node id")
 
 		node = make([]byte, 6)
 		n, err := o.Random(node)
 		if err != nil {
-			log.Printf("uuid: could not read random bytes into node - read [%d] %s", n, err)
-			o.err = err
-			return
+			o.Printf("could not read random bytes into node - read [%d] %s", n, err)
+			return err
 		}
 		// Mark as randomly generated
 		node[0] |= 0x01
@@ -273,12 +293,11 @@ func (o *Generator) init() {
 		n, err := o.Random(b)
 		if err == nil {
 			storage.Sequence = Sequence(binary.BigEndian.Uint16(b))
-			log.Printf("uuid: initialised random sequence [%d]", storage.Sequence)
+			o.Printf("initialised random sequence [%d]", storage.Sequence)
 
 		} else {
-			log.Printf("uuid: could not read random bytes into sequence - read [%d] %s", n, err)
-			o.err = err
-			return
+			o.Printf("could not read random bytes into sequence - read [%d] %s", n, err)
+			return err
 		}
 	} else if now < storage.Timestamp {
 		// If the state was available, but the saved timestamp is later than
@@ -290,6 +309,8 @@ func (o *Generator) init() {
 	storage.Node = node
 
 	o.Store = &storage
+
+	return nil
 }
 
 func (o *Generator) save() {
@@ -315,7 +336,7 @@ func (o *Generator) NewV1() UUID {
 		uint16(o.Sequence),
 		o.Node)
 
-	id.setRFC4122Version(1)
+	id.setRFC4122Version(VersionOne)
 	return id
 }
 
@@ -365,7 +386,7 @@ func (o *Generator) NewV2(idType SystemId) UUID {
 		o.Node)
 
 	id[9] = byte(idType)
-	id.setRFC4122Version(2)
+	id.setRFC4122Version(VersionTwo)
 	return id
 }
 
@@ -374,7 +395,7 @@ func (o *Generator) NewV2(idType SystemId) UUID {
 func (o *Generator) NewV3(namespace Implementation, names ...interface{}) UUID {
 	id := UUID{}
 	id.unmarshal(digest(md5.New(), namespace.Bytes(), names...))
-	id.setRFC4122Version(3)
+	id.setRFC4122Version(VersionThree)
 	return id
 }
 
@@ -395,48 +416,27 @@ func digest(hash hash.Hash, name []byte, names ...interface{}) []byte {
 			name = append(name, s.String()...)
 			continue
 		}
-		log.Panicf("uuid: does not support type [%T] as a name for hashed UUIDs.", v)
+		panic(fmt.Sprintf("uuid: does not support type [%T] as a name for hashed UUIDs.", v))
 	}
 	hash.Write(name)
 	return hash.Sum(nil)
 }
 
-// NewV4 generates a new RFC4122 version 4 UUID a cryptographically secure
-// random UUID.
-func (o *Generator) NewV4() *UUID {
-	id, err := v4()
-	if err == nil {
-		return id
-	}
-	log.Printf("uuid: there was an error getting random bytes [%s]", err)
-
-	if ok := generator.HandleError(err); ok {
-		id, err = v4()
-		if err == nil {
-			return id
-		}
-	}
-	return nil
-}
-
-// NewV4Safe generates a new RFC4122 version 4 UUID a cryptographically secure
-// random UUID. If there is an error in the CRNG this will return immediately.
-func (o *Generator) NewV4Safe() (*UUID, error) {
-	return v4()
+// NewV4 generates a cryptographically secure random RFC4122 version 4 UUID. If there is an error with the random
+// number generator this will
+func (o *Generator) NewV4() (id UUID) {
+	o.v4(&id)
+	return
 }
 
 // ReadV4 will read into a slice of UUIDs. Be careful with the set amount.
 // Note: V4 UUIDs require sufficient entropy from the generator.
 // If n == len(ids) err will be nil.
-func (o *Generator) ReadV4(ids []UUID) (n int, err error) {
-	var id *UUID
+func (o *Generator) ReadV4(ids []UUID) {
 	for i := range ids {
-		id, err = v4()
-		if err != nil {
-			return
-		}
-		ids[i] = *id
-		n++
+		id := UUID{}
+		o.v4(&id)
+		ids[i] = id
 		continue
 	}
 	return
@@ -445,28 +445,30 @@ func (o *Generator) ReadV4(ids []UUID) (n int, err error) {
 // BulkV4 will return a slice of V4 UUIDs. Be careful with the set amount.
 // Note: V4 UUIDs require sufficient entropy from the generator.
 // If n == len(ids) err will be nil.
-func (o *Generator) BulkV4(amount int) ([]UUID, int, error) {
+func (o *Generator) BulkV4(amount int) []UUID {
 	ids := make([]UUID, amount)
-	n, err := o.ReadV4(ids)
-	return ids, n, err
+	o.ReadV4(ids)
+	return ids
 }
 
-func v4() (*UUID, error) {
-	id := UUID{}
-	_, err := generator.Random(id[:])
+func (o *Generator) v4(id *UUID) {
+	n, err := o.Random(id[:])
 	if err != nil {
-		return nil, err
+		o.Printf("there was an error getting random bytes [%s]", err)
+		if err = o.HandleRandomError(id[:], n, err); err != nil {
+			panic(fmt.Sprintf("random number error must be handled without error - %s", err))
+		}
 	}
-	id.setRFC4122Version(4)
-	return &id, nil
+	id.setRFC4122Version(VersionFour)
 }
+
 
 // NewV5 generates an RFC4122 version 5 UUID based on the SHA-1 hash of a
 // namespace Implementation UUID and one or more unique names.
 func (o *Generator) NewV5(namespace Implementation, names ...interface{}) UUID {
 	id := UUID{}
 	id.unmarshal(digest(sha1.New(), namespace.Bytes(), names...))
-	id.setRFC4122Version(5)
+	id.setRFC4122Version(VersionFive)
 	return id
 }
 
@@ -509,7 +511,6 @@ func findFirstHardwareAddress() (node Node) {
 			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
 				// Don't use random as we have a real address
 				node = Node(i.HardwareAddr)
-				log.Printf("uuid: found hardware address [%s]", i.HardwareAddr)
 				break
 			}
 		}
@@ -517,7 +518,9 @@ func findFirstHardwareAddress() (node Node) {
 	return
 }
 
-func runHandleError(err error) bool {
-	log.Panicln("uuid: there seems to be a serious problem with the system's random number generator", err)
-	return false
+func (o *Generator) runHandleError(id []byte, n int, err error) error {
+	o.Lock()
+	mrand.Read(id)
+	o.Unlock()
+	return nil
 }

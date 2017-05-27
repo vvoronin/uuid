@@ -1,7 +1,6 @@
 package uuid
 
 import (
-	"errors"
 	"strings"
 )
 
@@ -82,11 +81,11 @@ func checkFormat(form Format) {
 	}
 	s := strings.ToLower(string(form))
 	if strings.Count(s, "%x") != 5 {
-		panic(errors.New("uuid: invalid format"))
+		panic("uuid: invalid format")
 	}
 	s = strings.Replace(s, "%x", "", -1)
 	if strings.Count(s, "%") > 0 {
-		panic(errors.New("uuid: invalid format"))
+		panic("uuid: invalid format")
 	}
 }
 

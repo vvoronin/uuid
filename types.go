@@ -20,7 +20,7 @@ func (o *UUID) unmarshal(data []byte) {
 
 // Set the three most significant bits (bits 0, 1 and 2) of the
 // sequenceHiAndVariant equivalent in the array to ReservedRFC4122.
-func (o *UUID) setRFC4122Version(version uint8) {
+func (o *UUID) setRFC4122Version(version Version) {
 	o[versionIndex] &= 0x0f
 	o[versionIndex] |= uint8(version << 4)
 	o[variantIndex] &= variantSet
@@ -31,7 +31,7 @@ func (o *UUID) setRFC4122Version(version uint8) {
 
 var _ Implementation = &UUID{}
 
-// Uuid is the default UUID implementation. All uuid functions will return this
+// UUID is the default RFC implementation. All uuid functions will return this
 // type.
 type UUID [length]byte
 

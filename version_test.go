@@ -7,7 +7,7 @@ import (
 
 func TestVersion_String(t *testing.T) {
 	for _, v := range []Version{
-		One, Two, Three, Four, Five, Unknown,
+		VersionOne, VersionTwo, VersionThree, VersionFour, VersionFive, VersionUnknown,
 	} {
 		assert.NotEmpty(t, v.String(), "Expected a value")
 	}

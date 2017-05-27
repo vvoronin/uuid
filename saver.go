@@ -1,6 +1,8 @@
 package uuid
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Sequence represents an iterated value to help ensure unique UUID generations
 // values across the same domain, server restarts and clock issues.
@@ -43,11 +45,18 @@ type Saver interface {
 // be run before any calls to V1 or V2 UUIDs. uuid.RegisterSaver cannot be run
 // in conjunction with uuid.Init. You may implement the uuid.Saver interface
 // or use the provided uuid.Saver's from the uuid/savers package.
-func RegisterSaver(saver Saver) {
-	generator.Do(func() {
-		defer generator.init()
+func RegisterSaver(saver Saver) (err error) {
+	notOnce := true
+	once.Do(func() {
 		generator.Lock()
-		defer generator.Unlock()
 		generator.Saver = saver
+		generator.Unlock()
+		err = generator.init()
+		notOnce = false
+		return
 	})
+	if notOnce {
+		panic("uuid: Register* methods cannot be called more than once.")
+	}
+	return
 }

@@ -156,7 +156,7 @@ func TestCompare(t *testing.T) {
 func TestNewHex(t *testing.T) {
 	s := "e902893a9d223c7ea7b8d6e313b71d9f"
 	u := NewHex(s)
-	assert.Equal(t, Three, u.Version(), "Expected correct version")
+	assert.Equal(t, VersionThree, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 
@@ -197,7 +197,7 @@ func TestNew(t *testing.T) {
 		u := New(k.Bytes())
 
 		assert.NotNil(t, u, "Expected a valid non nil UUID")
-		assert.Equal(t, One, u.Version(), "Expected correct version %d, but got %d", One, u.Version())
+		assert.Equal(t, VersionOne, u.Version(), "Expected correct version %d, but got %d", VersionOne, u.Version())
 		assert.Equal(t, VariantRFC4122, u.Variant(), "Expected ReservedNCS variant %x, but got %x", VariantNCS, u.Variant())
 		assert.Equal(t, k.String(), u.String(), "Stringer versions should equal")
 	}
@@ -225,7 +225,7 @@ func TestNewHash(t *testing.T) {
 		id = "this is a unique id"
 		ids[i] = NewHash(v, NameSpaceDNS, goLang, NameSpaceDNS.Bytes(), &id)
 		assert.False(t, IsNil(ids[i]))
-		assert.Equal(t, Unknown, ids[i].Version(), "Expected correct version")
+		assert.Equal(t, VersionUnknown, ids[i].Version(), "Expected correct version")
 		assert.Equal(t, VariantFuture, ids[i].Variant(), "Expected correct variant")
 	}
 
@@ -246,21 +246,21 @@ func didNewHashPanic() bool {
 
 func TestNewV1(t *testing.T) {
 	id := NewV1()
-	assert.Equal(t, One, id.Version(), "Expected correct version")
+	assert.Equal(t, VersionOne, id.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, id.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(id.String()), "Expected string representation to be valid")
 }
 
 func TestNewV2(t *testing.T) {
 	id := NewV2(SystemIdGroup)
-	assert.Equal(t, Two, id.Version(), "Expected correct version")
+	assert.Equal(t, VersionTwo, id.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, id.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(id.String()), "Expected string representation to be valid")
 }
 
 func TestNewV3(t *testing.T) {
 	id := NewV3(NameSpaceURL, goLang)
-	assert.Equal(t, Three, id.Version(), "Expected correct version")
+	assert.Equal(t, VersionThree, id.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, id.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(id.String()), "Expected string representation to be valid")
 
@@ -296,7 +296,7 @@ func TestNewV3(t *testing.T) {
 
 func TestNewV4(t *testing.T) {
 	id := NewV4()
-	assert.Equal(t, Four, id.Version(), "Expected correct version")
+	assert.Equal(t, VersionFour, id.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, id.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(id.String()), "Expected string representation to be valid")
 }
@@ -304,7 +304,7 @@ func TestNewV4(t *testing.T) {
 func TestNewV5(t *testing.T) {
 	u := NewV5(NameSpaceURL, goLang)
 
-	assert.Equal(t, Five, u.Version(), "Expected correct version")
+	assert.Equal(t, VersionFive, u.Version(), "Expected correct version")
 	assert.Equal(t, VariantRFC4122, u.Variant(), "Expected correct variant")
 	assert.True(t, parseUUIDRegex.MatchString(u.String()), "Expected string representation to be valid")
 
@@ -361,9 +361,7 @@ func Test_EachIsUnique(t *testing.T) {
 	}
 
 	// Test V4
-	ids, n, err := BulkV4(spin)
-	assert.Equal(t, spin, n)
-	assert.NoError(t, err)
+	ids := BulkV4(spin)
 
 	eachIsUnique(t, ids)
 
@@ -376,7 +374,10 @@ func Test_EachIsUnique(t *testing.T) {
 
 func eachIsUnique(t *testing.T, ids []UUID) {
 	for i, v := range ids {
-		for j := 0; j < i; j++ {
+		for j := 0; j < len(ids); j++ {
+			if i == j {
+				continue
+			}
 			if b := assert.NotEqual(t, v.String(), ids[j].String(), "Should not create the same UUID"); !b {
 				break
 			}
@@ -412,5 +413,16 @@ func TestIsNil(t *testing.T) {
 	assert.False(t, IsNil(NewV3(NameSpaceDNS, "www.example.com")))
 	assert.False(t, IsNil(NewV4()))
 	assert.False(t, IsNil(NewV5(NameSpaceDNS, "www.example.com")))
+}
 
+func TestReadV1(t *testing.T) {
+	ids := make([]UUID, 100)
+	ReadV1(ids)
+	eachIsUnique(t, ids)
+}
+
+func TestReadV4(t *testing.T) {
+	ids := make([]UUID, 100)
+	ReadV4(ids)
+	eachIsUnique(t, ids)
 }

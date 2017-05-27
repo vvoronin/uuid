@@ -1,7 +1,6 @@
 package uuid
 
 import (
-	"errors"
 	"gopkg.in/stretchr/testify.v1/assert"
 	"testing"
 )
@@ -59,7 +58,7 @@ func TestUuid_Version(t *testing.T) {
 	bytes := UUID{}
 	bytes.unmarshal(uuidBytes[:])
 
-	assert.Equal(t, Unknown, id.Version(), "The version should be 0")
+	assert.Equal(t, VersionUnknown, id.Version(), "The version should be 0")
 
 	for v := 0; v < 16; v++ {
 		for i := 0; i <= 255; i++ {
@@ -248,7 +247,7 @@ func setVariant(byte *byte, variant uint8) {
 	case VariantNCS:
 		*byte &= 0x7F
 	default:
-		panic(errors.New("uuid: invalid variant mask"))
+		panic("uuid: invalid variant mask")
 	}
 	*byte |= variant
 }

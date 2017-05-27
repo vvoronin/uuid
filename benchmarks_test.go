@@ -1,11 +1,11 @@
 package uuid_test
 
 import (
-	. "github.com/twinj/uuid"
+	. "github.com/myesui/uuid"
 	"testing"
 )
 
-var generator = NewGenerator(GeneratorConfig{})
+var generator, _ = NewGenerator(nil)
 
 func BenchmarkNewV1(b *testing.B) {
 	for i := 0; i < b.N; i++ {
@@ -84,6 +84,7 @@ func BenchmarkNewHex(b *testing.B) {
 	}
 	b.StopTimer()
 	b.ReportAllocs()
+	b.Name()
 }
 
 func BenchmarkParse(b *testing.B) {
@@ -171,6 +172,12 @@ func BenchmarkImmutable_Bytes(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		NameSpaceDNS.Bytes()
 	}
+	b.StopTimer()
+	b.ReportAllocs()
+}
+
+func BenchmarkBulkV1(b *testing.B) {
+	BulkV1(5000)
 	b.StopTimer()
 	b.ReportAllocs()
 }
