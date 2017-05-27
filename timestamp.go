@@ -93,21 +93,24 @@ type spinner struct {
 
 	// the tracked spin stamp
 	Timestamp
+
+	now func() Timestamp
 }
 
 func (o *spinner) next() Timestamp {
 	for {
-		now := Now()
+		now := o.now()
 		// if clock reading changed since last UUID generated
 		if o.Timestamp == now {
 			o.Count++
 			if o.Count == o.Resolution {
-				for Now() < o.Timestamp+Timestamp(o.Resolution) {
+				for o.now() < o.Timestamp+Timestamp(o.Resolution) {
 				}
 				continue
 			}
 			break
 		}
+
 		// reset count of UUIDs with this timestamp
 		o.Count = 0
 		o.Timestamp = now

@@ -24,13 +24,10 @@ before_script:
 before_install:
     - go get -t -v ./...
     - go get github.com/mattn/goveralls
-    - go get golang.org/x/tools/cmd/cover
 
 script:
-    - go test -race github.com/myesui/uuid
-    - go test -v -covermode=count -coverprofile=cover.out  github.com/myesui/uuid
-    - goveralls -coverprofile=cover.out -service=travis-ci
-    - go test -v -covermode=count -coverprofile=cover.out  github.com/myesui/uuid/savers
+    - go test -v -race github.com/myesui/uuid
+    - go test -v -covermode=count -coverprofile=cover.out
     - goveralls -coverprofile=cover.out -service=travis-ci
 
 notifications:

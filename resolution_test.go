@@ -7,8 +7,12 @@ import (
 	"io/ioutil"
 )
 
+func BenchmarkNewV1Resolution_0(b *testing.B) {
+	run(b, 0)
+}
+
 func BenchmarkNewV1Resolution_1024(b *testing.B) {
-	run(b, 0) // default 1024
+	run(b, 1024) // default 1024
 }
 
 func BenchmarkNewV1Resolution_2048(b *testing.B) {

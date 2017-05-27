@@ -15,6 +15,10 @@ type save struct {
 	sync.Mutex
 }
 
+func (o *save) Init() Saver {
+	return o
+}
+
 func (o *save) Save(pStore Store) {
 	o.Lock()
 	defer o.Unlock()

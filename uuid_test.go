@@ -13,10 +13,6 @@ import (
 	"testing"
 )
 
-const (
-	generate = 10000
-)
-
 var (
 	goLang = "https://google.com/golang.org?q=golang"
 
@@ -336,11 +332,11 @@ func TestNewV5(t *testing.T) {
 }
 
 func TestBulkV1(t *testing.T) {
-	BulkV1(generate)
+	eachIsUnique(t, BulkV1(100))
 }
 
 func TestBulkV4(t *testing.T) {
-	BulkV4(generate)
+	eachIsUnique(t, BulkV4(100))
 }
 
 func Test_EachIsUnique(t *testing.T) {

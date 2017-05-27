@@ -37,6 +37,14 @@ type FileSystemSaver struct {
 	*log.Logger
 }
 
+func (o *FileSystemSaver) Init() uuid.Saver {
+	o.Logger = log.New(os.Stderr, "uuid-saver", log.LstdFlags)
+	o.Duration = 10 * time.Second
+	o.Path = path.Join(os.TempDir(), "myesui-uuid-generator-fs-saver.gob")
+	o.Timestamp = uuid.Now()
+	return o
+}
+
 // Save saves the given store to the filesystem.
 func (o *FileSystemSaver) Save(store uuid.Store) {
 
