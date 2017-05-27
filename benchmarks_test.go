@@ -84,7 +84,6 @@ func BenchmarkNewHex(b *testing.B) {
 	}
 	b.StopTimer()
 	b.ReportAllocs()
-	b.Name()
 }
 
 func BenchmarkParse(b *testing.B) {
