@@ -1,16 +1,16 @@
 package uuid
 
 // Version represents the type of UUID.
-type Version uint8
+type Version int
 
 // The following are the supported Versions.
 const (
-	Unknown Version = iota // Unknown
-	One                    // Time based
-	Two                    // DCE security via POSIX UIDs
-	Three                  // Namespace hash uses MD5
-	Four                   // Crypto random
-	Five                   // Namespace hash uses SHA-1
+	VersionUnknown Version = iota // Unknown
+	VersionOne                    // Time based
+	VersionTwo                    // DCE security via POSIX UIDs
+	VersionThree                  // Namespace hash uses MD5
+	VersionFour                   // Crypto random
+	VersionFive                   // Namespace hash uses SHA-1
 )
 
 // The following are the supported Variants.
@@ -34,32 +34,32 @@ const (
 // String returns English description of version.
 func (o Version) String() string {
 	switch o {
-	case One:
-		return "Version 1: Based on a 60 Bit Timestamp"
-	case Two:
-		return "Version 2: Based on DCE security domain and 60 bit timestamp"
-	case Three:
-		return "Version 3: Namespace UUID and unique names hashed by MD5"
-	case Four:
-		return "Version 4: Crypto-random"
-	case Five:
-		return "Version 5: Namespace UUID and unique names hashed by SHA-1"
+	case VersionOne:
+		return "Version 1: Based on a 60 Bit Timestamp."
+	case VersionTwo:
+		return "Version 2: Based on DCE security domain and 60 bit timestamp."
+	case VersionThree:
+		return "Version 3: Namespace UUID and unique names hashed by MD5."
+	case VersionFour:
+		return "Version 4: Crypto-random generated."
+	case VersionFive:
+		return "Version 5: Namespace UUID and unique names hashed by SHA-1."
 	default:
 		return "Unknown: Not supported"
 	}
 }
 
-func resolveVersion(pVersion uint8) Version {
-	switch Version(pVersion) {
-	case One, Two, Three, Four, Five:
-		return Version(pVersion)
+func resolveVersion(version uint8) Version {
+	switch Version(version) {
+	case VersionOne, VersionTwo, VersionThree, VersionFour, VersionFive:
+		return Version(version)
 	default:
-		return Unknown
+		return VersionUnknown
 	}
 }
 
-func variant(pVariant uint8) uint8 {
-	switch pVariant & variantGet {
+func variant(variant uint8) uint8 {
+	switch variant & variantGet {
 	case VariantRFC4122, 0xA0:
 		return VariantRFC4122
 	case VariantMicrosoft:

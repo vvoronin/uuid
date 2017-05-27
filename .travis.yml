@@ -2,15 +2,20 @@ language: go
 
 sudo: false
 
+go_import_path: github.com/myesui/uuid
+
 go:
+    - 1.8
     - 1.7
     - 1.6
-    - 1.5
-    - 1.4
 
 os:
     - linux
     - osx
+
+env:
+  global:
+    - PATH=$HOME/gopath/bin:$PATH
 
 before_script:
     - gofmt -s -l -e .
@@ -22,9 +27,11 @@ before_install:
     - go get golang.org/x/tools/cmd/cover
 
 script:
-    - go test -v -short -covermode=count -coverprofile=coverage.out -coverpkg=./...
-    - go test ./... -v -short -race
-    - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
+    - go test -race github.com/myesui/uuid
+    - go test -v -covermode=count -coverprofile=cover.out  github.com/myesui/uuid
+    - goveralls -coverprofile=cover.out -service=travis-ci
+    - go test -v -covermode=count -coverprofile=cover.out  github.com/myesui/uuid/savers
+    - goveralls -coverprofile=cover.out -service=travis-ci
 
 notifications:
     email: true
