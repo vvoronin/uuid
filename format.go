@@ -14,7 +14,7 @@ const (
 	FormatHexCurly   Format = "{%x%x%x%x%x}"
 	FormatHexBracket Format = "(%x%x%x%x%x)"
 
-	// Canonical is the canonical format.
+	// FormatCanonical is the default format.
 	FormatCanonical Format = "%x-%x-%x-%x-%x"
 
 	FormatCanonicalCurly   Format = "{%x-%x-%x-%x-%x}"
@@ -22,9 +22,10 @@ const (
 	FormatUrn              Format = "urn:uuid:" + FormatCanonical
 )
 
-var printFormat = FormatCanonical
-
-var defaultFormats map[Format]bool = make(map[Format]bool)
+var (
+	printFormat = FormatCanonical
+	defaultFormats map[Format]bool = make(map[Format]bool)
+)
 
 func init() {
 	defaultFormats[FormatHex] = true
@@ -38,32 +39,29 @@ func init() {
 
 // SwitchFormat switches the default printing format for ALL UUIDs.
 //
-// The default is the canonical uuid.Format.FormatCanonical which has been
+// The default is canonical uuid.Format.FormatCanonical which has been
 // optimised for use with this package. It is twice as fast compared to other
-// formats; supplied or given. However, the benchmark for non default formats
-// is still very quick and quite usable. The package has moved away from using
-// fmt.Sprintf which was up to 5 times slower in comparison to custom formats
-// and 10 times slower in comparison to the canonical format.
+// formats. However, non package formats are still very quick.
 //
 // A valid format will have 5 groups of [%x|%X] or follow the pattern,
 // *%[xX]*%[xX]*%[xX]*%[xX]*%[xX]*. If the supplied format does not meet this
 // standard the function will panic. Note any extra uses of [%] outside of the
 // [%x|%X] will also cause a panic.
-// Constant uuid.Formats have been provided for the most likely formats.
+// Constant uuid.Formats have been provided for most likely formats.
 func SwitchFormat(form Format) {
 	checkFormat(form)
 	printFormat = form
 }
 
-// SwitchFormatToUpper is a convenience function to set the Format to uppercase
-// versions of the given constants.
+// SwitchFormatToUpper is a convenience function to set the uuid.Format to uppercase
+// versions.
 func SwitchFormatToUpper(form Format) {
 	SwitchFormat(Format(strings.ToUpper(string(form))))
 }
 
 // Formatter will return a string representation of the given UUID.
 //
-// Use this for one time formatting when setting the default using
+// Use this for one time formatting when setting the Format using
 // uuid.SwitchFormat would be overkill.
 //
 // A valid format will have 5 groups of [%x|%X] or follow the pattern,

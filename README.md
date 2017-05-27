@@ -8,8 +8,6 @@ Go UUID implementation
 [![Coverage Status](https://coveralls.io/repos/github/myesui/uuid/badge.svg?branch=master)](https://coveralls.io/github/myesui/uuid?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/myesui/uuid)](https://goreportcard.com/report/github.com/myesui/uuid)
 
-**This project is currently pre 1.0.0**
-
 This package provides RFC 4122 and DCE 1.1 compliant UUIDs.
 It will generate the following:
 
@@ -26,69 +24,9 @@ generating version 1, 2, 3, 4 and 5 Uuid's
 
 Will generally support last 3 versions of Go.
 
-1.8
-1.7
-1.6
-
-# Design considerations
-
-* UUID is an interface which correlates to 
-
-* V1 UUIDs should be properly sequential. This can cause the Generator to work
-more slowly compared to other implementations. It can however be manually tuned
-to have performance that is on par. This is achieved by setting the Timestamp
-Resolution. Benchmark tests have been provided to help determine the best
-setting for your server
-
-    Proper test coverage has determined thant the UUID timestamp spinner works
-    correctly, across multiple clock resolutions. The generator produces
-    timestamps that roll out sequentially and will only modify the clock
-    sequence on very rare circumstances.
-
-    It is highly recommended that you register a uuid.Saver if you use V1 or V2
-    UUIDs as it will ensure a higher probability of uniqueness.
-
-        Example V1 output:
-        5fb1a280-30f0-11e6-9614-005056c00001
-        5fb1a281-30f0-11e6-9614-005056c00001
-        5fb1a282-30f0-11e6-9614-005056c00001
-        5fb1a283-30f0-11e6-9614-005056c00001
-        5fb1a284-30f0-11e6-9614-005056c00001
-        5fb1a285-30f0-11e6-9614-005056c00001
-        5fb1a286-30f0-11e6-9614-005056c00001
-        5fb1a287-30f0-11e6-9614-005056c00001
-        5fb1a288-30f0-11e6-9614-005056c00001
-        5fb1a289-30f0-11e6-9614-005056c00001
-        5fb1a28a-30f0-11e6-9614-005056c00001
-        5fb1a28b-30f0-11e6-9614-005056c00001
-        5fb1a28c-30f0-11e6-9614-005056c00001
-        5fb1a28d-30f0-11e6-9614-005056c00001
-        5fb1a28e-30f0-11e6-9614-005056c00001
-        5fb1a28f-30f0-11e6-9614-005056c00001
-        5fb1a290-30f0-11e6-9614-005056c00001
-
-* The V1 UUID generator should be file system and server agnostic
-    To achieve this there are:
-        ** No Os locking threads or file system dependant storage 
-        ** Provided the uuid.Saver interface so a package can implement its own solution if required
-* The V4 UUID should allow a package to handle any error that can occur in the CPRNG. The default is to panic.
-* The package should be able to handle multiple instances of Generators so a package can produce UUIDs from multiple sources.
-
-# Recent Changes
-
-* Added ability for user defined Generator's which can be setup with your own
-retrieval functions for a Node Id, Timestamp and Random data for a UUID; more
-details in docs.
-* Now builds in Windows, OsX and Linux, with test coverage checking and code
-quality checks.
-* Added V2 UUIDs
-* Improved builds and 100% test coverage
-* Library overhaul to cleanup exports that are not useful for a user
-* Improved and fixed file system uuid.Saver interface, breaking changes.
-    To use a uuid.Saver make sure you pass it in via the
-    uuid.RegisterSaver(Saver) function before a UUID is generated, so as to
-    take affect. This is because only one attempt at system initialisation can
-    be attempted.
+ - 1.8
+ - 1.7
+ - 1.6
 
 ## Installation
 
@@ -160,7 +98,7 @@ for more information.
     FormatUrn              = urn:uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxx
     
     The uuid.Formatter function also exists and is only ever meant to be used for one time prints where a different format from the default or switched format is required. You can supply your own format as long as it fits the pattern.
-    which cointains %x for the five groups in an UUID. Eg: FormatCanonical = %x-%x-%x-%x-%x
+    which contains %x for the five groups in an UUID. Eg: FormatCanonical = %x-%x-%x-%x-%x
     
     You can also stwict to a custom format
     
@@ -170,10 +108,6 @@ for more information.
 
     import "gopkg.in/myesui/uuid.v1"
 
-    // An uuid.Init or uuid.Register* function must be called before any V1 or
-    // V2 UUIDs, only needs 1 call.
-    uuid.Init()
-
     id := uuid.NewV1()
     fmt.Println(id)
     fmt.Printf("version %s variant %x: %s\n", u1.Version(), u1.Variant(), id)
@@ -182,23 +116,28 @@ for more information.
     fmt.Println(id)
     fmt.Printf("version %s variant %x: %s\n", u1.Version(), u1.Variant(), id)
 
-    // If you wish to register a saving mechanism to keep track of your UUID
-    // It is recommeneded to add a Saver so as to reduce risk in UUID
-    // collisions
-    saver := new(savers.FileSystemSaver)
-    saver.Report = true
-    saver.Duration = time.Second * 3
+    ids := uuid.BulkV1(500)
+    for _, v := range ids {
+    	fmt.Println(v)
+    }
+    
+    ids = make([]UUID, 100)
+    ReadV1(ids)
+    for _, v := range ids {
+        fmt.Println(v)
+    }
 
-    // Must be called before any V1 or V2 UUIDs. Do not call uuid.Init if
+    // If you wish to register a saving mechanism to keep track of your UUIDs over restarts
+    // It is recommeneded to add a Saver so as to reduce risk in UUID collisions
+    saver := savers.FileSystemSaver.Init()
+
+    // Must be called before any V1 or V2 UUIDs. Do not call other uuid.Register* if
     // registering a Saver
     uuid.RegisterSaver(saver)
 
 ## Version 3 and 5 UUIDs
 
     import "gopkg.in/myesui/uuid.v1"
-
-    // Does not need to be called first but is recommended
-    uuid.Init()
 
     id := uuid.NewV3(uuid.NameSpaceURL, uuid.Name("www.example.com"))
     fmt.Println(id)
@@ -216,14 +155,22 @@ for more information.
 
     import "gopkg.in/myesui/uuid.v1"
 
-    // Does not need to be called first but is recommended
-    uuid.Init()
-
     // A V4 UUID will panic by default if the systems CPRNG fails - this can
     // be changed by registering your own generator
     u4 := uuid.NewV4()
     fmt.Println(id)
     fmt.Printf("version %d variant %x: %s\n", u4.Version(), u4.Variant(), u4)
+    
+    ids := uuid.BulkV4(500)
+    for _, v := range ids {
+        fmt.Println(v)
+    }
+    
+    ids := make([]UUID, 100)
+    ReadV4(ids)
+    for _, v := range ids {
+        fmt.Println(v)
+    }
 
 ## Custom Generators
 
@@ -234,10 +181,10 @@ for more information.
     // for the next unique timestamp. The default is a low 1024, this equates
     // to Ids that can be created in 100 nanoseconds. It is low to encourage
     // you to set it.
-    uuid.RegisterGenerator(GeneratorConfig{Resolution: 18465})
+    uuid.RegisterGenerator(&GeneratorConfig{Resolution: 18465})
 
     // Provide your own node Id or MAC address
-    uuid.RegisterGenerator(GeneratorConfig{
+    uuid.RegisterGenerator(&GeneratorConfig{
         Id: func() uuid.Node{
             // My Node Id
             // If this returns nil a random one will be generated
@@ -245,7 +192,7 @@ for more information.
     })
 
     // Replace the default Timestamp spinner with your own.
-    uuid.RegisterGenerator(GeneratorConfig{
+    uuid.RegisterGenerator(&GeneratorConfig{
         Next: func()(uuid.Timestamp){
             // My own Timestamp function...
             // Resolution will become reduendant if you set this.
@@ -254,49 +201,58 @@ for more information.
     })
 
     // Replace the default crypto/rand.Read CPRNG with your own.
-    uuid.RegisterGenerator(GeneratorConfig{
+    uuid.RegisterGenerator(&GeneratorConfig{
         Random: func([]byte)(int, error){
             // My CPRNG function...
         },
     })
+    
+    // type HandleRandomError func([]byte, int, error) error
 
-    // Replace the default error handler for V4 UUIDs. This function is called
-    // when there is an error in the CPRNG. The default function causes a panic.
-    // You can change that behaviour and handle the error by checking for nil
-    // on a NewV4() call.
-    //  id := NewV4()
-    //  if id == nil {
-    //      err := uuid.Error()
-    //      // handle error
-    //  }
-    // Trying again could fix the problem. Errors could be due to a lack of
-    // system entropy or some other serious issue. These issues are rare,
+    // Replace the default random number error handler for V4 UUIDs. This function is called
+    // when there is an error in the crypto/rand CPRNG. The default error handler function reads 
+    // from math.Rand as a fallback.
+    // 
+    // You can change that behaviour and handle the error by providing your own function.
+    // 
+    // Errors could be due to a lack of system entropy or some other serious issue. These issues are rare,
     // however, having the tools to handle such issues is important.
-    // This approach was taken as each user of this package will want to handle
-    // this differently.
-    uuid.RegisterGenerator(GeneratorConfig{
-        HandleError: func(error)bool{
-            // My HandleError function...
-            // If this returns true the V4 generator will try again - if it
-            //      fails again the NewV4() function will exit with a nil
-            // If this returns false the NewV4() function will exit with a nil
+    // This approach was taken as each user of this package will want to handle this differently.
+    // 
+    // For example one user of the package might want to just panic instead. 
+    //  Returning an error will cause a panic.
+    
+    uuid.RegisterGenerator(&GeneratorConfig{
+        HandleError: func(id []byte, n int, err error)bool{
+            return err
         },
     })
     
-    // You can also just manage your own completely.
-    gen := NewGenerator(GeneratorConfig{})
+    // You can also just generate your own completely.
+    myGenerator := NewGenerator(nil)
     
-    id := gen.NewV4()
+    id := myGenerator.NewV4()
+    
+    // You can replace the logger
+    uuid.RegisterGenerator(&GeneratorConfig{
+            Logger: log.New(someWriter, "my-prefix", myFlags),
+        })
     
 
 ## Coverage
 
 * go test -coverprofile cover.out github.com/myesui/uuid
+* go test -coverprofile cover.out github.com/myesui/uuid/savers
+
 * go tool cover -html=cover.out -o cover.html
 
 ## Contribution 
 
-* please fork from the *develop* branch. 
+1. fork from the *master* branch to create your own fork
+2. clone from *master* into $GOPATH/src/github.com/myesui/uuid
+3. git remote add `username` https://github.com/username/uuid.git
+4. push changes on your fork and track your remote
+5. Remember to create a branch
 
 To ensure you get the correct packages and subpackages install in a gopath which matches *go/src/github.com/myesui/uuid*
 
@@ -305,8 +261,51 @@ To ensure you get the correct packages and subpackages install in a gopath which
 * [RFC 4122](http://www.ietf.org/rfc/rfc4122.txt)
 * [DCE 1.1: Authentication and Security Services](http://pubs.opengroup.org/onlinepubs/9629399/apdxa.htm)
 
+# Design considerations
+
+* UUID is an interface which correlates to 
+
+* V1 UUIDs are sequential. This can cause the Generator to work
+more slowly compared to other implementations. It can however be manually tuned
+to have performance that is on par. This is achieved by setting the Timestamp
+Resolution. Benchmark tests have been provided to help determine the best
+setting for your server
+
+    Proper test coverage has determined thant the UUID timestamp spinner works
+    correctly, across multiple clock resolutions. The generator produces
+    timestamps that roll out sequentially and will only modify the clock
+    sequence on very rare circumstances.
+
+    It is highly recommended that you register a uuid.Saver if you use V1 or V2
+    UUIDs as it will ensure a higher probability of uniqueness.
+
+        Example V1 output:
+        5fb1a280-30f0-11e6-9614-005056c00001
+        5fb1a281-30f0-11e6-9614-005056c00001
+        5fb1a282-30f0-11e6-9614-005056c00001
+        5fb1a283-30f0-11e6-9614-005056c00001
+        5fb1a284-30f0-11e6-9614-005056c00001
+        5fb1a285-30f0-11e6-9614-005056c00001
+        5fb1a286-30f0-11e6-9614-005056c00001
+        5fb1a287-30f0-11e6-9614-005056c00001
+        5fb1a288-30f0-11e6-9614-005056c00001
+        5fb1a289-30f0-11e6-9614-005056c00001
+        5fb1a28a-30f0-11e6-9614-005056c00001
+        5fb1a28b-30f0-11e6-9614-005056c00001
+        5fb1a28c-30f0-11e6-9614-005056c00001
+        5fb1a28d-30f0-11e6-9614-005056c00001
+        5fb1a28e-30f0-11e6-9614-005056c00001
+        5fb1a28f-30f0-11e6-9614-005056c00001
+        5fb1a290-30f0-11e6-9614-005056c00001
+
+* The V1 UUID generator should be file system and server agnostic
+    To achieve this there are:
+        ** No Os locking threads or file system dependant storage 
+        ** Provided the uuid.Saver interface so a package can implement its own solution if required
+* The V4 UUID should allow a package to handle any error that can occur in the CPRNG. The default is to read from math.Rand``````.
+* The package should be able to handle multiple instances of Generators so a package can produce UUIDs from multiple sources.
+
 ## Copyright
 
-Copyright (C) 2016 myesui@github.com
-See [LICENSE](https://github.com/myesui/uuid/tree/master/LICENSE)
-file for details.
+Copyright (C) 2017 myesui@github.com
+See [LICENSE](https://github.com/myesui/uuid/tree/master/LICENSE) file for details.

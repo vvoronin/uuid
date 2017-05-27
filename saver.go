@@ -38,6 +38,9 @@ type Saver interface {
 
 	// Save saves the state to the non volatile store and is called only if
 	Save(Store)
+
+	// Init allows default setup of a new Saver
+	Init() Saver
 }
 
 // RegisterSaver register's a uuid.Saver implementation to the default package

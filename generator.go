@@ -59,7 +59,7 @@ type Identifier func() Node
 // caused by accessing the standard crypto/rand library or the supplied uuid/Random
 // function. Due to the rarity of this occurrence the error is swallowed by the
 // uuid/NewV4 function which relies heavily on random numbers, the package will
-// panic if an error occurs.
+// panic instead if an error occurs.
 //
 // You can change this behaviour by passing in your own uuid/HandleError
 // function to a custom Generator. This function can attempt to fix the random
@@ -155,6 +155,7 @@ func newGenerator(config *GeneratorConfig) (gen *Generator) {
 			Resolution: config.Resolution,
 			Count:      0,
 			Timestamp:  Now(),
+			now: Now,
 		}).next
 	} else {
 		gen.Next = config.Next
@@ -456,7 +457,7 @@ func (o *Generator) v4(id *UUID) {
 	if err != nil {
 		o.Printf("there was an error getting random bytes [%s]", err)
 		if err = o.HandleRandomError(id[:], n, err); err != nil {
-			panic(fmt.Sprintf("random number error must be handled without error - %s", err))
+			panic(fmt.Sprintf("random number error - %s", err))
 		}
 	}
 	id.setRFC4122Version(VersionFour)
