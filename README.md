@@ -7,6 +7,7 @@ Go UUID implementation
 [![Build Status](https://travis-ci.org/myesui/uuid.png?branch=master)](https://travis-ci.org/myesui/uuid)
 [![Coverage Status](https://coveralls.io/repos/github/myesui/uuid/badge.svg?branch=master)](https://coveralls.io/github/myesui/uuid?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/myesui/uuid)](https://goreportcard.com/report/github.com/myesui/uuid)
+
 **This project is currently pre 1.0.0**
 
 This package provides RFC 4122 and DCE 1.1 compliant UUIDs.
@@ -23,7 +24,11 @@ generating version 1, 2, 3, 4 and 5 Uuid's
 
 # Requirements
 
-Any supported version of Go.
+Will generally support last 3 versions of Go.
+
+1.8
+1.7
+1.6
 
 # Design considerations
 
