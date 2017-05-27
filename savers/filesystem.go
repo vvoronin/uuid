@@ -12,6 +12,10 @@ import (
 
 var _ uuid.Saver = &FileSystemSaver{}
 
+func init() {
+	gob.Register(&uuid.Store{})
+}
+
 // FileSystemSaver implements the uuid.Saver interface.
 type FileSystemSaver struct {
 	// A file to save the state to
@@ -50,7 +54,6 @@ func (o *FileSystemSaver) Save(store uuid.Store) {
 // Read reads and loads the Store from the filesystem.
 func (o *FileSystemSaver) Read() (store uuid.Store, err error) {
 	store = uuid.Store{}
-	gob.Register(&uuid.Store{})
 
 	if _, err = os.Stat(o.Path); os.IsNotExist(err) {
 		dir, file := path.Split(o.Path)
