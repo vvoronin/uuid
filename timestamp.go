@@ -2,7 +2,6 @@ package uuid
 
 import (
 	"time"
-	"fmt"
 )
 
 const (
