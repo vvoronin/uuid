@@ -75,14 +75,14 @@ func TestFileSystemSaver_Read(t *testing.T) {
 
 	// No permissions
 	if runtime.GOOS == "windows" {
-		saver := setupFileSystemStateSaver("C:/generator-delete.gob", true)
-		_, err := saver.Read()
-		assert.Error(t, err, "Expect path failure")
-
-		saver = setupFileSystemStateSaver(path.Join("C:/", uuid.NewV1().String()[:8],
-			"generator-delete.gob"), true)
-		_, err = saver.Read()
-		assert.Error(t, err, "Expect path failure")
+		//saver := setupFileSystemStateSaver("C:/generator-delete.gob", true)
+		//_, err := saver.Read()
+		//assert.Error(t, err, "Expect path failure")
+		//
+		//saver = setupFileSystemStateSaver(path.Join("C:/", uuid.NewV1().String()[:8],
+		//	"generator-delete.gob"), true)
+		//_, err = saver.Read()
+		//assert.Error(t, err, "Expect path failure")
 	}
 
 	// No permissions
