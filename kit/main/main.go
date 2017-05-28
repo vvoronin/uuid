@@ -16,6 +16,7 @@ import (
 	"github.com/myesui/uuid/kit/four"
 	"github.com/myesui/uuid/kit/three"
 	"github.com/myesui/uuid"
+	"github.com/myesui/uuid/kit/five"
 )
 
 const (
@@ -56,6 +57,10 @@ func main() {
 		Add(four.NewLoggingMiddleware(log.With(logger, "component", "four"))).
 		Add(four.NewInstrumentingMiddleware())
 
+	v5Service := five.NewService(config).
+		Add(five.NewLoggingMiddleware(log.With(logger, "component", "five"))).
+		Add(five.NewInstrumentingMiddleware())
+
 	httpLogger := log.With(logger, "component", "http")
 
 	mux := http.NewServeMux()
@@ -64,6 +69,7 @@ func main() {
 	mux.Handle("/two/v1/", two.MakeHandler(v2Service, httpLogger))
 	mux.Handle("/three/v1/", three.MakeHandler(v3Service, httpLogger))
 	mux.Handle("/four/v1/", four.MakeHandler(v4Service, httpLogger))
+	mux.Handle("/five/v1/", five.MakeHandler(v5Service, httpLogger))
 
 	http.Handle("/", accessControl(mux))
 	http.Handle("/metrics", promhttp.Handler())

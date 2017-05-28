@@ -1,4 +1,4 @@
-package three
+package five
 
 import (
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -20,7 +20,7 @@ func MakeHandler(service Service, logger log.Logger) http.Handler {
 		kit.Route{
 			Name: "UUID",
 			Method: "GET",
-			Pattern: "/three/v1/uuid",
+			Pattern: "/five/v1/uuid",
 			Handler: kithttp.NewServer(
 				makeUuidEndpoint(service),
 				decodeUuidRequest,
