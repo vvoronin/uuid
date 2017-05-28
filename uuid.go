@@ -36,18 +36,22 @@ const (
 	NameSpaceX500 Immutable = "k\xa7\xb8\x14\x9d\xad\x11р\xb4\x00\xc0O\xd40\xc8"
 )
 
+//go:generate stringer -type=SystemId
+
 // SystemId denotes the type of id to retrieve from the operating system.
 // That id is then used to create an identifier UUID.
 type SystemId uint8
 
 // The following SystemId's are for use with V2 UUIDs.
 const (
-	SystemIdUser SystemId = iota + 1
+	SystemIdNone SystemId = iota
+	SystemIdUser
 	SystemIdEffectiveUser
 	SystemIdGroup
 	SystemIdEffectiveGroup
 	SystemIdCallerProcess
 	SystemIdCallerProcessParent
+	SystemIdUnknown
 )
 
 // Implementation is the common interface implemented by all UUIDs.
