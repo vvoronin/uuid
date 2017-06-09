@@ -1,8 +1,9 @@
 package kit
 
 import (
-	"github.com/go-kit/kit/log"
 	"time"
+
+	"github.com/go-kit/kit/log"
 )
 
 type LoggingMiddleware struct {

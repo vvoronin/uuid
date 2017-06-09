@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	once       = new(sync.Once)
-	generator  = newGenerator(nil)
+	once      = new(sync.Once)
+	generator = newGenerator(nil)
 )
 
 func init() {
@@ -155,7 +155,7 @@ func newGenerator(config *GeneratorConfig) (gen *Generator) {
 			Resolution: config.Resolution,
 			Count:      0,
 			Timestamp:  Now(),
-			now: Now,
+			now:        Now,
 		}).next
 	} else {
 		gen.Next = config.Next
@@ -462,7 +462,6 @@ func (o *Generator) v4(id *UUID) {
 	}
 	id.setRFC4122Version(VersionFour)
 }
-
 
 // NewV5 generates an RFC4122 version 5 UUID based on the SHA-1 hash of a
 // namespace Implementation UUID and one or more unique names.

@@ -5,11 +5,11 @@ import (
 	"github.com/myesui/uuid/kit"
 )
 
-var  _ Service = &service{}
+var _ Service = &service{}
 
 type Service interface {
-	kit.Kit
-	Add(kit.Kit) Service
+	kit.UUIDKit
+	Add(kit.UUIDKit) Service
 
 	UUID(SystemId) UUID
 }
@@ -23,7 +23,7 @@ func (o service) UUID(idType SystemId) UUID {
 	return o.generator.NewV2(idType)
 }
 
-func (o *service) Add(service kit.Kit) Service {
+func (o *service) Add(service kit.UUIDKit) Service {
 	return kit.AddMiddleware(service, o).(Service)
 }
 

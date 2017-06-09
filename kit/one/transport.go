@@ -1,43 +1,44 @@
 package one
 
 import (
-	kithttp "github.com/go-kit/kit/transport/http"
-	"github.com/go-kit/kit/log"
-	"github.com/myesui/uuid/kit"
-	"net/http"
-	"github.com/gorilla/mux"
-	"strconv"
 	"context"
+	"net/http"
+	"strconv"
+
+	"github.com/go-kit/kit/log"
+	khttp "github.com/go-kit/kit/transport/http"
+	"github.com/gorilla/mux"
+	"github.com/myesui/uuid/kit"
 )
 
 // MakeHandler makes the UUID Service handler
 func MakeHandler(service Service, logger log.Logger) http.Handler {
-	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorLogger(logger),
-		kithttp.ServerErrorEncoder(kit.EncodeError),
+	opts := []khttp.ServerOption{
+		khttp.ServerErrorLogger(logger),
+		khttp.ServerErrorEncoder(kit.EncodeError),
 	}
 
 	routes := kit.Routes{
 		kit.Route{
-			Name: "UUID",
-			Method: "GET",
+			Name:    "UUID",
+			Method:  "GET",
 			Pattern: "/one/v1/uuid",
-			Handler: kithttp.NewServer(
+			Handler: khttp.NewServer(
 				makeUuidEndpoint(service),
 				kit.Decode(nil),
 				kit.Encode,
-				opts...
+				opts...,
 			),
 		},
 		kit.Route{
-			Name: "BULK",
-			Method: "GET",
+			Name:    "BULK",
+			Method:  "GET",
 			Pattern: "/one/v1/bulk/{amount}",
-			Handler: kithttp.NewServer(
+			Handler: khttp.NewServer(
 				makeBulkEndpoint(service),
 				decodeBulkRequest,
 				kit.Encode,
-				opts...
+				opts...,
 			),
 		},
 	}

@@ -1,11 +1,12 @@
 package uuid_test
 
 import (
-	. "github.com/myesui/uuid"
 	"gopkg.in/stretchr/testify.v1/assert"
-	"testing"
-	"log"
 	"io/ioutil"
+	"log"
+	"testing"
+
+	. "github.com/myesui/uuid"
 )
 
 func TestInit(t *testing.T) {

@@ -131,11 +131,11 @@ func parse(uuid string) ([]byte, error) {
 }
 
 func fromHex(uuid string) []byte {
-	bytes, err := hex.DecodeString(uuid)
+	to, err := hex.DecodeString(uuid)
 	if err != nil {
 		panic(err)
 	}
-	return bytes
+	return to
 }
 
 // NewV1 generates a new RFC4122 version 1 UUID based on a 60 bit timestamp and

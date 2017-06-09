@@ -2,8 +2,8 @@ package uuid
 
 import (
 	"database/sql/driver"
-	"fmt"
 	"errors"
+	"fmt"
 )
 
 const (

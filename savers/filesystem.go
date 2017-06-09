@@ -3,11 +3,12 @@ package savers
 
 import (
 	"encoding/gob"
-	"github.com/myesui/uuid"
 	"log"
 	"os"
 	"path"
 	"time"
+
+	"github.com/myesui/uuid"
 )
 
 var _ uuid.Saver = &FileSystemSaver{}
@@ -62,7 +63,7 @@ func (o *FileSystemSaver) Save(store uuid.Store) {
 // Read reads and loads the Store from the filesystem.
 func (o *FileSystemSaver) Read() (store uuid.Store, err error) {
 	store = uuid.Store{}
-	_, err = os.Stat(o.Path);
+	_, err = os.Stat(o.Path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			dir, file := path.Split(o.Path)
@@ -80,14 +81,14 @@ func (o *FileSystemSaver) Read() (store uuid.Store, err error) {
 		goto failed
 	}
 
-	open:
+open:
 	err = o.openAndDo(o.decode, &store)
 	if err == nil {
 		o.Println("file system saver created", o.Path)
 		return
 	}
 
-	failed:
+failed:
 	o.Println("file system saver read error - will autogenerate", err)
 	return
 }

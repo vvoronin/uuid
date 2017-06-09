@@ -3,30 +3,30 @@ package main
 import (
 	"flag"
 	"fmt"
+	slog "log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	slog "log"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/go-kit/kit/log"
-	"github.com/myesui/uuid/kit/one"
-	"github.com/myesui/uuid/kit/two"
-	"github.com/myesui/uuid/kit/four"
-	"github.com/myesui/uuid/kit/three"
 	"github.com/myesui/uuid"
 	"github.com/myesui/uuid/kit/five"
+	"github.com/myesui/uuid/kit/four"
+	"github.com/myesui/uuid/kit/one"
+	"github.com/myesui/uuid/kit/three"
+	"github.com/myesui/uuid/kit/two"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
-	defaultPort              = "8080"
+	defaultPort = "8080"
 )
 
 func main() {
 	var (
-		address  = envString("PORT", defaultPort)
-		httpAddress          = flag.String("http.addr", ":"+address, "HTTP listen address")
+		address     = envString("PORT", defaultPort)
+		httpAddress = flag.String("http.addr", ":"+address, "HTTP listen address")
 	)
 
 	flag.Parse()
@@ -110,4 +110,3 @@ func envString(env, fallback string) string {
 	}
 	return e
 }
-

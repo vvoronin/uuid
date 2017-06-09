@@ -1,10 +1,11 @@
 package uuid_test
 
 import (
-	. "github.com/myesui/uuid"
-	"testing"
-	"log"
 	"io/ioutil"
+	"log"
+	"testing"
+
+	. "github.com/myesui/uuid"
 )
 
 func BenchmarkNewV1Resolution_0(b *testing.B) {

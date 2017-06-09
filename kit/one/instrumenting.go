@@ -1,8 +1,9 @@
 package one
 
 import (
-	. "github.com/myesui/uuid"
 	"time"
+
+	. "github.com/myesui/uuid"
 	"github.com/myesui/uuid/kit"
 )
 
@@ -30,7 +31,7 @@ func (o instrumentingMiddleware) Bulk(amount int) (ids []UUID) {
 	return
 }
 
-func (o *instrumentingMiddleware) Add(service kit.Kit) Service {
+func (o *instrumentingMiddleware) Add(service kit.UUIDKit) Service {
 	return kit.AddMiddleware(service, o).(Service)
 }
 
@@ -38,7 +39,7 @@ func (instrumentingMiddleware) String() string {
 	return "uuid-one-instrumenting"
 }
 
-func NewInstrumentingMiddleware() kit.Kit {
+func NewInstrumentingMiddleware() kit.UUIDKit {
 	namespace := "uuid"
 	subsystem := "one"
 

@@ -16,7 +16,7 @@ import (
 var (
 	goLang = "https://google.com/golang.org?q=golang"
 
-	uuidBytes = []byte{
+	idBytes = []byte{
 		0xaa, 0xcf, 0xee, 0x12,
 		0xd4, 0x00,
 		0x27, 0x23,
@@ -27,7 +27,7 @@ var (
 
 	idString = "aacfee12-d400-2723-00d3-23124a1189bb"
 
-	uuidVariants = []byte{
+	idVariants = []byte{
 		VariantNCS, VariantRFC4122, VariantMicrosoft, VariantFuture,
 	}
 
@@ -201,7 +201,7 @@ func TestNew(t *testing.T) {
 
 func TestNew_Bulk(t *testing.T) {
 	for i := 0; i < 1000000; i++ {
-		New(uuidBytes[:])
+		New(idBytes[:])
 	}
 }
 

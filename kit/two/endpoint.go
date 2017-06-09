@@ -1,9 +1,9 @@
 package two
 
 import (
-	. "github.com/myesui/uuid"
-	"github.com/go-kit/kit/endpoint"
 	"context"
+	"github.com/go-kit/kit/endpoint"
+	. "github.com/myesui/uuid"
 )
 
 type uuidRequest struct {

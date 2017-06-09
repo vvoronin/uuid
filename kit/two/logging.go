@@ -1,9 +1,10 @@
 package two
 
 import (
-	. "github.com/myesui/uuid"
-	"github.com/go-kit/kit/log"
 	"time"
+
+	"github.com/go-kit/kit/log"
+	. "github.com/myesui/uuid"
 	"github.com/myesui/uuid/kit"
 )
 
@@ -22,7 +23,7 @@ func (o loggingMiddleware) UUID(idType SystemId) (id UUID) {
 	return
 }
 
-func (o *loggingMiddleware) Add(service kit.Kit) Service {
+func (o *loggingMiddleware) Add(service kit.UUIDKit) Service {
 	return kit.AddMiddleware(service, o).(Service)
 }
 

@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	printFormat = FormatCanonical
+	printFormat                    = FormatCanonical
 	defaultFormats map[Format]bool = make(map[Format]bool)
 )
 
@@ -91,9 +91,9 @@ const (
 	hexTable      = "0123456789abcdef"
 	hexUpperTable = "0123456789ABCDEF"
 
-	canonicalLength      = length*2 + 4
-	formatArgCount       = 10
-	uuidStringBufferSize = length*2 - formatArgCount
+	canonicalLength  = length*2 + 4
+	formatArgCount   = 10
+	stringBufferSize = length*2 - formatArgCount
 )
 
 var groups = [...]int{4, 2, 2, 2, 6}
@@ -107,7 +107,7 @@ func formatUuid(src []byte, form Format) string {
 
 func format(src []byte, form string) []byte {
 	end := len(form)
-	buf := make([]byte, end+uuidStringBufferSize)
+	buf := make([]byte, end+stringBufferSize)
 
 	var s, ls, b, e, p int
 	var u bool

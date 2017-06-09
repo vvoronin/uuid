@@ -1,10 +1,11 @@
 package kit
 
 import (
-	"github.com/go-kit/kit/metrics"
 	"time"
-	stdprometheus "github.com/prometheus/client_golang/prometheus"
-	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+
+	"github.com/go-kit/kit/metrics"
+	kprometheus "github.com/go-kit/kit/metrics/prometheus"
+	sprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
 type InstrumentingMiddleware struct {
@@ -22,13 +23,13 @@ func NewInstrumentingMiddleware(namespace, subsystem string) InstrumentingMiddle
 	fieldKeys := []string{"method", "error"}
 
 	return InstrumentingMiddleware{
-		requestCount: kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		requestCount: kprometheus.NewCounterFrom(sprometheus.CounterOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "request_count",
 			Help:      "Number of requests received.",
 		}, fieldKeys),
-		requestLatency:kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
+		requestLatency: kprometheus.NewSummaryFrom(sprometheus.SummaryOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "request_latency_microseconds",

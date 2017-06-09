@@ -2,31 +2,32 @@ package kit
 
 import (
 	"net/http"
+
 	"github.com/gorilla/mux"
 )
 
 type Middleware struct {
-	next Kit
+	next UUIDKit
 }
 
-func (o *Middleware) embed(service Kit) {
+func (o *Middleware) embed(service UUIDKit) {
 	o.next = service
 }
 
-func (o Middleware) Next() Kit {
+func (o Middleware) Next() UUIDKit {
 	return o.next
 }
 
-func AddMiddleware(service, next Kit) Kit {
+func AddMiddleware(service, next UUIDKit) UUIDKit {
 	service.embed(next)
 	return service
 }
 
 type Route struct {
-	Name         string
-	Method       string
-	Pattern      string
-	Handler  http.Handler
+	Name    string
+	Method  string
+	Pattern string
+	Handler http.Handler
 	Queries []string
 }
 

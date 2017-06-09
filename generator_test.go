@@ -4,11 +4,11 @@ import (
 	"crypto/rand"
 	"errors"
 	"gopkg.in/stretchr/testify.v1/assert"
+	"io/ioutil"
+	"log"
 	"sync"
 	"testing"
 	"time"
-	"log"
-	"io/ioutil"
 )
 
 var (
@@ -114,7 +114,7 @@ func TestNewGenerator(t *testing.T) {
 			return 1, nil
 		},
 		Resolution: 0,
-		Logger: log.New(ioutil.Discard, "", 0),
+		Logger:     log.New(ioutil.Discard, "", 0),
 	})
 
 	assert.NotNil(t, gen.Next, "There shoud be a default Next function")
@@ -142,7 +142,7 @@ func TestNewGenerator(t *testing.T) {
 			return 1, nil
 		},
 		Resolution: 4096,
-		Logger: log.New(ioutil.Discard, "", 0),
+		Logger:     log.New(ioutil.Discard, "", 0),
 	})
 
 	n, err = gen.Random(nil)
@@ -333,10 +333,9 @@ func didNewV4Panic() {
 }
 
 func TestGeneratorSave(t *testing.T) {
-	var err error
 	registerTestGenerator(Now(), []byte{0xdd, 0xee, 0xff, 0xaa, 0xbb})
 	generator.Do(func() {
-		err = generator.init()
+		 generator.init()
 	})
 	generator.read()
 	generator.save()

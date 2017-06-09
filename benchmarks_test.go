@@ -1,8 +1,9 @@
 package uuid_test
 
 import (
-	. "github.com/myesui/uuid"
 	"testing"
+
+	. "github.com/myesui/uuid"
 )
 
 var generator, _ = NewGenerator(nil)

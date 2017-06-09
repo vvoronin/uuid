@@ -19,7 +19,7 @@ func TestNow(t *testing.T) {
 
 func TestTimestamp_Add(t *testing.T) {
 	now := Now()
-	assert.True(t, now.Add(time.Second) == now + Timestamp((time.Second / 100)), "The times should be equal")
+	assert.True(t, now.Add(time.Second) == now+Timestamp((time.Second/100)), "The times should be equal")
 }
 
 func TestTimestamp_String(t *testing.T) {
@@ -30,7 +30,7 @@ func TestTimestamp_String(t *testing.T) {
 
 func TestTimestamp_Sub(t *testing.T) {
 	now := Now()
-	assert.True(t, now.Sub(time.Second) == now - Timestamp((time.Second / 100)), "The times should be equal")
+	assert.True(t, now.Sub(time.Second) == now-Timestamp((time.Second/100)), "The times should be equal")
 }
 
 func TestTimestamp_Time(t *testing.T) {
@@ -64,7 +64,7 @@ func TestSpinnerNext(t *testing.T) {
 		Count:      defaultSpinResolution - 1,
 		Timestamp:  Now(),
 		Resolution: 1024,
-		now: Now,
+		now:        Now,
 	}
 
 	for i := 0; i < size; i++ {
@@ -84,7 +84,7 @@ func TestSpinnerNext(t *testing.T) {
 		Count:      0,
 		Timestamp:  Now(),
 		Resolution: 1,
-		now: Now,
+		now:        Now,
 	}
 
 	for i := 0; i < size; i++ {

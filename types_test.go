@@ -18,16 +18,16 @@ func TestUuid_Size(t *testing.T) {
 
 func TestUuid_String(t *testing.T) {
 	id := UUID{}
-	copy(id[:], uuidBytes)
+	copy(id[:], idBytes)
 	assert.Equal(t, idString, id.String(), "The Format given should match the output")
 }
 
 func TestUuid_Variant(t *testing.T) {
 	id := UUID{}
-	copy(id[:], uuidBytes)
+	copy(id[:], idBytes)
 	bytes := id[:]
 
-	for _, v := range uuidVariants {
+	for _, v := range idVariants {
 		for i := 0; i <= 255; i++ {
 			bytes[variantIndex] = byte(i)
 			id := createMarshaler(bytes[:], 4, v)
@@ -56,7 +56,7 @@ func didMarshalerSetVariantPanic(bytes []byte) bool {
 func TestUuid_Version(t *testing.T) {
 	id := UUID{}
 	bytes := UUID{}
-	bytes.unmarshal(uuidBytes[:])
+	bytes.unmarshal(idBytes[:])
 
 	assert.Equal(t, VersionUnknown, id.Version(), "The version should be 0")
 
@@ -88,15 +88,15 @@ func TestImmutable_Size(t *testing.T) {
 }
 
 func TestImmutable_String(t *testing.T) {
-	id := Immutable(uuidBytes)
+	id := Immutable(idBytes)
 	assert.Equal(t, idString, id.String(), "The Format given should match the output")
 }
 
 func TestImmutable_Variant(t *testing.T) {
 	bytes := UUID{}
-	bytes.unmarshal(uuidBytes[:])
+	bytes.unmarshal(idBytes[:])
 
-	for _, v := range uuidVariants {
+	for _, v := range idVariants {
 		for i := 0; i <= 255; i++ {
 			bytes[variantIndex] = byte(i)
 			id := createMarshaler(bytes[:], 4, v)
@@ -112,7 +112,7 @@ func TestImmutable_Version(t *testing.T) {
 
 	id := UUID{}
 	bytes := UUID{}
-	bytes.unmarshal(uuidBytes[:])
+	bytes.unmarshal(idBytes[:])
 
 	for v := 0; v < 16; v++ {
 		for i := 0; i <= 255; i++ {
@@ -132,10 +132,10 @@ func TestImmutable_Version(t *testing.T) {
 
 func TestUuid_MarshalBinary(t *testing.T) {
 	id := UUID{}
-	id.unmarshal(uuidBytes)
+	id.unmarshal(idBytes)
 	bytes, err := id.MarshalBinary()
 	assert.Nil(t, err, "There should be no error")
-	assert.Equal(t, uuidBytes, bytes, "Byte should be the same")
+	assert.Equal(t, idBytes, bytes, "Byte should be the same")
 }
 
 func TestUuid_UnmarshalBinary(t *testing.T) {
@@ -146,11 +146,11 @@ func TestUuid_UnmarshalBinary(t *testing.T) {
 	err := u.UnmarshalBinary([]byte{1, 2, 3, 4, 5})
 	assert.Error(t, err, "Expect length error")
 
-	err = u.UnmarshalBinary(uuidBytes[:])
+	err = u.UnmarshalBinary(idBytes[:])
 
 	u = UUID{}
 
-	err = u.UnmarshalBinary(uuidBytes[:])
+	err = u.UnmarshalBinary(idBytes[:])
 
 	assert.Nil(t, err, "There should be no error but got %s", err)
 

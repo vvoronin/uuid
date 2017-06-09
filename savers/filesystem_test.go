@@ -2,14 +2,15 @@ package savers
 
 import (
 	"gopkg.in/stretchr/testify.v1/assert"
+	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"runtime"
 	"testing"
 	"time"
+
 	"github.com/myesui/uuid"
-	"log"
-	"io/ioutil"
 )
 
 const (
@@ -18,10 +19,10 @@ const (
 
 func setupFileSystemStateSaver(path string, report bool) *FileSystemSaver {
 	return &FileSystemSaver{
-		Path: path,
-		Report: report,
+		Path:     path,
+		Report:   report,
 		Duration: saveDuration * time.Second,
-		Logger: log.New(ioutil.Discard, "", 0),
+		Logger:   log.New(ioutil.Discard, "", 0),
 		//Logger: log.New(os.Stderr, "", log.LstdFlags),
 	}
 }

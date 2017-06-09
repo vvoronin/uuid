@@ -1,11 +1,12 @@
 package kit
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
-	"encoding/json"
-	kithttp "github.com/go-kit/kit/transport/http"
-	"context"
+
+	khttp "github.com/go-kit/kit/transport/http"
 )
 
 var (
@@ -19,14 +20,14 @@ var (
 	ErrUnknown = errors.New("unknown error")
 )
 
-type Kit interface {
-	embed(service Kit)
+type UUIDKit interface {
+	embed(service UUIDKit)
 	String() string
 }
 
-func Decode(objectFunc func() interface{}) kithttp.DecodeRequestFunc {
+func Decode(objectFunc func() interface{}) khttp.DecodeRequestFunc {
 	return func(ctx context.Context, request *http.Request) (interface{}, error) {
-		if (objectFunc == nil) {
+		if objectFunc == nil {
 			return nil, nil
 		}
 		object := objectFunc()
@@ -68,7 +69,7 @@ func EncodeError(_ context.Context, err error, response http.ResponseWriter) {
 	})
 }
 
-func Make(service Kit) Kit {
+func Make(service UUIDKit) UUIDKit {
 	service.embed(service)
 	return service
 }
